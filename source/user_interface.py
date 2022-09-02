@@ -10,25 +10,18 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 
-
-class MainWindow():
+@Gtk.Template(filename=os.path.join(os.getcwd(), "interface", "interface_style.ui"))
+class MainWindow(Gtk.Window):
 
     '''
     Janela princial.
     '''
+    __gtype_name__ = "MainWindow"
 
-    window: None
-
-    def __init__(self) -> None:
-
-        builder = Gtk.Builder()
-        builder.add_from_file(os.path.join(os.getcwd(), "interface", "interface_style.glade"))
-
-        self.window = builder.get_object("main_window")
-
-    def show(self) -> None:
+    @Gtk.Template.Callback()
+    def on_destroy(self, *args):
         '''
-        Exibe a janela.
+        Fecha a janela.
         '''
 
-        self.window.show_all()
+        Gtk.main_quit()
