@@ -23,12 +23,9 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 
-VERSION = "v0.1-dev"
-
 from source.user_interface import MainWindow
 
-win = MainWindow()
-win.connect("destroy", Gtk.main_quit)
-win.show_all()
-Gtk.main()
+main_window = MainWindow()
+main_window.show()
 
+Gtk.main()

@@ -4,22 +4,31 @@
 Módolo para a interface de usuário.
 '''
 
+import os
 import gi
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 
-class MainWindow(Gtk.Window):
+
+class MainWindow():
 
     '''
+    Janela princial.
     '''
 
-    def __init__(self):
-        super().__init__(title="Hello World")
+    window: None
 
-        self.button = Gtk.Button(label="Click Here")
-        self.button.connect("clicked", self.on_button_clicked)
-        self.add(self.button)
+    def __init__(self) -> None:
 
-    def on_button_clicked(self, widget):
-        print("Hello World")
+        builder = Gtk.Builder()
+        builder.add_from_file(os.path.join(os.getcwd(), "interface", "interface_style.glade"))
+
+        self.window = builder.get_object("main_window")
+
+    def show(self) -> None:
+        '''
+        Exibe a janela.
+        '''
+
+        self.window.show_all()
