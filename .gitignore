@@ -127,3 +127,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+/interface/*.glade~
+/interface/*.ui~
+/interface/*.ui#

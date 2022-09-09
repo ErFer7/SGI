@@ -1,3 +1,3 @@
 # SGI
 
-Sistema gráfico integrado em Python
+Sistema gráfico interativo em Python
