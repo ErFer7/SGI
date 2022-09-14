@@ -23,10 +23,9 @@ class ViewportHandler():
         self.drawing_area = drawing_area
 
         self.drawing_area.connect("draw", self.on_draw)
-        self.drawing_area.set_events(Gdk.EventMask.BUTTON_PRESS_MASK)  
+        self.drawing_area.set_events(Gdk.EventMask.BUTTON_PRESS_MASK)
         self.drawing_area.connect("button-press-event", self.on_button_press)
 
-        self.llck = True
         self.coords = []
 
     # Handlers ----------------------------------------------------------------
