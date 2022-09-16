@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 
 '''
-Neste módolo estão definidos os funcionamentos do viewport.
+Neste módulo estão definidos os funcionamentos do viewport.
 '''
 
+from turtle import width
 import gi
 
 gi.require_version("Gtk", "3.0")
@@ -18,6 +19,8 @@ class ViewportHandler():
 
     coords: list
     drawing_area: Gtk.DrawingArea
+    brush_width: float = 0.5
+    
 
     def __init__(self, drawing_area: Gtk.DrawingArea) -> None:
         self.drawing_area = drawing_area
@@ -27,6 +30,9 @@ class ViewportHandler():
         self.drawing_area.connect("button-press-event", self.on_button_press)
 
         self.coords = []
+
+    def set_brush_width(self, brush_width: float):
+        self.brush_width = brush_width
 
     # Handlers ----------------------------------------------------------------
     def on_draw(self, area, context) -> None:
@@ -41,7 +47,7 @@ class ViewportHandler():
 
         # Define uma linha
         context.set_source_rgb(1, 1, 1)
-        context.set_line_width(0.5)
+        context.set_line_width(self.brush_width)
 
         if len(self.coords) > 1:
 

@@ -17,7 +17,6 @@ from gi.repository import Gtk
 
 from source.interface import MainWindow
 
-
 main_window = MainWindow()
 main_window.show()
 
