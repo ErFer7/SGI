@@ -2,7 +2,7 @@
 <!-- Generated with glade 3.38.2 -->
 <interface>
   <requires lib="gtk+" version="3.20"/>
-  <object class="GtkListStore" id="liststore1">
+  <object class="GtkListStore" id="df_list">
     <columns>
       <!-- column-name Object -->
       <column type="gchararray"/>
@@ -115,11 +115,14 @@
               </packing>
             </child>
             <child>
-              <object class="GtkTreeView" id="display_file1">
+              <object class="GtkTreeView" id="display_file">
                 <property name="visible">True</property>
                 <property name="can-focus">True</property>
-                <property name="model">liststore1</property>
+                <property name="model">df_list</property>
                 <property name="search-column">0</property>
+                <child internal-child="selection">
+                  <object class="GtkTreeSelection"/>
+                </child>
                 <child>
                   <object class="GtkTreeViewColumn" id="object_name1">
                     <property name="sizing">autosize</property>
@@ -151,6 +154,18 @@
                 <property name="homogeneous">True</property>
                 <property name="layout-style">start</property>
                 <child>
+                  <object class="GtkLabel" id="width_label">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="label" translatable="yes">Brush width</property>
+                  </object>
+                  <packing>
+                    <property name="expand">True</property>
+                    <property name="fill">True</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
                   <object class="GtkSpinButton" id="width_button">
                     <property name="visible">True</property>
                     <property name="can-focus">True</property>
@@ -163,7 +178,20 @@
                   <packing>
                     <property name="expand">True</property>
                     <property name="fill">True</property>
-                    <property name="position">0</property>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkSeparator">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="opacity">0</property>
+                    <property name="orientation">vertical</property>
+                  </object>
+                  <packing>
+                    <property name="expand">True</property>
+                    <property name="fill">False</property>
+                    <property name="position">2</property>
                   </packing>
                 </child>
                 <child>
@@ -176,7 +204,7 @@
                   <packing>
                     <property name="expand">True</property>
                     <property name="fill">True</property>
-                    <property name="position">1</property>
+                    <property name="position">3</property>
                   </packing>
                 </child>
                 <child>
@@ -189,7 +217,7 @@
                   <packing>
                     <property name="expand">True</property>
                     <property name="fill">True</property>
-                    <property name="position">3</property>
+                    <property name="position">4</property>
                   </packing>
                 </child>
                 <child>
@@ -202,7 +230,7 @@
                   <packing>
                     <property name="expand">True</property>
                     <property name="fill">True</property>
-                    <property name="position">4</property>
+                    <property name="position">5</property>
                   </packing>
                 </child>
               </object>

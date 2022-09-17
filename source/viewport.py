@@ -19,25 +19,23 @@ class ViewportHandler():
 
     coords: list
     drawing_area: Gtk.DrawingArea
-    brush_width: float = 0.5
+    brush_width: float = 1.0
+    width_button: Gtk.Widget
     
-
-    def __init__(self, drawing_area: Gtk.DrawingArea) -> None:
+    def __init__(self, drawing_area: Gtk.DrawingArea, width_button: Gtk.Widget) -> None:     
         self.drawing_area = drawing_area
-
         self.drawing_area.connect("draw", self.on_draw)
         self.drawing_area.set_events(Gdk.EventMask.BUTTON_PRESS_MASK)
         self.drawing_area.connect("button-press-event", self.on_button_press)
-
         self.coords = []
-
-    def set_brush_width(self, brush_width: float):
-        self.brush_width = brush_width
+        
+        self.width_button = width_button
+        self.width_button.connect("value_changed", self.on_width_button_value_changed)
 
     # Handlers ----------------------------------------------------------------
     def on_draw(self, area, context) -> None:
         '''
-        Método para a renderização
+        Método para a renderização.
         '''
 
         # Preenche o fundo
@@ -67,3 +65,12 @@ class ViewportHandler():
         if e.type == Gdk.EventType.BUTTON_PRESS and e.button == 1:
             self.coords.append([e.x, e.y])
             self.drawing_area.queue_draw()
+
+    # --- fiz isso aqui pq não sei como fazer isso funcionar com o handler em button.py
+    def on_width_button_value_changed(self, obj):
+        '''
+        Botão de controle da largura dos traços.
+        '''
+        
+        if self.width_button.get_name() == "GtkSpinButton":
+            self.brush_width = self.width_button.get_value()
