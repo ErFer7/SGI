@@ -6,6 +6,7 @@ Módulo para wireframes.
 
 
 from abc import ABC, abstractmethod
+from uuid import uuid4
 from source.transform import Transform2D
 
 
@@ -15,7 +16,7 @@ class Object(ABC):
     Objeto renderizável.
     '''
 
-    #TODO: setters e getters
+    identification: str
     name: str
     color: tuple
     line_width: float
@@ -23,9 +24,74 @@ class Object(ABC):
     def __init__(self, name: str, color: tuple, line_width: float) -> None:
 
         super().__init__()
+        self.identification = str(uuid4())
         self.name = name
         self.color = color
         self.line_width = line_width
+
+    @property
+    def identification(self) -> str:
+        '''
+        Getter do id.
+        '''
+
+        return self._identification
+
+    @identification.setter
+    def identification(self, value: str) -> None:
+        '''
+        Setter do id.
+        '''
+
+        self._identification = value
+
+    @property
+    def name(self) -> str:
+        '''
+        Getter do nome.
+        '''
+
+        return self._name
+
+    @name.setter
+    def name(self, value: str) -> None:
+        '''
+        Setter do nome.
+        '''
+
+        self._name = value
+
+    @property
+    def color(self) -> tuple:
+        '''
+        Getter da cor.
+        '''
+
+        return self._color
+
+    @color.setter
+    def color(self, value: tuple) -> None:
+        '''
+        Setter da cor.
+        '''
+
+        self._color = value
+
+    @property
+    def line_width(self) -> float:
+        '''
+        Getter da grossura da linha.
+        '''
+
+        return self._line_width
+
+    @line_width.setter
+    def line_width(self, value: float) -> None:
+        '''
+        Setter da grossura da linha.
+        '''
+
+        self._line_width = value
 
     @abstractmethod
     def get_coord_list(self) -> list:

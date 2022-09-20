@@ -45,13 +45,13 @@ class DisplayFileHandler():
         self.objects.append(obj)
 
     # Por enquanto o id é o nome
-    def remove_object(self, name: str) -> None:
+    def remove_object(self, identification: str) -> None:
         '''
         Remove um objeto.
         '''
 
         for obj in self.objects:
 
-            if obj.name == name:
+            if obj.identification == identification:
                 self.objects.remove(obj)
                 break

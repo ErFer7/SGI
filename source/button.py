@@ -4,7 +4,6 @@
 Módulo para handlers de botões.
 '''
 
-import string
 import gi
 
 from source.viewport import ViewportHandler
@@ -15,7 +14,7 @@ from gi.repository import Gtk
 class ButtonHandler():
 
     button: Gtk.Widget
-    button_id: string
+    button_id: str
     viewport: ViewportHandler
 
     def __init__(self, button: Gtk.Widget, button_id, viewport: ViewportHandler = None) -> None:
