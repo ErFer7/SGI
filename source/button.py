@@ -14,7 +14,7 @@ from gi.repository import Gtk
 
 class ButtonHandler():
 
-    button: Gtk.Widget 
+    button: Gtk.Widget
     button_id: string
     viewport: ViewportHandler
 

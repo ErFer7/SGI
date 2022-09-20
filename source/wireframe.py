@@ -15,12 +15,17 @@ class Object(ABC):
     Objeto renderizável.
     '''
 
+    #TODO: setters e getters
     name: str
+    color: tuple
+    line_width: float
 
-    def __init__(self, name: str) -> None:
+    def __init__(self, name: str, color: tuple, line_width: float) -> None:
 
         super().__init__()
         self.name = name
+        self.color = color
+        self.line_width = line_width
 
     @abstractmethod
     def get_coord_list(self) -> list:
@@ -37,10 +42,10 @@ class Point(Object):
 
     transform: Transform2D
 
-    def __init__(self, position: tuple, name: str = '') -> None:
+    def __init__(self, x: int, y: int, name: str = '', color: tuple = (1, 1, 1), line_width: float = 1.0) -> None:
 
-        super().__init__(name)
-        self.transform = Transform2D(position)
+        super().__init__(name, color, line_width)
+        self.transform = Transform2D((x, y))
 
     def get_coord(self) -> list:
         '''
@@ -65,11 +70,18 @@ class Line(Object):
     start: Point
     end: Point
 
-    def __init__(self, start_position: tuple, end_position: tuple, name: str = '') -> None:
+    def __init__(self,
+                 x1: int,
+                 y1: int,
+                 x2: int,
+                 y2: int,
+                 name: str = '',
+                 color: tuple = (1, 1, 1),
+                 line_width: float = 1.0) -> None:
 
-        super().__init__(name)
-        self.start = Point(start_position)
-        self.end = Point(end_position)
+        super().__init__(name, color, line_width)
+        self.start = Point(x1, y1)
+        self.end = Point(x2, y2)
 
     def get_coord_list(self) -> list:
         '''
@@ -86,13 +98,19 @@ class Wireframe(Object):
 
     lines: list
 
-    def __init__(self, lines: tuple, name: str = '') -> None:
+    def __init__(self,
+                 lines: tuple,
+                 name: str = '',
+                 color: tuple = (1, 1, 1),
+                 line_width: float = 1.0) -> None:
 
-        super().__init__(name)
+        super().__init__(name, color, line_width)
         self.lines = []
 
+        # Lines: [(x1, y1, x2, y2), ...]
+
         for line in lines:
-            self.lines.append(Line(line[0], line[1]))
+            self.lines.append(Line(line[0], line[1], line[2], line[3]))
 
     def get_coord_list(self) -> list:
         '''

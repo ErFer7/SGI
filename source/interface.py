@@ -5,7 +5,6 @@ Módulo para a interface de usuário.
 '''
 
 import os
-from tkinter import Button
 import gi
 from source.button import ButtonHandler
 from source.displayfile import DisplayFileHandler
