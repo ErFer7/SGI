@@ -101,7 +101,6 @@ class ViewportHandler():
 
             # if drawing_mode == "line":
             if len(self.coord_cache) > 1:
-
                 self.display_file.add_object(Line(self.coord_cache[0][0],
                                                   self.coord_cache[0][1],
                                                   self.coord_cache[1][0],

@@ -142,9 +142,8 @@ class Line(Object):
                  x2: int,
                  y2: int,
                  name: str = '',
-                 color: tuple = None,
+                 color: tuple = (1, 1, 1),
                  line_width: float = 1.0) -> None:
-
         super().__init__(name, color, line_width)
         self.start = Point(x1, y1)
         self.end = Point(x2, y2)

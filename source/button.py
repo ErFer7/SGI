@@ -33,7 +33,6 @@ class ButtonHandler():
         elif id == "width_button":
             self.button.connect("value_changed", self.on_width_button_value_changed)
         elif id == "color_button":
-            # TODO: escolher e criar um botão para definir cor, arrumar o signal aqui
             self.button.connect("color_set", self.on_color_button_color_set)
         else:
             print("Erro: handler não encontrado: " + self.button_id)
@@ -56,6 +55,6 @@ class ButtonHandler():
             self.viewport.set_brush_width(self.button.get_value())
 
     def on_color_button_color_set(self, obj):
-        rgb_string = self.button.get_rgba().to_string().strip("rgb()") # "rgb(r,g,b)"" -> "r,g,b"
-        rgb = [int(val) for val in rgb_string.split(",")] # "r,g,b" -> [r, g, b]
-        self.viewport.set_brush_color(tuple(rgb))
+        rgba = self.button.get_rgba()
+        color_rgb = (rgba.red, rgba.green, rgba.blue)
+        self.viewport.set_brush_color(color_rgb)
