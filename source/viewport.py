@@ -50,7 +50,7 @@ class ViewportHandler():
     def set_brush_width(self, width_val: float):
         self.brush_width = width_val
 
-    def set_brush_color(self, color_rgb: list):
+    def set_brush_color(self, color_rgb: tuple):
         self.brush_color = color_rgb
 
     # Handlers ----------------------------------------------------------------
@@ -99,6 +99,7 @@ class ViewportHandler():
 
             self.coord_cache.append([e.x, e.y])
 
+            # if drawing_mode == "line":
             if len(self.coord_cache) > 1:
 
                 self.display_file.add_object(Line(self.coord_cache[0][0],

@@ -142,7 +142,7 @@ class Line(Object):
                  x2: int,
                  y2: int,
                  name: str = '',
-                 color: tuple = (1, 1, 1),
+                 color: tuple = None,
                  line_width: float = 1.0) -> None:
 
         super().__init__(name, color, line_width)

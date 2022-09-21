@@ -14,7 +14,7 @@ class DisplayFileHandler():
     Nesta classe os objetos seriam armazenados e transferidos para o viewport quando necessário.
     '''
 
-    objects: list
+    objects: list 
 
     def __init__(self) -> None:
 
