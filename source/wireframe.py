@@ -16,14 +16,19 @@ class Object(ABC):
     Objeto renderizável.
     '''
 
+    transform: Transform2D
+    coord_list: list
     identification: str
     name: str
     color: tuple
     line_width: float
 
-    def __init__(self, name: str, color: tuple, line_width: float) -> None:
+    def __init__(self, coord_list: list, name: str, color: tuple, line_width: float) -> None:
 
         super().__init__()
+        self.coord_list = coord_list
+        self.transform = Transform2D(coord_list)
+
         self.identification = str(uuid4())
         self.name = name
         self.color = color
@@ -93,6 +98,23 @@ class Object(ABC):
 
         self._line_width = value
 
+    @property
+    def coord_list(self) -> list:
+        return self._coord_list
+    
+    @coord_list.setter
+    def coord_list(self, coord_list: list) -> None:
+        self._coord_list = coord_list
+
+    def translate(self, translation: tuple) -> None:
+        '''
+        Método para transladar o objeto (Transform2D::translate).
+        '''
+        self.coord_list = self.transform.translate((translation[0], translation[1]))
+
+    # --- Esse(s) método(s) não é mais necessário. Adicionei a lista de coordenadas como atributo de Object.
+    # --- No construtor de cada tipo de objeto é necessário passar as coordenadas para o super().
+    # --- Achei que fazia mais sentido. Na dúvida, não removi os métodos ainda, mas não estão sendo chamados.
     @abstractmethod
     def get_coord_list(self) -> list:
         '''
@@ -106,26 +128,28 @@ class Point(Object):
     Ponto.
     '''
 
-    transform: Transform2D
+    x: float
+    y: float
 
     def __init__(self, x: int, y: int, name: str = '', color: tuple = (1, 1, 1), line_width: float = 1.0) -> None:
 
-        super().__init__(name, color, line_width)
-        self.transform = Transform2D((x, y))
+        super().__init__([(x, y)], name, color, line_width)
+        self.x = x
+        self.y = y
 
-    def get_coord(self) -> list:
+    def get_coord(self) -> tuple:
         '''
         Retorna a posição.
         '''
 
-        return self.transform.position
+        return (self.x, self.y)
 
     def get_coord_list(self) -> list:
         '''
         Retorna as coordenadas para a renderização.
         '''
 
-        return [self.transform.position, self.transform.position]
+        return [(self.x, self.y)]
 
 class Line(Object):
 
@@ -144,7 +168,7 @@ class Line(Object):
                  name: str = '',
                  color: tuple = (1, 1, 1),
                  line_width: float = 1.0) -> None:
-        super().__init__(name, color, line_width)
+        super().__init__([(x1, y1), (x2, y2)], name, color, line_width)
         self.start = Point(x1, y1)
         self.end = Point(x2, y2)
 

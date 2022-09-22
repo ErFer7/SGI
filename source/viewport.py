@@ -67,7 +67,7 @@ class ViewportHandler():
         # Renderiza todos os objetos do display file
         for obj in self.display_file.objects:
 
-            self.coords = obj.get_coord_list()
+            self.coords = obj.coord_list
             color = obj.color
             line_width = obj.line_width
 

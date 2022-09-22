@@ -39,8 +39,10 @@ class ButtonHandler():
 
     # Handlers ----------------------------------------------------------------
     def on_pen_button_clicked(self, obj):
+        print(self.viewport.display_file.objects[0].coord_list)
+        self.viewport.display_file.objects[0].translate((20, 20))
+        print(self.viewport.display_file.objects[0].coord_list)
         # TODO: funcionamento alternativo para a função draw em viewport.py
-        pass
 
     def on_line_button_clicked(self, obj):
         # TODO: associar ao funcionamento atual da função draw
