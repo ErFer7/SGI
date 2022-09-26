@@ -193,7 +193,7 @@ class Wireframe(Object):
                  color: tuple = (1, 1, 1),
                  line_width: float = 1.0) -> None:
 
-        super().__init__(name, color, line_width)
+        super().__init__(list(lines), name, color, line_width)
         self.lines = []
 
         # Lines: [(x1, y1, x2, y2), ...]

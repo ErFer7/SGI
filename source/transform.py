@@ -6,7 +6,7 @@ Módulo para as operações matemáticas.
 
 import numpy as np
 
-#TODO: Implementar
+
 class Transform2D():
 
     '''
@@ -14,11 +14,12 @@ class Transform2D():
     '''
 
     # Atributos ---------------------------------------------------------------
-    #TODO: Usar uma matriz aqui.
-    t_matrix: np.array
+    
     coord_list: list # lista de pontos (tuplas) que compõem o objeto
     rotation: float
     scale: list
+
+    t_matrix: np.array # translation matrix
 
     # Construtor --------------------------------------------------------------
     def __init__(self, coord_list: list = [(0.0, 0.0)], rotation: float = 0.0, scale: tuple = (1.0, 1.0)) -> None:
@@ -27,7 +28,7 @@ class Transform2D():
         self.rotation = rotation
         self.scale = list(scale)
 
-    # Getters e Seters --------------------------------------------------------
+    # Getters e Setters --------------------------------------------------------
     @property
     def coord_list(self) -> list:
         '''
@@ -44,21 +45,25 @@ class Transform2D():
 
         self._coord_list = value
 
+    # Transformações -----------------------------------------------------------
     def translate(self, translation: tuple) -> list:
         '''
         Translação de um objeto. Retorna uma nova lista de coordenadas.
         '''
 
+        new_coord_list: list = []
         tx = translation[0]
         ty = translation[1]
         self.t_matrix = np.asarray([[1, 0, tx],
                                     [0, 1, ty],
                                     [0, 0, 1]])
-        new_coord_list: list = []
-        for point in self.coord_list: # point = (x, y) ... new_point = (point[x] + t[x], point[y] + t[y])
+
+        # Translação ponto a ponto
+        for point in self.coord_list:
             x = point[0]
             y = point[1]
             new_coord = np.matmul(self.t_matrix, [x, y, 1])
             new_coord_list.append((new_coord[0], new_coord[1]))
         self.coord_list = new_coord_list
+        print(self.coord_list)
         return self.coord_list

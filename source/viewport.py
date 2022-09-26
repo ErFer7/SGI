@@ -4,15 +4,15 @@
 Neste módulo estão definidos os funcionamentos do viewport.
 '''
 
-from random import randrange
-from source.displayfile import DisplayFileHandler
 import string
 import gi
-
-from source.wireframe import Line, Object
-
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
+
+from random import randrange
+from source.displayfile import DisplayFileHandler
+from source.wireframe import Line, Object
+
 
 class ViewportHandler():
 
@@ -23,8 +23,7 @@ class ViewportHandler():
     drawing_area: Gtk.DrawingArea
     display_file: DisplayFileHandler
     bg_color: tuple
-    coords: list # coordenadas de um novo objeto, dadas por cliques na drawing_area
-    coord_cache: list # Temporário
+    coord: list # Coordenadas de um novo objeto (temp?)
     brush_width: float
     brush_color: tuple
 
@@ -42,11 +41,10 @@ class ViewportHandler():
         self.drawing_area.connect("button-press-event", self.on_button_press)
         self.display_file = display_file
         self.bg_color = bg_color
-        self.coords = []
-        self.coord_cache = []
+        self.coord = []
         self.brush_width = 1.0
         self.brush_color = (1, 1, 1)
-        
+  
     def set_brush_width(self, width_val: float):
         self.brush_width = width_val
 
@@ -55,7 +53,7 @@ class ViewportHandler():
 
     # Handlers ----------------------------------------------------------------
     def on_draw(self, area, context) -> None:
-        '''
+        ''' 
         Método para a renderização.
         '''
 
@@ -67,7 +65,7 @@ class ViewportHandler():
         # Renderiza todos os objetos do display file
         for obj in self.display_file.objects:
 
-            self.coords = obj.coord_list
+            coords = obj.coord_list
             color = obj.color
             line_width = obj.line_width
 
@@ -75,20 +73,12 @@ class ViewportHandler():
             context.set_source_rgb(color[0], color[1], color[2])
             context.set_line_width(line_width)
 
-            for i, _ in enumerate(self.coords):
+            for i, _ in enumerate(coords):
 
-                if i < len(self.coords) - 1:
-                    context.move_to(self.coords[i][0], self.coords[i][1])
-                    context.line_to(self.coords[i + 1][0], self.coords[i + 1][1])
+                if i < len(coords) - 1:
+                    context.move_to(coords[i][0], coords[i][1])
+                    context.line_to(coords[i + 1][0], coords[i + 1][1])
                     context.stroke()
-
-            # Adiciona objetos ao display file
-            # --- o tipo (line) tá hardcoded pq ainda não temos wireframe etc
-            # if len(self.coords) > 1:
-            #     new_object = ["line", self.coords, self.brush_width, self.brush_color]
-            #     self.display_file.add_object(new_object)
-            #     self.coords = []
-
 
     def on_button_press(self, w, e):
         '''
@@ -97,17 +87,17 @@ class ViewportHandler():
 
         if e.type == Gdk.EventType.BUTTON_PRESS and e.button == 1:
 
-            self.coord_cache.append([e.x, e.y])
+            self.coord.append([e.x, e.y])
 
             # if drawing_mode == "line":
-            if len(self.coord_cache) > 1:
-                self.display_file.add_object(Line(self.coord_cache[0][0],
-                                                  self.coord_cache[0][1],
-                                                  self.coord_cache[1][0],
-                                                  self.coord_cache[1][1],
+            if len(self.coord) > 1:
+                self.display_file.add_object(Line(self.coord[0][0],
+                                                  self.coord[0][1],
+                                                  self.coord[1][0],
+                                                  self.coord[1][1],
                                                   '',
                                                   self.brush_color,
                                                   self.brush_width))
                 
-                self.coord_cache.clear()
+                self.coord.clear()
                 self.drawing_area.queue_draw()

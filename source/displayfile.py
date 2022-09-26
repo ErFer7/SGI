@@ -4,7 +4,6 @@
 Módulo para o handler do display file.
 '''
 
-
 from source.wireframe import Object, Point, Line, Wireframe
 
 
@@ -14,7 +13,7 @@ class DisplayFileHandler():
     Nesta classe os objetos seriam armazenados e transferidos para o viewport quando necessário.
     '''
 
-    objects: list 
+    objects: list
 
     def __init__(self) -> None:
 
