@@ -15,7 +15,7 @@ class Transform2D():
 
     # Atributos ---------------------------------------------------------------
     #TODO: Usar uma matriz aqui.
-    
+    t_matrix: np.array
     coord_list: list # lista de pontos (tuplas) que compõem o objeto
     rotation: float
     scale: list
@@ -48,9 +48,17 @@ class Transform2D():
         '''
         Translação de um objeto. Retorna uma nova lista de coordenadas.
         '''
+
+        tx = translation[0]
+        ty = translation[1]
+        self.t_matrix = np.asarray([[1, 0, tx],
+                                    [0, 1, ty],
+                                    [0, 0, 1]])
         new_coord_list: list = []
         for point in self.coord_list: # point = (x, y) ... new_point = (point[x] + t[x], point[y] + t[y])
-            point = (point[0] + translation[0], point[1] + translation[1])
-            new_coord_list.append(point)
+            x = point[0]
+            y = point[1]
+            new_coord = np.matmul(self.t_matrix, [x, y, 1])
+            new_coord_list.append((new_coord[0], new_coord[1]))
         self.coord_list = new_coord_list
         return self.coord_list
