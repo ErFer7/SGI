@@ -5,7 +5,7 @@ Módulo para wireframes.
 '''
 
 
-from abc import ABC, abstractmethod
+from abc import ABC
 from uuid import uuid4
 from source.transform import Transform2D
 
@@ -16,110 +16,47 @@ class Object(ABC):
     Objeto renderizável.
     '''
 
-    transform: Transform2D
-    coord_list: list
     identification: str
     name: str
     color: tuple
     line_width: float
 
+    __transform: Transform2D
+    __coord_list: list
+
     def __init__(self, coord_list: list, name: str, color: tuple, line_width: float) -> None:
 
         super().__init__()
-        self.coord_list = coord_list
-        self.transform = Transform2D(coord_list)
-
         self.identification = str(uuid4())
         self.name = name
         self.color = color
         self.line_width = line_width
 
-    @property
-    def identification(self) -> str:
-        '''
-        Getter do id.
-        '''
-
-        return self._identification
-
-    @identification.setter
-    def identification(self, value: str) -> None:
-        '''
-        Setter do id.
-        '''
-
-        self._identification = value
-
-    @property
-    def name(self) -> str:
-        '''
-        Getter do nome.
-        '''
-
-        return self._name
-
-    @name.setter
-    def name(self, value: str) -> None:
-        '''
-        Setter do nome.
-        '''
-
-        self._name = value
-
-    @property
-    def color(self) -> tuple:
-        '''
-        Getter da cor.
-        '''
-
-        return self._color
-
-    @color.setter
-    def color(self, value: tuple) -> None:
-        '''
-        Setter da cor.
-        '''
-
-        self._color = value
-
-    @property
-    def line_width(self) -> float:
-        '''
-        Getter da grossura da linha.
-        '''
-
-        return self._line_width
-
-    @line_width.setter
-    def line_width(self, value: float) -> None:
-        '''
-        Setter da grossura da linha.
-        '''
-
-        self._line_width = value
+        self.__coord_list = coord_list
+        self.__transform = Transform2D(coord_list)
 
     @property
     def coord_list(self) -> list:
-        return self._coord_list
-    
+        '''
+        Getter da lista de coordenadas.
+        '''
+
+        return self.__coord_list
+
     @coord_list.setter
     def coord_list(self, coord_list: list) -> None:
-        self._coord_list = coord_list
+        '''
+        Setter da lista de coordenadas.
+        '''
+
+        self.__coord_list = coord_list
 
     def translate(self, translation: tuple) -> None:
         '''
         Método para transladar o objeto (Transform2D::translate).
         '''
-        self.coord_list = self.transform.translate((translation[0], translation[1]))
 
-    # --- Esse(s) método(s) não é mais necessário. Adicionei a lista de coordenadas como atributo de Object.
-    # --- No construtor de cada tipo de objeto é necessário passar as coordenadas para o super().
-    # --- Achei que fazia mais sentido. Na dúvida, não removi os métodos ainda, mas não estão sendo chamados.
-    @abstractmethod
-    def get_coord_list(self) -> list:
-        '''
-        Método abstrato que retorna uma lista de coordenadas.
-        '''
+        self.__coord_list = self.__transform.translate((translation[0], translation[1]))
 
 
 class Point(Object):
@@ -128,28 +65,17 @@ class Point(Object):
     Ponto.
     '''
 
-    x: float
-    y: float
+    def __init__(self, position: tuple, name: str = '', color: tuple = (1, 1, 1), line_width: float = 1.0) -> None:
 
-    def __init__(self, x: int, y: int, name: str = '', color: tuple = (1, 1, 1), line_width: float = 1.0) -> None:
-
-        super().__init__([(x, y)], name, color, line_width)
-        self.x = x
-        self.y = y
+        super().__init__([position], name, color, line_width)
 
     def get_coord(self) -> tuple:
         '''
         Retorna a posição.
         '''
 
-        return (self.x, self.y)
+        return self.coord_list[0]
 
-    def get_coord_list(self) -> list:
-        '''
-        Retorna as coordenadas para a renderização.
-        '''
-
-        return [(self.x, self.y)]
 
 class Line(Object):
 
@@ -157,27 +83,29 @@ class Line(Object):
     Linha.
     '''
 
-    start: Point
-    end: Point
-
     def __init__(self,
-                 x1: int,
-                 y1: int,
-                 x2: int,
-                 y2: int,
+                 position_a: tuple,
+                 position_b: tuple,
                  name: str = '',
                  color: tuple = (1, 1, 1),
                  line_width: float = 1.0) -> None:
-        super().__init__([(x1, y1), (x2, y2)], name, color, line_width)
-        self.start = Point(x1, y1)
-        self.end = Point(x2, y2)
 
-    def get_coord_list(self) -> list:
+        super().__init__([position_a, position_b], name, color, line_width)
+
+    def get_start(self):
         '''
-        Retorna as coordenadas para a renderização.
+        Obtém o ponto inicial.
         '''
 
-        return [self.start.get_coord(), self.end.get_coord()]
+        return self.coord_list[0]
+
+    def get_end(self):
+        '''
+        Obtém o ponto final.
+        '''
+
+        return self.coord_list[1]
+
 
 class Wireframe(Object):
 
@@ -185,30 +113,59 @@ class Wireframe(Object):
     Wireframe
     '''
 
-    lines: list
-
     def __init__(self,
-                 lines: tuple,
+                 points: tuple,
                  name: str = '',
                  color: tuple = (1, 1, 1),
                  line_width: float = 1.0) -> None:
 
-        super().__init__(list(lines), name, color, line_width)
-        self.lines = []
+        super().__init__(list(points), name, color, line_width)
 
-        # Lines: [(x1, y1, x2, y2), ...]
-
-        for line in lines:
-            self.lines.append(Line(line[0], line[1], line[2], line[3]))
-
-    def get_coord_list(self) -> list:
+    def get_lines(self) -> list:
         '''
-        Retorna as coordenadas para a renderização.
+        Retorna as linhas para a renderização.
         '''
 
-        coords = []
+        lines = []
 
-        for line in self.lines:
-            coords.append(line.get_coord_list())
+        for i, _ in enumerate(self.coord_list):
 
-        return coords
+            if i < len(self.coord_list) - 1:
+                lines.append((self.coord_list[i], self.coord_list[i + 1]))
+
+        return lines
+
+
+class Triangle(Wireframe):
+
+    '''
+    Triângulo.
+    '''
+
+    def __init__(self,
+                 position_a: tuple,
+                 position_b: tuple,
+                 position_c: tuple,
+                 name: str = '',
+                 color: tuple = (1, 1, 1),
+                 line_width: float = 1) -> None:
+
+        super().__init__([position_a, position_b, position_c], name, color, line_width)
+
+
+class Rectangle(Wireframe):
+
+    '''
+    Retangulo
+    '''
+
+    def __init__(self,
+                 bottom_left: tuple,
+                 bottom_right: tuple,
+                 top_left: tuple,
+                 top_right: tuple,
+                 name: str = '',
+                 color: tuple = (1, 1, 1),
+                 line_width: float = 1) -> None:
+
+        super().__init__([bottom_left, bottom_right, top_left, top_right], name, color, line_width)

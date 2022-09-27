@@ -4,14 +4,13 @@
 Neste módulo estão definidos os funcionamentos do viewport.
 '''
 
-import string
+from source.wireframe import Line, Object
+from source.displayfile import DisplayFileHandler
+
 import gi
+
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
-
-from random import randrange
-from source.displayfile import DisplayFileHandler
-from source.wireframe import Line, Object
 
 
 class ViewportHandler():
@@ -23,12 +22,10 @@ class ViewportHandler():
     drawing_area: Gtk.DrawingArea
     display_file: DisplayFileHandler
     bg_color: tuple
-    coord: list # Coordenadas de um novo objeto (temp?)
+    coord: list  # Coordenadas de um novo objeto (temp?)
     brush_width: float
     brush_color: tuple
-
-    # Acredito que não terá uso
-    drawing_mode: string = "line" # sem uso ainda
+    window: list
 
     def __init__(self,
                  drawing_area: Gtk.DrawingArea,
@@ -44,7 +41,8 @@ class ViewportHandler():
         self.coord = []
         self.brush_width = 1.0
         self.brush_color = (1, 1, 1)
-  
+        self.window = [0.0, 0.0, 1.0, 1.0]  # TL, TR, BL, BR
+
     def set_brush_width(self, width_val: float):
         self.brush_width = width_val
 
@@ -53,7 +51,7 @@ class ViewportHandler():
 
     # Handlers ----------------------------------------------------------------
     def on_draw(self, area, context) -> None:
-        ''' 
+        '''
         Método para a renderização.
         '''
 
@@ -89,15 +87,14 @@ class ViewportHandler():
 
             self.coord.append([e.x, e.y])
 
-            # if drawing_mode == "line":
             if len(self.coord) > 1:
-                self.display_file.add_object(Line(self.coord[0][0],
-                                                  self.coord[0][1],
-                                                  self.coord[1][0],
-                                                  self.coord[1][1],
+                self.display_file.add_object(Line((self.coord[0][0],
+                                                  self.coord[0][1]),
+                                                  (self.coord[1][0],
+                                                  self.coord[1][1]),
                                                   '',
                                                   self.brush_color,
                                                   self.brush_width))
-                
+
                 self.coord.clear()
                 self.drawing_area.queue_draw()

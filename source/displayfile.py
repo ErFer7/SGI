@@ -18,7 +18,7 @@ class DisplayFileHandler():
     def __init__(self) -> None:
 
         self.objects = []
-        self.add_object(Line(500, 500, 200, 300, "Test", (1, 0, 0), 2.0))  # Teste
+        self.add_object(Line((500, 500), (200, 300), "Test", (1, 0, 0), 2.0))  # Teste
 
     @property
     def objects(self) -> list:
