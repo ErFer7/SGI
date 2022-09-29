@@ -4,7 +4,8 @@
 Neste módulo estão definidos os funcionamentos do viewport.
 '''
 
-from source.wireframe import Line, Object
+from source.editor import EditorHandler
+from source.wireframe import Line, Point, Rectangle
 from source.displayfile import DisplayFileHandler
 
 import gi
@@ -19,51 +20,70 @@ class ViewportHandler():
     Definição do viewport, este viewport é um handler para um widget DrawingArea.
     '''
 
-    drawing_area: Gtk.DrawingArea
-    display_file: DisplayFileHandler
-    bg_color: tuple
-    coord: list  # Coordenadas de um novo objeto (temp?)
-    brush_width: float
-    brush_color: tuple
-    window: list
+    # Atributos privados
+    _brush_color: tuple
+    _brush_width: float
+    _window: Rectangle
+    _bg_color: tuple
+    _drawing_area: Gtk.DrawingArea
+    _display_file: DisplayFileHandler
+    _editor: EditorHandler
 
     def __init__(self,
                  drawing_area: Gtk.DrawingArea,
                  display_file: DisplayFileHandler,
+                 editor: EditorHandler,
                  bg_color: tuple = (0, 0, 0)) -> None:
 
-        self.drawing_area = drawing_area
-        self.drawing_area.connect("draw", self.on_draw)
-        self.drawing_area.set_events(Gdk.EventMask.BUTTON_PRESS_MASK)
-        self.drawing_area.connect("button-press-event", self.on_button_press)
-        self.display_file = display_file
-        self.bg_color = bg_color
-        self.coord = []
-        self.brush_width = 1.0
-        self.brush_color = (1, 1, 1)
-        self.window = [0.0, 0.0, 1.0, 1.0]  # TL, TR, BL, BR
+        self._drawing_area = drawing_area
+        self._drawing_area.connect("draw", self.on_draw)
+        self._drawing_area.set_events(Gdk.EventMask.BUTTON_PRESS_MASK)
+        self._drawing_area.connect("button-press-event", self.on_button_press)
+        self._display_file = display_file
+        self._editor = editor
+        self._bg_color = bg_color
+        self._coord = []
+        self._brush_width = 1.0
+        self._brush_color = (1, 1, 1)
+        self._window = Rectangle((0.0, 0.0), (100.0, 100.0), "Window")  # Coordenadas no espaço vetorial do mundo
 
-    def set_brush_width(self, width_val: float):
-        self.brush_width = width_val
+    # Métodos utilitários
+    def coords_to_lines(self, coords: list) -> list:
+        '''
+        Converte coordenadas normais para linhas.
+        '''
 
-    def set_brush_color(self, color_rgb: tuple):
-        self.brush_color = color_rgb
+        lines = []
 
-    # Handlers ----------------------------------------------------------------
+        if len(coords) == 1:
+            lines.append((coords[0], (coords[0][0] + 1, coords[0][1])))
+        else:
+
+            for i, _ in enumerate(coords):
+
+                if i < len(coords) - 1:
+                    lines.append((coords[i], coords[i + 1]))
+
+            if (len(coords) // 3) % 2 != 0:
+                lines.append((coords[-1], coords[0]))
+
+        return lines
+
+    # Handlers
     def on_draw(self, area, context) -> None:
         '''
         Método para a renderização.
         '''
 
         # Preenche o fundo
-        context.set_source_rgb(self.bg_color[0], self.bg_color[1], self.bg_color[2])
+        context.set_source_rgb(self._bg_color[0], self._bg_color[1], self._bg_color[2])
         context.rectangle(0, 0, area.get_allocated_width(), area.get_allocated_height())
         context.fill()
 
         # Renderiza todos os objetos do display file
-        for obj in self.display_file.objects:
+        for obj in self._display_file.objects:
 
-            coords = obj.coord_list
+            lines = self.coords_to_lines(obj.coord_list)
             color = obj.color
             line_width = obj.line_width
 
@@ -71,12 +91,10 @@ class ViewportHandler():
             context.set_source_rgb(color[0], color[1], color[2])
             context.set_line_width(line_width)
 
-            for i, _ in enumerate(coords):
-
-                if i < len(coords) - 1:
-                    context.move_to(coords[i][0], coords[i][1])
-                    context.line_to(coords[i + 1][0], coords[i + 1][1])
-                    context.stroke()
+            for line in lines:
+                context.move_to(line[0][0], line[0][1])
+                context.line_to(line[1][0], line[1][1])
+                context.stroke()
 
     def on_button_press(self, w, e):
         '''
@@ -85,16 +103,5 @@ class ViewportHandler():
 
         if e.type == Gdk.EventType.BUTTON_PRESS and e.button == 1:
 
-            self.coord.append([e.x, e.y])
-
-            if len(self.coord) > 1:
-                self.display_file.add_object(Line((self.coord[0][0],
-                                                  self.coord[0][1]),
-                                                  (self.coord[1][0],
-                                                  self.coord[1][1]),
-                                                  '',
-                                                  self.brush_color,
-                                                  self.brush_width))
-
-                self.coord.clear()
-                self.drawing_area.queue_draw()
+            self._editor.handle_click((e.x, e.y))
+            self._drawing_area.queue_draw()

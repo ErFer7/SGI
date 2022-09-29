@@ -51,7 +51,7 @@ class ButtonHandler():
         '''
         Botão de controle da largura dos traços.
         '''
-        
+
         if self.button.get_name() == "GtkSpinButton":
             self.viewport.set_brush_width(self.button.get_value())
 

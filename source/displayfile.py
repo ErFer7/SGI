@@ -13,30 +13,15 @@ class DisplayFileHandler():
     Nesta classe os objetos seriam armazenados e transferidos para o viewport quando necessário.
     '''
 
+    # Atributos públicos
     objects: list
 
     def __init__(self) -> None:
 
         self.objects = []
-        self.add_object(Line((500, 500), (200, 300), "Test", (1, 0, 0), 2.0))  # Teste
 
-    @property
-    def objects(self) -> list:
-        '''
-        Getter dos objetos.
-        '''
-
-        return self._objects
-
-    @objects.setter
-    def objects(self, value: list) -> None:
-        '''
-        Setter dos objetos.
-        '''
-
-        self._objects = value
-
-    def add_object(self, obj: list) -> None:  # object é keyword reservada
+    # Métodos utilitários
+    def add_object(self, obj: Object) -> None:
         '''
         Adiciona um objeto.
         '''

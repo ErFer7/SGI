@@ -3,4 +3,5 @@
 ## v0.1
 
 * Implementação básica do viewport
-* Renderização de pontos
+* Renderização de wireframes
+* Edição básica
