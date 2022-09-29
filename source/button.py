@@ -2,6 +2,8 @@
 
 '''
 Módulo para handlers de botões.
+
+Este módulo é obsoleto.
 '''
 
 # from logging import setLogRecordFactory

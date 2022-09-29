@@ -5,7 +5,7 @@ Neste módulo estão definidos os funcionamentos do viewport.
 '''
 
 from source.editor import EditorHandler
-from source.wireframe import Line, Point, Rectangle
+from source.wireframe import Rectangle
 from source.displayfile import DisplayFileHandler
 
 import gi
@@ -48,6 +48,16 @@ class ViewportHandler():
         self._window = Rectangle((0.0, 0.0), (100.0, 100.0), "Window")  # Coordenadas no espaço vetorial do mundo
 
     # Métodos utilitários
+    def world_to_screen(self, coord: tuple):
+        '''
+        Converte a coordenada de mundo para uma coordenada de tela.
+        '''
+
+    def screen_to_world(self, coord: tuple):
+        '''
+        Converte a coordenada de tela para uma coordenada de mundo.
+        '''
+
     def coords_to_lines(self, coords: list) -> list:
         '''
         Converte coordenadas normais para linhas.
@@ -96,12 +106,13 @@ class ViewportHandler():
                 context.line_to(line[1][0], line[1][1])
                 context.stroke()
 
-    def on_button_press(self, w, e):
+        self._drawing_area.queue_draw()
+
+    def on_button_press(self, w, event):
         '''
         Evento de clique.
         '''
 
-        if e.type == Gdk.EventType.BUTTON_PRESS and e.button == 1:
+        if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 1:
 
-            self._editor.handle_click((e.x, e.y))
-            self._drawing_area.queue_draw()
+            self._editor.handle_click((event.x, event.y))

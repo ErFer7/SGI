@@ -4,11 +4,10 @@
 Módulo para o editor.
 '''
 
-from types import NoneType
 import gi
 from source.displayfile import DisplayFileHandler
 
-from source.wireframe import ObjectType, Line, Object, Point, Rectangle, Triangle, Wireframe
+from source.wireframe import ObjectType, Line, Object, Point, Rectangle, Triangle
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
@@ -48,7 +47,8 @@ class EditorHandler():
                  clear_button: Gtk.Button,
                  width_button: Gtk.SpinButton,
                  color_button: Gtk.ColorButton,
-                 mode_label: Gtk.Label) -> None:
+                 mode_label: Gtk.Label,
+                 remove_button: Gtk.Button) -> None:
 
         self._focus_object = None
         self._temp_coords = []
@@ -69,14 +69,15 @@ class EditorHandler():
         self._mode_label = mode_label
 
         file_button.connect("select", self.show_explorer)
-        self._width_button.connect("value-changed", self.on_width_change)
-        self._color_button.connect("color-set", self.on_color_set)
+        self._width_button.connect("value-changed", self.set_width)
+        self._color_button.connect("color-set", self.set_color)
         self._point_button.connect("clicked", self.set_mode, ObjectType.POINT)
         self._line_button.connect("clicked", self.set_mode, ObjectType.LINE)
         self._triangle_button.connect("clicked", self.set_mode, ObjectType.TRIANGLE)
         self._rectangle_button.connect("clicked", self.set_mode, ObjectType.RECTANGLE)
         self._polygon_button.connect("clicked", self.set_mode, ObjectType.POLYGON)
         self._clear_button.connect("clicked", self.set_mode, ObjectType.NULL)
+        remove_button.connect("clicked", self.remove)
 
     def handle_click(self, position: tuple):
         '''
@@ -89,14 +90,14 @@ class EditorHandler():
             object_completed = False
 
             if self._mode == ObjectType.POINT and len(self._temp_coords) >= 1:
-                self._display_file.add_object(Point(self._temp_coords[0], '', self._color))
+                self._display_file.add_object(Point(self._temp_coords[0], "Point", self._color))
                 object_completed = True
             elif self._mode == ObjectType.LINE and len(self._temp_coords) >= 2:
                 self._display_file.add_object(
                     Line(
                         self._temp_coords[0],
                         self._temp_coords[1],
-                        '',
+                        "Line",
                         self._color,
                         self._width))
                 object_completed = True
@@ -106,7 +107,7 @@ class EditorHandler():
                         self._temp_coords[0],
                         self._temp_coords[1],
                         self._temp_coords[2],
-                        '',
+                        "Triangle",
                         self._color,
                         self._width))
                 object_completed = True
@@ -115,7 +116,7 @@ class EditorHandler():
                     Rectangle(
                         self._temp_coords[0],
                         self._temp_coords[1],
-                        '',
+                        "Rectangle",
                         self._color,
                         self._width))
                 object_completed = True
@@ -155,20 +156,27 @@ class EditorHandler():
             case _:
                 raise Exception("On no '-'")
 
-    def on_width_change(self, user_data):
+    def set_width(self, user_data):
         '''
         Handler da mudança de tamanho.
         '''
 
         self._width = self._width_button.get_value()
 
-    def on_color_set(self, user_data):
+    def set_color(self, user_data):
         '''
         Handler da mudança de cor.
         '''
 
         rgba = self._color_button.get_rgba()
         self._color = (rgba.red, rgba.green, rgba.blue)
+
+    def remove(self, user_data):
+        '''
+        Remove um objeto. (Atualmente remove todos)
+        '''
+
+        self._display_file.remove_all()
 
     def show_explorer(self, user_data):
         '''

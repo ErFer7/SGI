@@ -6,7 +6,6 @@ Módulo para a interface de usuário.
 
 import os
 import gi
-from source.button import ButtonHandler
 from source.displayfile import DisplayFileHandler
 from source.editor import EditorHandler
 from source.viewport import ViewportHandler
@@ -29,11 +28,6 @@ class MainWindow(Gtk.Window):
     display_file_handler: DisplayFileHandler
     editor_handler: EditorHandler
 
-    # A ser visto
-    pen_button_handler: ButtonHandler
-    width_button_handler: ButtonHandler
-    color_button_handler: ButtonHandler
-
     # Os trilhões de widgets vão aqui :p
     # Widgets
     viewport_drawing_area: Gtk.DrawingArea = Gtk.Template.Child()
@@ -47,12 +41,14 @@ class MainWindow(Gtk.Window):
     mode_label: Gtk.Label = Gtk.Template.Child()
     width_button: Gtk.SpinButton = Gtk.Template.Child()
     color_button: Gtk.ColorButton = Gtk.Template.Child()
+    display_file_list: Gtk.ListStore = Gtk.Template.Child()
+    remove_button: Gtk.Button = Gtk.Template.Child()
 
     def __init__(self) -> None:
 
         super().__init__()
 
-        self.display_file_handler = DisplayFileHandler()
+        self.display_file_handler = DisplayFileHandler(self.display_file_list)
         self.editor_handler = EditorHandler(self.display_file_handler,
                                             self.file_button,
                                             self.point_button,
@@ -63,7 +59,8 @@ class MainWindow(Gtk.Window):
                                             self.clear_button,
                                             self.width_button,
                                             self.color_button,
-                                            self.mode_label)
+                                            self.mode_label,
+                                            self.remove_button)
         self.viewport_handler = ViewportHandler(self.viewport_drawing_area,
                                                 self.display_file_handler,
                                                 self.editor_handler)

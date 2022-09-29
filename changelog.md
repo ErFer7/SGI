@@ -5,3 +5,4 @@
 * Implementação básica do viewport
 * Renderização de wireframes
 * Edição básica
+* Exibição dos objetos na interface
