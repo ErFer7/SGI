@@ -142,17 +142,17 @@ class EditorHandler():
 
         match self._mode:
             case ObjectType.NULL:
-                self._mode_label.set_text("-")
+                self._mode_label.set_text("Mode: -")
             case ObjectType.POINT:
-                self._mode_label.set_text("Point")
+                self._mode_label.set_text("Mode: Point")
             case ObjectType.LINE:
-                self._mode_label.set_text("Line")
+                self._mode_label.set_text("Mode: Line")
             case ObjectType.TRIANGLE:
-                self._mode_label.set_text("Triangle")
+                self._mode_label.set_text("Mode: Triangle")
             case ObjectType.RECTANGLE:
-                self._mode_label.set_text("Rectangle")
+                self._mode_label.set_text("Mode: Rectangle")
             case ObjectType.POLYGON:
-                self._mode_label.set_text("Polygon")
+                self._mode_label.set_text("Mode: Polygon")
             case _:
                 raise Exception("On no '-'")
 
