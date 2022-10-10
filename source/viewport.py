@@ -21,8 +21,6 @@ class ViewportHandler():
     '''
 
     # Atributos privados
-    _brush_color: tuple
-    _brush_width: float
     _window: Rectangle
     _bg_color: tuple
     _drawing_area: Gtk.DrawingArea
@@ -43,17 +41,15 @@ class ViewportHandler():
         self._editor = editor
         self._bg_color = bg_color
         self._coord = []
-        self._brush_width = 1.0
-        self._brush_color = (1, 1, 1)
         self._window = Rectangle((0.0, 0.0), (100.0, 100.0), "Window")  # Coordenadas no espaço vetorial do mundo
 
     # Métodos utilitários
-    def world_to_screen(self, coord: tuple):
+    def world_to_screen(self, coord: tuple) -> tuple:
         '''
         Converte a coordenada de mundo para uma coordenada de tela.
         '''
 
-    def screen_to_world(self, coord: tuple):
+    def screen_to_world(self, coord: tuple) -> tuple:
         '''
         Converte a coordenada de tela para uma coordenada de mundo.
         '''
@@ -108,7 +104,7 @@ class ViewportHandler():
 
         self._drawing_area.queue_draw()
 
-    def on_button_press(self, w, event):
+    def on_button_press(self, w, event) -> None:
         '''
         Evento de clique.
         '''

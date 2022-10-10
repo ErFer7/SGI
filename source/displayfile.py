@@ -19,12 +19,12 @@ class DisplayFileHandler():
     '''
 
     # Atributos públicos
-    objects: list
+    objects: list[Object]
 
     # Atributos privados
     _display_file_list: Gtk.ListStore
 
-    def __init__(self, display_file_list) -> None:
+    def __init__(self, display_file_list: Gtk.ListStore) -> None:
 
         self.objects = []
         self._display_file_list = display_file_list

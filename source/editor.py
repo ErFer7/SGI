@@ -21,10 +21,10 @@ class EditorHandler():
 
     # Atributos privados
     _focus_object: Object
-    _temp_coords: list
+    _temp_coords: list[tuple]
     _mode: ObjectType
     _width: float
-    _color: list
+    _color: list[float]
     _display_file: DisplayFileHandler  # Referência ao displayfile
     _point_button: Gtk.Button
     _line_button: Gtk.Button
@@ -79,7 +79,7 @@ class EditorHandler():
         self._clear_button.connect("clicked", self.set_mode, ObjectType.NULL)
         remove_button.connect("clicked", self.remove)
 
-    def handle_click(self, position: tuple):
+    def handle_click(self, position: tuple) -> None:
         '''
         Processa um clique no viewport.
         '''
@@ -126,12 +126,12 @@ class EditorHandler():
                 self._temp_coords.clear()
 
     # TODO: Handler para teclas
-    def handle_keypress(self):
+    def handle_keypress(self) -> None:
         '''
         Processa um aperto de tecla.
         '''
 
-    def set_mode(self, user_data, mode: tuple):
+    def set_mode(self, user_data, mode: ObjectType) -> None:
         '''
         Define o modo.
         '''
@@ -156,14 +156,14 @@ class EditorHandler():
             case _:
                 raise Exception("On no '-'")
 
-    def set_width(self, user_data):
+    def set_width(self, user_data) -> None:
         '''
         Handler da mudança de tamanho.
         '''
 
         self._width = self._width_button.get_value()
 
-    def set_color(self, user_data):
+    def set_color(self, user_data) -> None:
         '''
         Handler da mudança de cor.
         '''
@@ -171,14 +171,14 @@ class EditorHandler():
         rgba = self._color_button.get_rgba()
         self._color = (rgba.red, rgba.green, rgba.blue)
 
-    def remove(self, user_data):
+    def remove(self, user_data) -> None:
         '''
         Remove um objeto. (Atualmente remove todos)
         '''
 
         self._display_file.remove_all()
 
-    def show_explorer(self, user_data):
+    def show_explorer(self, user_data) -> None:
         '''
         Mostra o explorador de arquivos.
         '''

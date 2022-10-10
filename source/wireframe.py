@@ -35,7 +35,7 @@ class Object(ABC):
     name: str
     color: tuple
     line_width: float
-    coord_list: list
+    coord_list: list[tuple]
     object_type: ObjectType
 
     # Atributos privados
@@ -96,28 +96,32 @@ class Line(Object):
         super().__init__([position_a, position_b], name, color, line_width, ObjectType.LINE)
 
     # Métodos utilitários
-    def get_start(self):
+    @property
+    def start(self) -> tuple:
         '''
         Obtém o ponto inicial.
         '''
 
         return self.coord_list[0]
 
-    def set_start(self, position: tuple):
+    @start.setter
+    def start(self, position: tuple) -> None:
         '''
         Define a posição de início.
         '''
 
         self.coord_list[0] = position
 
-    def get_end(self):
+    @property
+    def end(self) -> tuple:
         '''
         Obtém o ponto final.
         '''
 
         return self.coord_list[1]
 
-    def set_end(self, position: tuple):
+    @end.setter
+    def end(self, position: tuple) -> None:
         '''
         Define a posição de início.
         '''

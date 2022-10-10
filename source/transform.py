@@ -19,7 +19,6 @@ class Transform2D():
     scale: list
     t_matrix: np.array  # translation matrix
 
-    # Construtor --------------------------------------------------------------
     def __init__(self, coord_list: list = [(0.0, 0.0)], rotation: float = 0.0, scale: tuple = (1.0, 1.0)) -> None:
 
         self.coord_list = coord_list
@@ -27,7 +26,7 @@ class Transform2D():
         self.scale = list(scale)
         self.t_matrix = None
 
-    # Transformações -----------------------------------------------------------
+    # Transformações
     def translate(self, translation: tuple) -> list:
         '''
         Translação de um objeto. Retorna uma nova lista de coordenadas.
