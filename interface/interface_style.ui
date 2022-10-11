@@ -105,8 +105,6 @@
                   <object class="GtkDrawingArea" id="viewport_drawing_area">
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
-                    <signal name="button-press-event" handler="on_button_press" swapped="no"/>
-                    <signal name="draw" handler="on_draw" swapped="no"/>
                   </object>
                 </child>
               </object>
@@ -150,6 +148,9 @@
                     <property name="can-focus">True</property>
                     <property name="model">display_file_list</property>
                     <property name="search-column">0</property>
+                    <child internal-child="selection">
+                      <object class="GtkTreeSelection"/>
+                    </child>
                     <child>
                       <object class="GtkTreeViewColumn" id="object_name">
                         <property name="sizing">autosize</property>

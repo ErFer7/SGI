@@ -67,17 +67,26 @@ class Point(Object):
     Ponto.
     '''
 
-    def __init__(self, position: tuple, name: str = '', color: tuple = (1, 1, 1)) -> None:
+    def __init__(self, position: tuple, name: str = '', color: tuple = (1.0, 1.0, 1.0)) -> None:
 
         super().__init__([position], name, color, 1.0, ObjectType.POINT)
 
     # Métodos utilitários
-    def get_coord(self) -> tuple:
+    @property
+    def coord(self) -> tuple:
         '''
         Retorna a posição.
         '''
 
         return self.coord_list[0]
+
+    @coord.setter
+    def coord(self, value: tuple) -> None:
+        '''
+        Define a posição.
+        '''
+
+        self.coord_list[0] = value
 
 
 class Line(Object):
@@ -90,7 +99,7 @@ class Line(Object):
                  position_a: tuple,
                  position_b: tuple,
                  name: str = '',
-                 color: tuple = (1, 1, 1),
+                 color: tuple = (1.0, 1.0, 1.0),
                  line_width: float = 1.0) -> None:
 
         super().__init__([position_a, position_b], name, color, line_width, ObjectType.LINE)
@@ -105,12 +114,12 @@ class Line(Object):
         return self.coord_list[0]
 
     @start.setter
-    def start(self, position: tuple) -> None:
+    def start(self, value: tuple) -> None:
         '''
-        Define a posição de início.
+        Define o ponto inicial.
         '''
 
-        self.coord_list[0] = position
+        self.coord_list[0] = value
 
     @property
     def end(self) -> tuple:
@@ -121,12 +130,12 @@ class Line(Object):
         return self.coord_list[1]
 
     @end.setter
-    def end(self, position: tuple) -> None:
+    def end(self, value: tuple) -> None:
         '''
-        Define a posição de início.
+        Define o ponto final.
         '''
 
-        self.coord_list[1] = position
+        self.coord_list[1] = value
 
 
 class Wireframe(Object):
@@ -138,7 +147,7 @@ class Wireframe(Object):
     def __init__(self,
                  points: tuple,
                  name: str = '',
-                 color: tuple = (1, 1, 1),
+                 color: tuple = (1.0, 1.0, 1.0),
                  line_width: float = 1.0,
                  object_type: ObjectType = ObjectType.POLYGON) -> None:
 
@@ -156,10 +165,58 @@ class Triangle(Wireframe):
                  position_b: tuple,
                  position_c: tuple,
                  name: str = '',
-                 color: tuple = (1, 1, 1),
-                 line_width: float = 1) -> None:
+                 color: tuple = (1.0, 1.0, 1.0),
+                 line_width: float = 1.0) -> None:
 
         super().__init__([position_a, position_b, position_c], name, color, line_width, ObjectType.TRIANGLE)
+
+    @property
+    def top(self) -> tuple:
+        '''
+        Retorna a coordenada B.
+        '''
+
+        return self.coord_list[1]
+
+    @top.setter
+    def top(self, value: tuple) -> None:
+        '''
+        Define a coordenada B.
+        '''
+
+        self.coord_list[1] = value
+
+    @property
+    def left(self) -> tuple:
+        '''
+        Retorna a coordenada A.
+        '''
+
+        return self.coord_list[0]
+
+    @left.setter
+    def left(self, value: tuple) -> None:
+        '''
+        Define a coordenada A.
+        '''
+
+        self.coord_list[0] = value
+
+    @property
+    def right(self) -> tuple:
+        '''
+        Retorna a coordenada C.
+        '''
+
+        return self.coord_list[2]
+
+    @right.setter
+    def right(self, value: tuple) -> None:
+        '''
+        Define a coordenada C.
+        '''
+
+        self.coord_list[2] = value
 
 
 class Rectangle(Wireframe):
@@ -172,9 +229,82 @@ class Rectangle(Wireframe):
                  origin: tuple,
                  extension: tuple,
                  name: str = '',
-                 color: tuple = (1, 1, 1),
-                 line_width: float = 1) -> None:
+                 color: tuple = (1.0, 1.0, 1.0),
+                 line_width: float = 1.0) -> None:
 
+        # TL, BL, BR, TR
         super().__init__(
             [origin, (origin[0], extension[1]), extension, (extension[0], origin[1])],
             name, color, line_width, ObjectType.RECTANGLE)
+
+    @property
+    def top_left(self) -> tuple:
+        '''
+        Retorna a coordenada superior esquerda.
+        '''
+
+        return self.coord_list[0]
+
+    @top_left.setter
+    def top_left(self, value: tuple) -> None:
+        '''
+        Define a coordenada superior esquerda.
+        '''
+
+        self.coord_list[0] = value
+        self.coord_list[1] = (value[0], self.coord_list[1][1])  # Vamos parar de usar tuplas no futuro
+        self.coord_list[3] = (self.coord_list[1][0], value[1])
+
+    @property
+    def bottom_left(self) -> tuple:
+        '''
+        Retorna a coordenada inferior esquerda.
+        '''
+
+        return self.coord_list[1]
+
+    @bottom_left.setter
+    def bottom_left(self, value: tuple) -> None:
+        '''
+        Define a coordenada inferior esquerda.
+        '''
+
+        self.coord_list[1] = value
+        self.coord_list[0] = (value[0], self.coord_list[0][1])
+        self.coord_list[2] = (self.coord_list[2][0], value[1])
+
+    @property
+    def bottom_right(self) -> tuple:
+        '''
+        Retorna a coordenada inferior direita.
+        '''
+
+        return self.coord_list[2]
+
+    @bottom_right.setter
+    def bottom_right(self, value: tuple) -> None:
+        '''
+        Define a coordenada inferior direita.
+        '''
+
+        self.coord_list[2] = value
+        self.coord_list[3] = (value[0], self.coord_list[3][1])
+        self.coord_list[1] = (self.coord_list[1][0], value[1])
+
+    @property
+    def top_right(self) -> tuple:
+        '''
+        Retorna a coordenada superior direita.
+        '''
+
+        return self.coord_list[3]
+
+    @top_right.setter
+    def top_right(self, value: tuple) -> None:
+        '''
+        Define a coordenada superior direita.
+        '''
+
+        self.coord_list[3] = value
+        self.coord_list[2] = (value[0], self.coord_list[2][1])
+        self.coord_list[0] = (self.coord_list[0][0], value[1])
