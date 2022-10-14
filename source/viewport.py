@@ -5,6 +5,7 @@ Neste módulo estão definidos os funcionamentos do viewport.
 '''
 
 from source.editor import EditorHandler
+from source.transform import Vector2D
 from source.wireframe import Rectangle
 from source.displayfile import DisplayFileHandler
 
@@ -37,18 +38,19 @@ class ViewportHandler():
         self._drawing_area.connect("draw", self.on_draw)
         self._drawing_area.set_events(Gdk.EventMask.BUTTON_PRESS_MASK)
         self._drawing_area.connect("button-press-event", self.on_button_press)
+        self._drawing_area.connect("button-release-event", self.on_button_release)
         self._drawing_area.connect("size-allocate", self.on_size_allocate)
         self._display_file = display_file
         self._editor = editor
         self._bg_color = bg_color
-        self._window = Rectangle((0.0, 0.0),
-                                 (922.0, 623.0),
+        self._window = Rectangle(Vector2D(0.0, 0.0),
+                                 Vector2D(922.0, 623.0),
                                  "Window",
                                  (0.5, 0.0, 0.5),
                                  2.0)  # Coordenadas no espaço vetorial do mundo
 
     # Métodos utilitários
-    def world_to_screen(self, coord: tuple) -> tuple:
+    def world_to_screen(self, coord: Vector2D) -> Vector2D:
         '''
         Converte a coordenada de mundo para uma coordenada de tela.
         '''
@@ -56,21 +58,25 @@ class ViewportHandler():
         top_left = self._window.top_left
         bottom_right = self._window.bottom_right
 
-        x_vp = ((coord[0] - top_left[0]) / (bottom_right[0] - top_left[0])) \
-               * self._drawing_area.get_allocated_width()
-        y_vp = (1 - (coord[1] - top_left[1]) / (bottom_right[1] - top_left[1])) \
-               * self._drawing_area.get_allocated_height()
+        x_s = ((coord.x - top_left.x) / (bottom_right.x - top_left.x)) * self._drawing_area.get_allocated_width()
+        y_s = (1 - (coord.y - top_left.y) / (bottom_right.y - top_left.y)) * self._drawing_area.get_allocated_height()
 
-        return (x_vp, y_vp)
+        return Vector2D(x_s, y_s)
 
-    def screen_to_world(self, coord: tuple) -> tuple:
+    def screen_to_world(self, coord: Vector2D) -> Vector2D:
         '''
         Converte a coordenada de tela para uma coordenada de mundo.
         '''
 
-        return (coord[0], self._window.bottom_right[1] - coord[1])
+        top_left = self._window.top_left
+        bottom_right = self._window.bottom_right
 
-    def coords_to_lines(self, coords: list) -> list:
+        x_w = (coord.x / self._drawing_area.get_allocated_width()) * (bottom_right.x - top_left.x) + top_left.x
+        y_w = (1 - (coord.y / self._drawing_area.get_allocated_height())) * (bottom_right.y - top_left.y) + top_left.y
+
+        return Vector2D(x_w, y_w)
+
+    def coords_to_lines(self, coords: list[Vector2D]) -> list[tuple]:
         '''
         Converte coordenadas normais para linhas.
         '''
@@ -78,7 +84,7 @@ class ViewportHandler():
         lines = []
 
         if len(coords) == 1:
-            lines.append((coords[0], (coords[0][0] + 1, coords[0][1])))
+            lines.append((coords[0], Vector2D(coords[0].x + 1, coords[0].y)))
         else:
 
             for i, _ in enumerate(coords):
@@ -107,8 +113,6 @@ class ViewportHandler():
 
             screen_coords = list(map(self.world_to_screen, obj.coord_list))
 
-            # print(screen_coords)
-
             lines = self.coords_to_lines(screen_coords)
             color = obj.color
             line_width = obj.line_width
@@ -117,23 +121,11 @@ class ViewportHandler():
             context.set_source_rgb(color[0], color[1], color[2])
             context.set_line_width(line_width)
 
+
             for line in lines:
-                context.move_to(line[0][0], line[0][1])
-                context.line_to(line[1][0], line[1][1])
+                context.move_to(line[0].x, line[0].y)
+                context.line_to(line[1].x, line[1].y)
                 context.stroke()
-
-        lines = self.coords_to_lines(self._window.coord_list)
-        color = self._window.color
-        line_width = self._window.line_width
-
-        # Define cor e largura do pincel
-        context.set_source_rgb(color[0], color[1], color[2])
-        context.set_line_width(line_width)
-
-        for line in lines:
-            context.move_to(line[0][0], line[0][1])
-            context.line_to(line[1][0], line[1][1])
-            context.stroke()
 
         self._drawing_area.queue_draw()
 
@@ -143,11 +135,19 @@ class ViewportHandler():
         '''
 
         if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 1:
-            self._editor.handle_click(self.screen_to_world((event.x, event.y)))
+            self._editor.handle_click(self.screen_to_world(Vector2D(event.x, event.y)))
+
+    def on_button_release(self, w, event) -> None:
+        '''
+        Evento de liberação do mouse.
+        '''
+
+        if event.type == Gdk.EventType.BUTTON_RELEASE and event.button == 1:
+            self._editor.handle_click(self.screen_to_world(Vector2D(event.x, event.y)))
 
     def on_size_allocate(self, allocation, user_data):
         '''
         Evento de alocação.
         '''
 
-        self._window.bottom_right = (user_data.width, user_data.height)
+        self._window.bottom_right = Vector2D(user_data.width, user_data.height)

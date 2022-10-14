@@ -6,6 +6,7 @@ Módulo para o editor.
 
 import gi
 from source.displayfile import DisplayFileHandler
+from source.transform import Vector2D
 
 from source.wireframe import ObjectType, Line, Object, Point, Rectangle, Triangle
 
@@ -21,7 +22,7 @@ class EditorHandler():
 
     # Atributos privados
     _focus_object: Object
-    _temp_coords: list[tuple]
+    _temp_coords: list[Vector2D]
     _mode: ObjectType
     _width: float
     _color: list[float]
@@ -79,10 +80,12 @@ class EditorHandler():
         self._clear_button.connect("clicked", self.set_mode, ObjectType.NULL)
         remove_button.connect("clicked", self.remove)
 
-    def handle_click(self, position: tuple) -> None:
+    def handle_click(self, position: Vector2D) -> None:
         '''
         Processa um clique no viewport.
         '''
+
+        print(position)
 
         if self._mode != ObjectType.NULL:
 
@@ -131,6 +134,8 @@ class EditorHandler():
         Processa um aperto de tecla.
         '''
 
+        raise NotImplementedError
+
     def set_mode(self, user_data, mode: ObjectType) -> None:
         '''
         Define o modo.
@@ -142,7 +147,7 @@ class EditorHandler():
 
         match self._mode:
             case ObjectType.NULL:
-                self._mode_label.set_text("Mode: -")
+                self._mode_label.set_text("Mode: Navigation")
             case ObjectType.POINT:
                 self._mode_label.set_text("Mode: Point")
             case ObjectType.LINE:
@@ -183,5 +188,5 @@ class EditorHandler():
         Mostra o explorador de arquivos.
         '''
 
-        print("Show explorer")
         # TODO: Estudar uma maneira de fazer isso funcionar
+        raise NotImplementedError
