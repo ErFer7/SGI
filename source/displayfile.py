@@ -36,7 +36,7 @@ class DisplayFileHandler():
         '''
 
         self.objects.append(obj)
-        self._display_file_list.append([obj.name, "()"])
+        self._display_file_list.append([obj.name, str(obj.position)])
 
     # Por enquanto o id é o nome
     def remove_object(self, identification: str) -> None:

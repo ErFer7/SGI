@@ -5,15 +5,15 @@ Módulo para wireframes.
 '''
 
 from abc import ABC
-from uuid import uuid4
 from enum import Enum
-from source.transform import Transform2D, Vector2D
+from uuid import uuid4
+from source.transform import Transform, Vector
 
 
 class ObjectType(Enum):
 
     '''
-    Tipos de objetos
+    Tipos de objeto.
     '''
 
     NULL = 0
@@ -35,11 +35,11 @@ class Object(ABC):
     name: str
     color: tuple
     line_width: float
-    coord_list: list[Vector2D]
+    coord_list: list[Vector]
     object_type: ObjectType
 
     # Atributos privados
-    _transform: Transform2D
+    _transform: Transform
 
     def __init__(self, coord_list: list, name: str, color: tuple, line_width: float, object_type: ObjectType) -> None:
 
@@ -50,22 +50,43 @@ class Object(ABC):
         self.line_width = line_width
         self.coord_list = coord_list
         self.object_type = object_type
-        self._transform = Transform2D(self.center())
 
-    def center(self) -> Vector2D:
+        coord_sum = Vector(0.0, 0.0, 0.0)
+
+        for coord in self.coord_list:
+            coord_sum += coord
+
+        self._transform = Transform(coord_sum / len(self.coord_list))
+
+    @property
+    def position(self) -> Vector:
         '''
-        Calcula o centro do objeto.
+        Retorna a posição
         '''
 
-        raise NotImplementedError
+        return self._transform.position
 
     # Métodos de transformação
-    def translate(self, translation: Vector2D) -> None:
+    def move_to(self, position: Vector) -> None:
         '''
-        Método para transladar o objeto (Transform2D::translate).
+        Move para a posição especificada.
+        '''
+
+        self.coord_list = self._transform.move_to(position, self.coord_list)
+
+    def translate(self, translation: Vector) -> None:
+        '''
+        Método para transladar o objeto (Transform::translate).
         '''
 
         self.coord_list = self._transform.translate(translation, self.coord_list)
+
+    def scale(self, scale: Vector) -> None:
+        '''
+        Transformação de escala.
+        '''
+
+        self.coord_list = self._transform.scale(scale, self.coord_list)
 
 
 class Point(Object):
@@ -74,13 +95,13 @@ class Point(Object):
     Ponto.
     '''
 
-    def __init__(self, position: Vector2D, name: str = '', color: tuple = (1.0, 1.0, 1.0)) -> None:
+    def __init__(self, position: Vector, name: str = '', color: tuple = (1.0, 1.0, 1.0)) -> None:
 
         super().__init__([position], name, color, 1.0, ObjectType.POINT)
 
     # Métodos utilitários
     @property
-    def coord(self) -> Vector2D:
+    def coord(self) -> Vector:
         '''
         Retorna a posição.
         '''
@@ -88,15 +109,12 @@ class Point(Object):
         return self.coord_list[0]
 
     @coord.setter
-    def coord(self, value: Vector2D) -> None:
+    def coord(self, value: Vector) -> None:
         '''
         Define a posição.
         '''
 
         self.coord_list[0] = value
-
-    def center(self) -> Vector2D:
-        return self.coord_list[0]
 
 
 class Line(Object):
@@ -106,8 +124,8 @@ class Line(Object):
     '''
 
     def __init__(self,
-                 position_a: Vector2D,
-                 position_b: Vector2D,
+                 position_a: Vector,
+                 position_b: Vector,
                  name: str = '',
                  color: tuple = (1.0, 1.0, 1.0),
                  line_width: float = 1.0) -> None:
@@ -116,7 +134,7 @@ class Line(Object):
 
     # Métodos utilitários
     @property
-    def start(self) -> Vector2D:
+    def start(self) -> Vector:
         '''
         Obtém o ponto inicial.
         '''
@@ -124,7 +142,7 @@ class Line(Object):
         return self.coord_list[0]
 
     @start.setter
-    def start(self, value: Vector2D) -> None:
+    def start(self, value: Vector) -> None:
         '''
         Define o ponto inicial.
         '''
@@ -132,7 +150,7 @@ class Line(Object):
         self.coord_list[0] = value
 
     @property
-    def end(self) -> Vector2D:
+    def end(self) -> Vector:
         '''
         Obtém o ponto final.
         '''
@@ -140,15 +158,12 @@ class Line(Object):
         return self.coord_list[1]
 
     @end.setter
-    def end(self, value: Vector2D) -> None:
+    def end(self, value: Vector) -> None:
         '''
         Define o ponto final.
         '''
 
         self.coord_list[1] = value
-
-    def center(self) -> Vector2D:
-        return (self.coord_list[0] + self.coord_list[1]) / 2.0
 
 
 class Wireframe(Object):
@@ -158,7 +173,7 @@ class Wireframe(Object):
     '''
 
     def __init__(self,
-                 coords: list[Vector2D],
+                 coords: list[Vector],
                  name: str = '',
                  color: tuple = (1.0, 1.0, 1.0),
                  line_width: float = 1.0,
@@ -174,9 +189,9 @@ class Triangle(Wireframe):
     '''
 
     def __init__(self,
-                 position_a: Vector2D,
-                 position_b: Vector2D,
-                 position_c: Vector2D,
+                 position_a: Vector,
+                 position_b: Vector,
+                 position_c: Vector,
                  name: str = '',
                  color: tuple = (1.0, 1.0, 1.0),
                  line_width: float = 1.0) -> None:
@@ -184,7 +199,7 @@ class Triangle(Wireframe):
         super().__init__([position_a, position_b, position_c], name, color, line_width, ObjectType.TRIANGLE)
 
     @property
-    def top(self) -> Vector2D:
+    def top(self) -> Vector:
         '''
         Retorna a coordenada B.
         '''
@@ -192,7 +207,7 @@ class Triangle(Wireframe):
         return self.coord_list[1]
 
     @top.setter
-    def top(self, value: Vector2D) -> None:
+    def top(self, value: Vector) -> None:
         '''
         Define a coordenada B.
         '''
@@ -200,7 +215,7 @@ class Triangle(Wireframe):
         self.coord_list[1] = value
 
     @property
-    def left(self) -> Vector2D:
+    def left(self) -> Vector:
         '''
         Retorna a coordenada A.
         '''
@@ -208,7 +223,7 @@ class Triangle(Wireframe):
         return self.coord_list[0]
 
     @left.setter
-    def left(self, value: Vector2D) -> None:
+    def left(self, value: Vector) -> None:
         '''
         Define a coordenada A.
         '''
@@ -216,7 +231,7 @@ class Triangle(Wireframe):
         self.coord_list[0] = value
 
     @property
-    def right(self) -> Vector2D:
+    def right(self) -> Vector:
         '''
         Retorna a coordenada C.
         '''
@@ -224,15 +239,12 @@ class Triangle(Wireframe):
         return self.coord_list[2]
 
     @right.setter
-    def right(self, value: Vector2D) -> None:
+    def right(self, value: Vector) -> None:
         '''
         Define a coordenada C.
         '''
 
         self.coord_list[2] = value
-
-    def center(self) -> Vector2D:
-        return (self.coord_list[0] + self.coord_list[1] + self.coord_list[2]) / 3.0
 
 
 class Rectangle(Wireframe):
@@ -242,19 +254,19 @@ class Rectangle(Wireframe):
     '''
 
     def __init__(self,
-                 origin: Vector2D,
-                 extension: Vector2D,
+                 origin: Vector,
+                 extension: Vector,
                  name: str = '',
                  color: tuple = (1.0, 1.0, 1.0),
                  line_width: float = 1.0) -> None:
 
         # TL, BL, BR, TR
         super().__init__(
-            [origin, Vector2D(origin.x, extension.y), extension, Vector2D(extension.x, origin.y)],
+            [origin, Vector(origin.x, extension.y), extension, Vector(extension.x, origin.y)],
             name, color, line_width, ObjectType.RECTANGLE)
 
     @property
-    def top_left(self) -> Vector2D:
+    def top_left(self) -> Vector:
         '''
         Retorna a coordenada superior esquerda.
         '''
@@ -262,7 +274,7 @@ class Rectangle(Wireframe):
         return self.coord_list[0]
 
     @top_left.setter
-    def top_left(self, value: Vector2D) -> None:
+    def top_left(self, value: Vector) -> None:
         '''
         Define a coordenada superior esquerda.
         '''
@@ -272,7 +284,7 @@ class Rectangle(Wireframe):
         self.coord_list[3].y = value.y
 
     @property
-    def bottom_left(self) -> Vector2D:
+    def bottom_left(self) -> Vector:
         '''
         Retorna a coordenada inferior esquerda.
         '''
@@ -280,7 +292,7 @@ class Rectangle(Wireframe):
         return self.coord_list[1]
 
     @bottom_left.setter
-    def bottom_left(self, value: Vector2D) -> None:
+    def bottom_left(self, value: Vector) -> None:
         '''
         Define a coordenada inferior esquerda.
         '''
@@ -290,7 +302,7 @@ class Rectangle(Wireframe):
         self.coord_list[2].y = value.y
 
     @property
-    def bottom_right(self) -> Vector2D:
+    def bottom_right(self) -> Vector:
         '''
         Retorna a coordenada inferior direita.
         '''
@@ -298,7 +310,7 @@ class Rectangle(Wireframe):
         return self.coord_list[2]
 
     @bottom_right.setter
-    def bottom_right(self, value: Vector2D) -> None:
+    def bottom_right(self, value: Vector) -> None:
         '''
         Define a coordenada inferior direita.
         '''
@@ -308,7 +320,7 @@ class Rectangle(Wireframe):
         self.coord_list[1].y = value.y
 
     @property
-    def top_right(self) -> Vector2D:
+    def top_right(self) -> Vector:
         '''
         Retorna a coordenada superior direita.
         '''
@@ -316,7 +328,7 @@ class Rectangle(Wireframe):
         return self.coord_list[3]
 
     @top_right.setter
-    def top_right(self, value: Vector2D) -> None:
+    def top_right(self, value: Vector) -> None:
         '''
         Define a coordenada superior direita.
         '''
@@ -324,6 +336,3 @@ class Rectangle(Wireframe):
         self.coord_list[3] = value
         self.coord_list[2].x = value.x
         self.coord_list[0].y = value.y
-
-    def center(self) -> Vector2D:
-        return (self.coord_list[0] + self.coord_list[2]) / 2.0

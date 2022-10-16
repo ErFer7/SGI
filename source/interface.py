@@ -49,7 +49,7 @@ class MainWindow(Gtk.Window):
         super().__init__()
 
         self.display_file_handler = DisplayFileHandler(self.display_file_list)
-        self.editor_handler = EditorHandler(self.display_file_handler,
+        self.editor_handler = EditorHandler(self,
                                             self.file_button,
                                             self.point_button,
                                             self.line_button,
@@ -61,8 +61,6 @@ class MainWindow(Gtk.Window):
                                             self.color_button,
                                             self.mode_label,
                                             self.remove_button)
-        self.viewport_handler = ViewportHandler(self.viewport_drawing_area,
-                                                self.display_file_handler,
-                                                self.editor_handler)
+        self.viewport_handler = ViewportHandler(self, self.viewport_drawing_area)
 
         self.connect("destroy", Gtk.main_quit)

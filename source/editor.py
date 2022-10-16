@@ -5,10 +5,9 @@ Módulo para o editor.
 '''
 
 import gi
-from source.displayfile import DisplayFileHandler
-from source.transform import Vector2D
+from source.transform import Vector
 
-from source.wireframe import ObjectType, Line, Object, Point, Rectangle, Triangle
+from source.wireframe import ObjectType, Object, Point, Line, Triangle, Rectangle
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
@@ -21,12 +20,12 @@ class EditorHandler():
     '''
 
     # Atributos privados
+    _main_window: None
     _focus_object: Object
-    _temp_coords: list[Vector2D]
+    _temp_coords: list[Vector]
     _mode: ObjectType
     _width: float
     _color: list[float]
-    _display_file: DisplayFileHandler  # Referência ao displayfile
     _point_button: Gtk.Button
     _line_button: Gtk.Button
     _triangle_button: Gtk.Button
@@ -38,7 +37,7 @@ class EditorHandler():
     _color_button: Gtk.ColorButton
 
     def __init__(self,
-                 display_file: DisplayFileHandler,
+                 main_window,
                  file_button: Gtk.MenuItem,
                  point_button: Gtk.Button,
                  line_button: Gtk.Button,
@@ -51,12 +50,12 @@ class EditorHandler():
                  mode_label: Gtk.Label,
                  remove_button: Gtk.Button) -> None:
 
+        self._main_window = main_window
         self._focus_object = None
         self._temp_coords = []
         self._mode = ObjectType.NULL
         self._width = 1.0
         self._color = [1.0, 1.0, 1.0]
-        self._display_file = display_file
 
         # Os botões são nescessários para que seja possível desmarcá-los durante uma seleção de modo
         self._point_button = point_button
@@ -80,12 +79,10 @@ class EditorHandler():
         self._clear_button.connect("clicked", self.set_mode, ObjectType.NULL)
         remove_button.connect("clicked", self.remove)
 
-    def handle_click(self, position: Vector2D) -> None:
+    def handle_click(self, position: Vector) -> None:
         '''
         Processa um clique no viewport.
         '''
-
-        print(position)
 
         if self._mode != ObjectType.NULL:
 
@@ -93,10 +90,10 @@ class EditorHandler():
             object_completed = False
 
             if self._mode == ObjectType.POINT and len(self._temp_coords) >= 1:
-                self._display_file.add_object(Point(self._temp_coords[0], "Point", self._color))
+                self._main_window.display_file_handler.add_object(Point(self._temp_coords[0], "Point", self._color))
                 object_completed = True
             elif self._mode == ObjectType.LINE and len(self._temp_coords) >= 2:
-                self._display_file.add_object(
+                self._main_window.display_file_handler.add_object(
                     Line(
                         self._temp_coords[0],
                         self._temp_coords[1],
@@ -105,7 +102,7 @@ class EditorHandler():
                         self._width))
                 object_completed = True
             elif self._mode == ObjectType.TRIANGLE and len(self._temp_coords) >= 3:
-                self._display_file.add_object(
+                self._main_window.display_file_handler.add_object(
                     Triangle(
                         self._temp_coords[0],
                         self._temp_coords[1],
@@ -115,7 +112,7 @@ class EditorHandler():
                         self._width))
                 object_completed = True
             elif self._mode == ObjectType.RECTANGLE and len(self._temp_coords) >= 2:
-                self._display_file.add_object(
+                self._main_window.display_file_handler.add_object(
                     Rectangle(
                         self._temp_coords[0],
                         self._temp_coords[1],
@@ -125,16 +122,8 @@ class EditorHandler():
                 object_completed = True
 
             if object_completed:
-                self._focus_object = self._display_file.objects[-1]
+                self._focus_object = self._main_window.display_file_handler.objects[-1]
                 self._temp_coords.clear()
-
-    # TODO: Handler para teclas
-    def handle_keypress(self) -> None:
-        '''
-        Processa um aperto de tecla.
-        '''
-
-        raise NotImplementedError
 
     def set_mode(self, user_data, mode: ObjectType) -> None:
         '''
@@ -147,7 +136,7 @@ class EditorHandler():
 
         match self._mode:
             case ObjectType.NULL:
-                self._mode_label.set_text("Mode: Navigation")
+                self._mode_label.set_text("Mode: -")
             case ObjectType.POINT:
                 self._mode_label.set_text("Mode: Point")
             case ObjectType.LINE:
@@ -181,7 +170,7 @@ class EditorHandler():
         Remove um objeto. (Atualmente remove todos)
         '''
 
-        self._display_file.remove_all()
+        self._main_window.display_file_handler.remove_all()
 
     def show_explorer(self, user_data) -> None:
         '''

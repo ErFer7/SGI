@@ -6,3 +6,11 @@
 * Renderização de wireframes
 * Edição básica
 * Exibição dos objetos na interface
+* Movimentação e zoom
+
+---
+
+## v0.2
+
+Em desenvolvimento
+
