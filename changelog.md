@@ -12,5 +12,5 @@
 
 ## v0.2
 
-Em desenvolvimento
-
+* Correção na escala da tela
+* Correção na movimentação

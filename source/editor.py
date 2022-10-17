@@ -26,12 +26,6 @@ class EditorHandler():
     _mode: ObjectType
     _width: float
     _color: list[float]
-    _point_button: Gtk.Button
-    _line_button: Gtk.Button
-    _triangle_button: Gtk.Button
-    _rectangle_button: Gtk.Button
-    _polygon_button: Gtk.Button
-    _clear_button: Gtk.Button
     _mode_label: Gtk.Label
     _width_button: Gtk.SpinButton
     _color_button: Gtk.ColorButton
@@ -57,13 +51,6 @@ class EditorHandler():
         self._width = 1.0
         self._color = [1.0, 1.0, 1.0]
 
-        # Os botões são nescessários para que seja possível desmarcá-los durante uma seleção de modo
-        self._point_button = point_button
-        self._line_button = line_button
-        self._triangle_button = triangle_button
-        self._rectangle_button = retangle_button
-        self._polygon_button = polygon_button
-        self._clear_button = clear_button
         self._width_button = width_button
         self._color_button = color_button
         self._mode_label = mode_label
@@ -71,12 +58,12 @@ class EditorHandler():
         file_button.connect("select", self.show_explorer)
         self._width_button.connect("value-changed", self.set_width)
         self._color_button.connect("color-set", self.set_color)
-        self._point_button.connect("clicked", self.set_mode, ObjectType.POINT)
-        self._line_button.connect("clicked", self.set_mode, ObjectType.LINE)
-        self._triangle_button.connect("clicked", self.set_mode, ObjectType.TRIANGLE)
-        self._rectangle_button.connect("clicked", self.set_mode, ObjectType.RECTANGLE)
-        self._polygon_button.connect("clicked", self.set_mode, ObjectType.POLYGON)
-        self._clear_button.connect("clicked", self.set_mode, ObjectType.NULL)
+        point_button.connect("clicked", self.set_mode, ObjectType.POINT)
+        line_button.connect("clicked", self.set_mode, ObjectType.LINE)
+        triangle_button.connect("clicked", self.set_mode, ObjectType.TRIANGLE)
+        retangle_button.connect("clicked", self.set_mode, ObjectType.RECTANGLE)
+        polygon_button.connect("clicked", self.set_mode, ObjectType.POLYGON)
+        clear_button.connect("clicked", self.set_mode, ObjectType.NULL)
         remove_button.connect("clicked", self.remove)
 
     def handle_click(self, position: Vector) -> None:

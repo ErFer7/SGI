@@ -48,6 +48,8 @@ class MainWindow(Gtk.Window):
 
         super().__init__()
 
+        self.maximize()
+
         self.display_file_handler = DisplayFileHandler(self.display_file_list)
         self.editor_handler = EditorHandler(self,
                                             self.file_button,

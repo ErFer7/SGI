@@ -55,11 +55,11 @@ class ViewportHandler():
         Converte a coordenada de mundo para uma coordenada de tela.
         '''
 
-        top_left = self._window.top_left
-        bottom_right = self._window.bottom_right
+        origin = self._window.origin
+        extension = self._window.extension
 
-        x_s = ((coord.x - top_left.x) / (bottom_right.x - top_left.x)) * self._drawing_area.get_allocated_width()
-        y_s = (1 - (coord.y - top_left.y) / (bottom_right.y - top_left.y)) * self._drawing_area.get_allocated_height()
+        x_s = ((coord.x - origin.x) / (extension.x - origin.x)) * self._drawing_area.get_allocated_width()
+        y_s = (1 - (coord.y - origin.y) / (extension.y - origin.y)) * self._drawing_area.get_allocated_height()
 
         return Vector(x_s, y_s)
 
@@ -68,11 +68,11 @@ class ViewportHandler():
         Converte a coordenada de tela para uma coordenada de mundo.
         '''
 
-        top_left = self._window.top_left
-        bottom_right = self._window.bottom_right
+        origin = self._window.origin
+        extension = self._window.extension
 
-        x_w = (coord.x / self._drawing_area.get_allocated_width()) * (bottom_right.x - top_left.x) + top_left.x
-        y_w = (1 - (coord.y / self._drawing_area.get_allocated_height())) * (bottom_right.y - top_left.y) + top_left.y
+        x_w = (coord.x / self._drawing_area.get_allocated_width()) * (extension.x - origin.x) + origin.x
+        y_w = (1.0 - (coord.y / self._drawing_area.get_allocated_height())) * (extension.y - origin.y) + origin.y
 
         return Vector(x_w, y_w)
 
@@ -96,13 +96,6 @@ class ViewportHandler():
                 lines.append((coords[-1], coords[0]))
 
         return lines
-
-    def move_window(self, diff: Vector) -> None:
-        '''
-        Move a janela.
-        '''
-
-        self._window.translate(diff)
 
     # Handlers
     def on_draw(self, area, context) -> None:
@@ -140,10 +133,10 @@ class ViewportHandler():
         Evento de clique.
         '''
 
-        position = self.screen_to_world(Vector(event.x, event.y))
+        position = Vector(event.x, event.y)
 
         if event.button == 1:
-            self._main_window.editor_handler.handle_click(position)
+            self._main_window.editor_handler.handle_click(self.screen_to_world(position))
         elif event.button == 2:
             self._drag_coord = position
 
@@ -152,10 +145,14 @@ class ViewportHandler():
         Evento de movimento.
         '''
 
-        position = self.screen_to_world(Vector(event.x, event.y))
 
         if self._drag_coord is not None:
-            self._window.translate(self._drag_coord - position)
+
+            position = Vector(event.x, event.y)
+            diff = self._drag_coord - position
+            diff.y = -diff.y
+            diff *= self._window.scale.x
+            self._window.translate(diff)
             self._drag_coord = position
 
     def on_button_release(self, widget, event) -> None:
@@ -173,16 +170,23 @@ class ViewportHandler():
 
         direction = event.get_scroll_deltas()[2]
 
-
         if direction > 0:
-            self._window.scale(Vector(1.02, 1.02, 1))
+            self._window.rescale(Vector(1.03, 1.03, 1))
         else:
-            self._window.scale(Vector(0.98, 0.98, 1))
+            self._window.rescale(Vector(0.97, 0.97, 1))
 
     def on_size_allocate(self, allocation, user_data):
         '''
         Evento de alocação.
         '''
 
-        # TODO: Corrigir o zoom aqui no futuro
-        self._window.bottom_right = Vector(user_data.width, user_data.height)
+        diff = Vector(1.0, 1.0, 1.0)
+
+        diff.x /= self._window.scale.x
+        diff.y /= self._window.scale.y
+        diff.z /= self._window.scale.z
+
+        self._window.rescale(diff)
+        self._window.rescale(Vector(user_data.width / self._window.extension.x,
+                                    user_data.height / self._window.extension.y,
+                                    1.0))

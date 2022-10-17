@@ -100,14 +100,22 @@ class Transform():
 
         return self._position
 
-    def relative_to_origin(self, coord: Vector) -> Vector:
+    @property
+    def scale(self) -> Vector:
+        '''
+        Getter da escala.
+        '''
+
+        return self._scale
+
+    def world_to_local(self, coord: Vector) -> Vector:
         '''
         Calcula o ponto relativo à origem.
         '''
 
         return coord - self.position
 
-    def relative_to_world(self, coord: Vector) -> Vector:
+    def local_to_world(self, coord: Vector) -> Vector:
         '''
         Calcula o ponto relativo da coordenada.
         '''
@@ -143,10 +151,14 @@ class Transform():
 
         return new_coord_list
 
-    def scale(self, scale: Vector, coord_list: list[Vector]) -> list:
+    def rescale(self, scale: Vector, coord_list: list[Vector]) -> list:
         '''
         Transformação de escala.
         '''
+
+        self._scale.x *= scale.x
+        self._scale.y *= scale.y
+        self._scale.y *= scale.z
 
         self._scaling_matrix[0, 0] = scale.x
         self._scaling_matrix[1, 1] = scale.y
@@ -157,9 +169,9 @@ class Transform():
         # Translação ponto a ponto
         for coord in coord_list:
 
-            relative_coord = self.relative_to_origin(coord)
+            relative_coord = self.world_to_local(coord)
             new_coord = np.matmul(self._scaling_matrix, [relative_coord.x, relative_coord.y, relative_coord.z, 1])
-            relative_new_coord = self.relative_to_world(Vector(new_coord[0, 0], new_coord[0, 1], new_coord[0, 2]))
+            relative_new_coord = self.local_to_world(Vector(new_coord[0, 0], new_coord[0, 1], new_coord[0, 2]))
             new_coord_list.append(relative_new_coord)
 
         return new_coord_list
