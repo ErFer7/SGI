@@ -26,7 +26,11 @@ class EditorHandler():
     _mode: ObjectType
     _width: float
     _color: list[float]
-    _mode_label: Gtk.Label
+    _point_button: Gtk.ToggleButton
+    _line_button: Gtk.ToggleButton
+    _triangle_button: Gtk.ToggleButton
+    _rectangle_button: Gtk.ToggleButton
+    _polygon_button: Gtk.ToggleButton
     _width_button: Gtk.SpinButton
     _color_button: Gtk.ColorButton
     _position_x_button: Gtk.SpinButton
@@ -50,15 +54,13 @@ class EditorHandler():
     def __init__(self,
                  main_window,
                  file_button: Gtk.MenuItem,
-                 point_button: Gtk.Button,
-                 line_button: Gtk.Button,
-                 triangle_button: Gtk.Button,
-                 retangle_button: Gtk.Button,
-                 polygon_button: Gtk.Button,
-                 clear_button: Gtk.Button,
+                 point_button: Gtk.ToggleButton,
+                 line_button: Gtk.ToggleButton,
+                 triangle_button: Gtk.ToggleButton,
+                 rectangle_button: Gtk.ToggleButton,
+                 polygon_button: Gtk.ToggleButton,
                  width_button: Gtk.SpinButton,
                  color_button: Gtk.ColorButton,
-                 mode_label: Gtk.Label,
                  remove_button: Gtk.Button,
                  position_x_button: Gtk.SpinButton,
                  position_y_button: Gtk.SpinButton,
@@ -89,9 +91,14 @@ class EditorHandler():
 
         self._width_button = width_button
         self._color_button = color_button
-        self._mode_label = mode_label
         self._width_button.connect("value-changed", self.set_width)
         self._color_button.connect("color-set", self.set_color)
+
+        self._point_button = point_button
+        self._line_button = line_button
+        self._triangle_button = triangle_button
+        self._rectangle_button = rectangle_button
+        self._polygon_button = polygon_button
 
         self._position_x_button = position_x_button
         self._position_y_button = position_y_button
@@ -114,12 +121,13 @@ class EditorHandler():
         self._rotation_button = rotation_button
 
         file_button.connect("select", self.show_explorer)
-        point_button.connect("clicked", self.set_mode, ObjectType.POINT)
-        line_button.connect("clicked", self.set_mode, ObjectType.LINE)
-        triangle_button.connect("clicked", self.set_mode, ObjectType.TRIANGLE)
-        retangle_button.connect("clicked", self.set_mode, ObjectType.RECTANGLE)
-        polygon_button.connect("clicked", self.set_mode, ObjectType.POLYGON)
-        clear_button.connect("clicked", self.set_mode, ObjectType.NULL)
+
+        self._point_button.connect("toggled", self.set_mode, ObjectType.POINT)
+        self._line_button.connect("toggled", self.set_mode, ObjectType.LINE)
+        self._triangle_button .connect("toggled", self.set_mode, ObjectType.TRIANGLE)
+        self._rectangle_button.connect("toggled", self.set_mode, ObjectType.RECTANGLE)
+        self._polygon_button.connect("toggled", self.set_mode, ObjectType.POLYGON)
+
         remove_button.connect("clicked", self.remove)
 
         apply_translation_button.connect("clicked", self.translate)
@@ -138,9 +146,9 @@ class EditorHandler():
 
         self._user_call_lock = True
 
-    def update_buttons(self) -> None:
+    def update_spin_buttons(self) -> None:
         '''
-        Atualiza todos os botões.
+        Atualiza todos os botões numéricos.
         '''
 
         self._user_call_lock = False
@@ -153,6 +161,25 @@ class EditorHandler():
         self._rotation_x_button.set_value(self._focus_object.rotation.x)
         self._rotation_y_button.set_value(self._focus_object.rotation.y)
         self._rotation_z_button.set_value(self._focus_object.rotation.z)
+        self._user_call_lock = True
+
+    def update_toggle_buttons(self, mode: ObjectType) -> None:
+        '''
+        Atualiza todos os botões de marcação
+        '''
+
+        self._user_call_lock = False
+        match mode:
+            case ObjectType.POINT:
+                self._point_button.set_active(False)
+            case ObjectType.LINE:
+                self._line_button.set_active(False)
+            case ObjectType.TRIANGLE:
+                self._triangle_button.set_active(False)
+            case ObjectType.RECTANGLE:
+                self._rectangle_button.set_active(False)
+            case ObjectType.POLYGON:
+                self._polygon_button.set_active(False)
         self._user_call_lock = True
 
     def handle_click(self, position: Vector) -> None:
@@ -199,7 +226,7 @@ class EditorHandler():
 
             if object_completed:
                 self._focus_object = self._main_window.display_file_handler.objects[-1]
-                self.update_buttons()
+                self.update_spin_buttons()
                 self._temp_coords.clear()
 
     def set_mode(self, user_data, mode: ObjectType) -> None:
@@ -207,25 +234,19 @@ class EditorHandler():
         Define o modo.
         '''
 
-        self._focus_object = None
-        self._mode = mode
-        self._temp_coords.clear()
+        if not self._user_call_lock:
+            return
 
-        match self._mode:
-            case ObjectType.NULL:
-                self._mode_label.set_text("Mode: -")
-            case ObjectType.POINT:
-                self._mode_label.set_text("Mode: Point")
-            case ObjectType.LINE:
-                self._mode_label.set_text("Mode: Line")
-            case ObjectType.TRIANGLE:
-                self._mode_label.set_text("Mode: Triangle")
-            case ObjectType.RECTANGLE:
-                self._mode_label.set_text("Mode: Rectangle")
-            case ObjectType.POLYGON:
-                self._mode_label.set_text("Mode: Polygon")
-            case _:
-                raise Exception("On no '-'")
+        self._focus_object = None
+
+        if self._mode != mode:
+
+            self.update_toggle_buttons(self._mode)
+            self._mode = mode
+        else:
+            self._mode = ObjectType.NULL
+
+        self._temp_coords.clear()
 
     def set_width(self, user_data) -> None:
         '''
@@ -269,7 +290,7 @@ class EditorHandler():
             translation_z = self._translate_z_button.get_value()
 
             self._focus_object.translate(Vector(translation_x, translation_y, translation_z))
-            self.update_buttons()
+            self.update_spin_buttons()
 
             object_index = self._main_window.display_file_handler.objects.index(self._focus_object)
             self._main_window.display_file_handler.update_object_info(object_index)
@@ -286,7 +307,7 @@ class EditorHandler():
             scale_z = self._rescale_z_button.get_value()
 
             self._focus_object.rescale(Vector(scale_x, scale_y, scale_z))
-            self.update_buttons()
+            self.update_spin_buttons()
 
     def rotate(self, user_data) -> None:
         '''
@@ -298,7 +319,7 @@ class EditorHandler():
             angle = self._rotation_button.get_value()
 
             self._focus_object.rotate(angle)
-            self.update_buttons()
+            self.update_spin_buttons()
 
     def update_position(self, user_data) -> None:
         '''

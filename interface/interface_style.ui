@@ -50,19 +50,19 @@
   <object class="GtkAdjustment" id="position_x">
     <property name="lower">-9.9999999999999994e+57</property>
     <property name="upper">9.9999999999999994e+57</property>
-    <property name="step-increment">0.01</property>
+    <property name="step-increment">1</property>
     <property name="page-increment">10</property>
   </object>
   <object class="GtkAdjustment" id="position_y">
     <property name="lower">-9.9999999999999994e+57</property>
     <property name="upper">9.9999999999999994e+57</property>
-    <property name="step-increment">0.01</property>
+    <property name="step-increment">1</property>
     <property name="page-increment">10</property>
   </object>
   <object class="GtkAdjustment" id="position_z">
     <property name="lower">-9.9999999999999994e+57</property>
     <property name="upper">9.9999999999999994e+57</property>
-    <property name="step-increment">0.01</property>
+    <property name="step-increment">1</property>
     <property name="page-increment">10</property>
   </object>
   <object class="GtkAdjustment" id="rotation_x">
@@ -350,27 +350,13 @@
                             <property name="can-focus">False</property>
                             <property name="orientation">vertical</property>
                             <child>
-                              <object class="GtkLabel" id="mode_label">
-                                <property name="visible">True</property>
-                                <property name="can-focus">False</property>
-                                <property name="margin-top">5</property>
-                                <property name="margin-bottom">10</property>
-                                <property name="label" translatable="yes">Mode: -</property>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="fill">True</property>
-                                <property name="position">0</property>
-                              </packing>
-                            </child>
-                            <child>
                               <!-- n-columns=3 n-rows=2 -->
                               <object class="GtkGrid">
                                 <property name="visible">True</property>
                                 <property name="can-focus">False</property>
                                 <property name="halign">center</property>
                                 <child>
-                                  <object class="GtkButton" id="point_button">
+                                  <object class="GtkToggleButton" id="point_button">
                                     <property name="label" translatable="yes">Point</property>
                                     <property name="visible">True</property>
                                     <property name="can-focus">True</property>
@@ -382,7 +368,7 @@
                                   </packing>
                                 </child>
                                 <child>
-                                  <object class="GtkButton" id="line_button">
+                                  <object class="GtkToggleButton" id="line_button">
                                     <property name="label" translatable="yes">Line</property>
                                     <property name="visible">True</property>
                                     <property name="can-focus">True</property>
@@ -394,31 +380,7 @@
                                   </packing>
                                 </child>
                                 <child>
-                                  <object class="GtkButton" id="polygon_button">
-                                    <property name="label" translatable="yes">Polygon</property>
-                                    <property name="visible">True</property>
-                                    <property name="can-focus">True</property>
-                                    <property name="receives-default">True</property>
-                                  </object>
-                                  <packing>
-                                    <property name="left-attach">1</property>
-                                    <property name="top-attach">1</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkButton" id="rectangle_button">
-                                    <property name="label" translatable="yes">Rectangle</property>
-                                    <property name="visible">True</property>
-                                    <property name="can-focus">True</property>
-                                    <property name="receives-default">True</property>
-                                  </object>
-                                  <packing>
-                                    <property name="left-attach">0</property>
-                                    <property name="top-attach">1</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkButton" id="triangle_button">
+                                  <object class="GtkToggleButton" id="triangle_button">
                                     <property name="label" translatable="yes">Triangle</property>
                                     <property name="visible">True</property>
                                     <property name="can-focus">True</property>
@@ -430,16 +392,31 @@
                                   </packing>
                                 </child>
                                 <child>
-                                  <object class="GtkButton" id="clear_button">
-                                    <property name="label" translatable="yes">Clear</property>
+                                  <object class="GtkToggleButton" id="rectangle_button">
+                                    <property name="label" translatable="yes">Rectangle</property>
                                     <property name="visible">True</property>
                                     <property name="can-focus">True</property>
                                     <property name="receives-default">True</property>
                                   </object>
                                   <packing>
-                                    <property name="left-attach">2</property>
+                                    <property name="left-attach">0</property>
                                     <property name="top-attach">1</property>
                                   </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkToggleButton" id="polygon_button">
+                                    <property name="label" translatable="yes">Polygon</property>
+                                    <property name="visible">True</property>
+                                    <property name="can-focus">True</property>
+                                    <property name="receives-default">True</property>
+                                  </object>
+                                  <packing>
+                                    <property name="left-attach">1</property>
+                                    <property name="top-attach">1</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <placeholder/>
                                 </child>
                               </object>
                               <packing>

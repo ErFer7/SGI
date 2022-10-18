@@ -32,13 +32,11 @@ class MainWindow(Gtk.Window):
     # Widgets
     viewport_drawing_area: Gtk.DrawingArea = Gtk.Template.Child()
     file_button: Gtk.MenuItem = Gtk.Template.Child()
-    point_button: Gtk.Button = Gtk.Template.Child()
-    line_button: Gtk.Button = Gtk.Template.Child()
-    triangle_button: Gtk.Button = Gtk.Template.Child()
-    rectangle_button: Gtk.Button = Gtk.Template.Child()
-    polygon_button: Gtk.Button = Gtk.Template.Child()
-    clear_button: Gtk.Button = Gtk.Template.Child()
-    mode_label: Gtk.Label = Gtk.Template.Child()
+    point_button: Gtk.ToggleButton = Gtk.Template.Child()
+    line_button: Gtk.ToggleButton = Gtk.Template.Child()
+    triangle_button: Gtk.ToggleButton = Gtk.Template.Child()
+    rectangle_button: Gtk.ToggleButton = Gtk.Template.Child()
+    polygon_button: Gtk.ToggleButton = Gtk.Template.Child()
     width_button: Gtk.SpinButton = Gtk.Template.Child()
     color_button: Gtk.ColorButton = Gtk.Template.Child()
     display_file_list: Gtk.ListStore = Gtk.Template.Child()
@@ -77,10 +75,8 @@ class MainWindow(Gtk.Window):
                                             self.triangle_button,
                                             self.rectangle_button,
                                             self.polygon_button,
-                                            self.clear_button,
                                             self.width_button,
                                             self.color_button,
-                                            self.mode_label,
                                             self.remove_button,
                                             self.position_x_button,
                                             self.position_y_button,
