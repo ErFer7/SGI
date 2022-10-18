@@ -4,6 +4,7 @@
 Módulo para as operações matemáticas.
 '''
 
+from math import cos, radians, sin
 import numpy as np
 
 
@@ -62,7 +63,9 @@ class Transform():
     _scale: Vector
     _translation_matrix: np.matrix
     _scaling_matrix: np.matrix
-    _rotation_matrix: np.matrix
+    _rotation_matrix_x: np.matrix
+    _rotation_matrix_y: np.matrix
+    _rotation_matrix_z: np.matrix
 
     def __init__(self,
                  position: Vector,
@@ -72,6 +75,7 @@ class Transform():
         self._position = position
         self._rotation = rotation
         self._scale = scale
+
 
         self._translation_matrix = np.matrix([[1.0, 0.0, 0.0, self._position.x],
                                               [0.0, 1.0, 0.0, self._position.y],
@@ -83,14 +87,36 @@ class Transform():
                                           [0.0, 0.0, self._scale.z, 0.0],
                                           [0.0, 0.0, 0.0, 1.0]])
 
-        # TODO: Adicionar a matriz de rotação
+        cos_0 = cos(rotation.x)
+        sin_0 = sin(rotation.x)
+
+        self._rotation_matrix_x = np.matrix([[1.0, 0.0, 0.0, 0.0],
+                                             [0.0, cos_0, sin_0, 0.0],
+                                             [0.0, sin_0, cos_0, 0.0],
+                                             [0.0, 0.0, 0.0, 1.0]])
+
+        cos_0 = cos(rotation.y)
+        sin_0 = sin(rotation.y)
+
+        self._rotation_matrix_y = np.matrix([[cos_0, 0.0, sin_0, 0.0],
+                                             [0.0, 1.0, 0.0, 0.0],
+                                             [-sin_0, 0.0, cos_0, 0.0],
+                                             [0.0, 0.0, 0.0, 1.0]])
+
+        cos_0 = cos(rotation.z)
+        sin_0 = sin(rotation.z)
+
+        self._rotation_matrix_z = np.matrix([[cos_0, -sin_0, 0.0, 0.0],
+                                             [sin_0, cos_0, 0.0, 0.0],
+                                             [0.0, 0.0, 1.0, 0.0],
+                                             [0.0, 0.0, 0.0, 1.0]])
 
 
     def __repr__(self) -> str:
-        return str(self._rotation_matrix)
+        return str(f"P: {self.position}, S: {self.scale}, R: {self._rotation}")
 
     def __str__(self) -> str:
-        return str(self._rotation_matrix)
+        return str(f"P: {self.position}, S: {self.scale}, R: {self._rotation}")
 
     @property
     def position(self) -> Vector:
@@ -108,6 +134,14 @@ class Transform():
 
         return self._scale
 
+    @property
+    def rotation(self) -> Vector:
+        '''
+        Getter da rotação.
+        '''
+
+        return self._rotation
+
     def world_to_local(self, coord: Vector) -> Vector:
         '''
         Calcula o ponto relativo à origem.
@@ -121,13 +155,6 @@ class Transform():
         '''
 
         return coord + self.position
-
-    def move_to(self, position, coord_list) -> list:
-        '''
-        Move o objeto para a posição.
-        '''
-
-        return self.translate(position - self._position, coord_list)
 
     # Transformações
     def translate(self, direction: Vector, coord_list: list[Vector]) -> list:
@@ -158,7 +185,7 @@ class Transform():
 
         self._scale.x *= scale.x
         self._scale.y *= scale.y
-        self._scale.y *= scale.z
+        self._scale.z *= scale.z
 
         self._scaling_matrix[0, 0] = scale.x
         self._scaling_matrix[1, 1] = scale.y
@@ -171,6 +198,35 @@ class Transform():
 
             relative_coord = self.world_to_local(coord)
             new_coord = np.matmul(self._scaling_matrix, [relative_coord.x, relative_coord.y, relative_coord.z, 1])
+            relative_new_coord = self.local_to_world(Vector(new_coord[0, 0], new_coord[0, 1], new_coord[0, 2]))
+            new_coord_list.append(relative_new_coord)
+
+        return new_coord_list
+
+    def rotate(self, angle: float, coord_list: list[Vector], anchor: Vector = None) -> list:
+        '''
+        Rotaciona o objeto em relação à um ponto.
+        '''
+
+        #TODO: Adicionar a rotação em múltiplos eixos
+
+        self._rotation.z = (self._rotation.z + angle) % 360
+
+        angle_cos = cos(radians(angle))
+        angle_sin = sin(radians(angle))
+
+        self._rotation_matrix_z[0, 0] = angle_cos
+        self._rotation_matrix_z[0, 1] = -angle_sin
+        self._rotation_matrix_z[1, 0] = angle_sin
+        self._rotation_matrix_z[1, 1] = angle_cos
+
+        new_coord_list = []
+
+        # Translação ponto a ponto
+        for coord in coord_list:
+
+            relative_coord = self.world_to_local(coord)
+            new_coord = np.matmul(self._rotation_matrix_z, [relative_coord.x, relative_coord.y, relative_coord.z, 1])
             relative_new_coord = self.local_to_world(Vector(new_coord[0, 0], new_coord[0, 1], new_coord[0, 2]))
             new_coord_list.append(relative_new_coord)
 

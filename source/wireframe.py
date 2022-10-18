@@ -6,7 +6,6 @@ Módulo para wireframes.
 
 from abc import ABC
 from enum import Enum
-from uuid import uuid4
 from source.transform import Transform, Vector
 
 
@@ -31,7 +30,6 @@ class Object(ABC):
     '''
 
     # Atributos públicos
-    identification: str
     name: str
     color: tuple
     line_width: float
@@ -44,13 +42,12 @@ class Object(ABC):
     def __init__(self, coord_list: list, name: str, color: tuple, line_width: float, object_type: ObjectType) -> None:
 
         super().__init__()
-        self.identification = str(uuid4())
         self.name = name
         self.color = color
         self.line_width = line_width
         self.coord_list = coord_list
         self.object_type = object_type
-        self._transform = Transform(self.center())
+        self._transform = Transform(self.center(), Vector(0.0, 0.0, 0.0), Vector(1.0, 1.0, 1.0))
 
     @property
     def position(self) -> Vector:
@@ -68,6 +65,14 @@ class Object(ABC):
 
         return self._transform.scale
 
+    @property
+    def rotation(self) -> Vector:
+        '''
+        Retorna a escala.
+        '''
+
+        return self._transform.rotation
+
     def center(self) -> Vector:
         '''
         Retorna o centro do objeto.
@@ -81,13 +86,6 @@ class Object(ABC):
         return coord_sum / len(self.coord_list)
 
     # Métodos de transformação
-    def move_to(self, position: Vector) -> None:
-        '''
-        Move para a posição especificada.
-        '''
-
-        self.coord_list = self._transform.move_to(position, self.coord_list)
-
     def translate(self, translation: Vector) -> None:
         '''
         Método para transladar o objeto (Transform::translate).
@@ -101,6 +99,13 @@ class Object(ABC):
         '''
 
         self.coord_list = self._transform.rescale(scale, self.coord_list)
+
+    def rotate(self, angle: float) -> None:
+        '''
+        Transformação de rotação.
+        '''
+
+        self.coord_list = self._transform.rotate(angle, self.coord_list)
 
 
 class Point(Object):

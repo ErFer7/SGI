@@ -14,3 +14,5 @@
 
 * Correção na escala da tela
 * Correção na movimentação
+* Edição da posição, escala e rotação do objeto
+* Transformadas

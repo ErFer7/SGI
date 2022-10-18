@@ -171,9 +171,9 @@ class ViewportHandler():
         direction = event.get_scroll_deltas()[2]
 
         if direction > 0:
-            self._window.rescale(Vector(1.03, 1.03, 1))
+            self._window.rescale(Vector(1.03, 1.03, 1.0))
         else:
-            self._window.rescale(Vector(0.97, 0.97, 1))
+            self._window.rescale(Vector(0.97, 0.97, 1.0))
 
     def on_size_allocate(self, allocation, user_data):
         '''

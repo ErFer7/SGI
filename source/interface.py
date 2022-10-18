@@ -43,6 +43,25 @@ class MainWindow(Gtk.Window):
     color_button: Gtk.ColorButton = Gtk.Template.Child()
     display_file_list: Gtk.ListStore = Gtk.Template.Child()
     remove_button: Gtk.Button = Gtk.Template.Child()
+    position_x_button: Gtk.SpinButton = Gtk.Template.Child()
+    position_y_button: Gtk.SpinButton = Gtk.Template.Child()
+    position_z_button: Gtk.SpinButton = Gtk.Template.Child()
+    scale_x_button: Gtk.SpinButton = Gtk.Template.Child()
+    scale_y_button: Gtk.SpinButton = Gtk.Template.Child()
+    scale_z_button: Gtk.SpinButton = Gtk.Template.Child()
+    rotation_x_button: Gtk.SpinButton = Gtk.Template.Child()
+    rotation_y_button: Gtk.SpinButton = Gtk.Template.Child()
+    rotation_z_button: Gtk.SpinButton = Gtk.Template.Child()
+    translate_x_button: Gtk.SpinButton = Gtk.Template.Child()
+    translate_y_button: Gtk.SpinButton = Gtk.Template.Child()
+    translate_z_button: Gtk.SpinButton = Gtk.Template.Child()
+    apply_translation_button: Gtk.Button = Gtk.Template.Child()
+    rescale_x_button: Gtk.SpinButton = Gtk.Template.Child()
+    rescale_y_button: Gtk.SpinButton = Gtk.Template.Child()
+    rescale_z_button: Gtk.SpinButton = Gtk.Template.Child()
+    apply_scaling_button: Gtk.Button = Gtk.Template.Child()
+    rotation_button: Gtk.SpinButton = Gtk.Template.Child()
+    apply_rotation_button: Gtk.Button = Gtk.Template.Child()
 
     def __init__(self) -> None:
 
@@ -62,7 +81,26 @@ class MainWindow(Gtk.Window):
                                             self.width_button,
                                             self.color_button,
                                             self.mode_label,
-                                            self.remove_button)
+                                            self.remove_button,
+                                            self.position_x_button,
+                                            self.position_y_button,
+                                            self.position_z_button,
+                                            self.scale_x_button,
+                                            self.scale_y_button,
+                                            self.scale_z_button,
+                                            self.rotation_x_button,
+                                            self.rotation_y_button,
+                                            self.rotation_z_button,
+                                            self.translate_x_button,
+                                            self.translate_y_button,
+                                            self.translate_z_button,
+                                            self.apply_translation_button,
+                                            self.rescale_x_button,
+                                            self.rescale_y_button,
+                                            self.rescale_z_button,
+                                            self.apply_scaling_button,
+                                            self.rotation_button,
+                                            self.apply_rotation_button)
         self.viewport_handler = ViewportHandler(self, self.viewport_drawing_area)
 
         self.connect("destroy", Gtk.main_quit)

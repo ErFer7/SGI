@@ -50,6 +50,13 @@ class DisplayFileHandler():
                 self.objects.remove(obj)
                 break
 
+    def update_object_info(self, index: int) -> None:
+        '''
+        Atualiza as informações de um objeto.
+        '''
+
+        self._display_file_list[index][1] = str(self.objects[index].position)
+
     def remove_all(self) -> None:
         '''
         Remove todos os objetos.

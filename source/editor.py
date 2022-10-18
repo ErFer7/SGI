@@ -29,6 +29,23 @@ class EditorHandler():
     _mode_label: Gtk.Label
     _width_button: Gtk.SpinButton
     _color_button: Gtk.ColorButton
+    _position_x_button: Gtk.SpinButton
+    _position_y_button: Gtk.SpinButton
+    _position_z_button: Gtk.SpinButton
+    _scale_x_button: Gtk.SpinButton
+    _scale_y_button: Gtk.SpinButton
+    _scale_z_button: Gtk.SpinButton
+    _rotation_x_button: Gtk.SpinButton
+    _rotation_y_button: Gtk.SpinButton
+    _rotation_z_button: Gtk.SpinButton
+    _translate_x_button: Gtk.SpinButton
+    _translate_y_button: Gtk.SpinButton
+    _translate_z_button: Gtk.SpinButton
+    _rescale_x_button: Gtk.SpinButton
+    _rescale_y_button: Gtk.SpinButton
+    _rescale_z_button: Gtk.SpinButton
+    _rotation_button: Gtk.SpinButton
+    _user_call_lock: bool
 
     def __init__(self,
                  main_window,
@@ -42,7 +59,26 @@ class EditorHandler():
                  width_button: Gtk.SpinButton,
                  color_button: Gtk.ColorButton,
                  mode_label: Gtk.Label,
-                 remove_button: Gtk.Button) -> None:
+                 remove_button: Gtk.Button,
+                 position_x_button: Gtk.SpinButton,
+                 position_y_button: Gtk.SpinButton,
+                 position_z_button: Gtk.SpinButton,
+                 scale_x_button: Gtk.SpinButton,
+                 scale_y_button: Gtk.SpinButton,
+                 scale_z_button: Gtk.SpinButton,
+                 rotation_x_button: Gtk.SpinButton,
+                 rotation_y_button: Gtk.SpinButton,
+                 rotation_z_button: Gtk.SpinButton,
+                 translate_x_button: Gtk.SpinButton,
+                 translate_y_button: Gtk.SpinButton,
+                 translate_z_button: Gtk.SpinButton,
+                 apply_translation_button: Gtk.Button,
+                 rescale_x_button: Gtk.SpinButton,
+                 rescale_y_button: Gtk.SpinButton,
+                 rescale_z_button: Gtk.SpinButton,
+                 apply_scaling_button: Gtk.Button,
+                 rotation_button: Gtk.SpinButton,
+                 apply_rotation_button: Gtk.Button) -> None:
 
         self._main_window = main_window
         self._focus_object = None
@@ -54,10 +90,30 @@ class EditorHandler():
         self._width_button = width_button
         self._color_button = color_button
         self._mode_label = mode_label
-
-        file_button.connect("select", self.show_explorer)
         self._width_button.connect("value-changed", self.set_width)
         self._color_button.connect("color-set", self.set_color)
+
+        self._position_x_button = position_x_button
+        self._position_y_button = position_y_button
+        self._position_z_button = position_z_button
+        self._scale_x_button = scale_x_button
+        self._scale_y_button = scale_y_button
+        self._scale_z_button = scale_z_button
+        self._rotation_x_button = rotation_x_button
+        self._rotation_y_button = rotation_y_button
+        self._rotation_z_button = rotation_z_button
+
+        self._translate_x_button = translate_x_button
+        self._translate_y_button = translate_y_button
+        self._translate_z_button = translate_z_button
+
+        self._rescale_x_button = rescale_x_button
+        self._rescale_y_button = rescale_y_button
+        self._rescale_z_button = rescale_z_button
+
+        self._rotation_button = rotation_button
+
+        file_button.connect("select", self.show_explorer)
         point_button.connect("clicked", self.set_mode, ObjectType.POINT)
         line_button.connect("clicked", self.set_mode, ObjectType.LINE)
         triangle_button.connect("clicked", self.set_mode, ObjectType.TRIANGLE)
@@ -65,6 +121,39 @@ class EditorHandler():
         polygon_button.connect("clicked", self.set_mode, ObjectType.POLYGON)
         clear_button.connect("clicked", self.set_mode, ObjectType.NULL)
         remove_button.connect("clicked", self.remove)
+
+        apply_translation_button.connect("clicked", self.translate)
+        apply_scaling_button.connect("clicked", self.rescale)
+        apply_rotation_button.connect("clicked", self.rotate)
+
+        self._position_x_button.connect("value-changed", self.update_position)
+        self._position_y_button.connect("value-changed", self.update_position)
+        self._position_z_button.connect("value-changed", self.update_position)
+        self._scale_x_button.connect("value-changed", self.update_scale)
+        self._scale_y_button.connect("value-changed", self.update_scale)
+        self._scale_z_button.connect("value-changed", self.update_scale)
+        self._rotation_x_button.connect("value-changed", self.update_rotation)
+        self._rotation_y_button.connect("value-changed", self.update_rotation)
+        self._rotation_z_button.connect("value-changed", self.update_rotation)
+
+        self._user_call_lock = True
+
+    def update_buttons(self) -> None:
+        '''
+        Atualiza todos os botões.
+        '''
+
+        self._user_call_lock = False
+        self._position_x_button.set_value(self._focus_object.position.x)
+        self._position_y_button.set_value(self._focus_object.position.y)
+        self._position_z_button.set_value(self._focus_object.position.z)
+        self._scale_x_button.set_value(self._focus_object.scale.x)
+        self._scale_y_button.set_value(self._focus_object.scale.y)
+        self._scale_z_button.set_value(self._focus_object.scale.z)
+        self._rotation_x_button.set_value(self._focus_object.rotation.x)
+        self._rotation_y_button.set_value(self._focus_object.rotation.y)
+        self._rotation_z_button.set_value(self._focus_object.rotation.z)
+        self._user_call_lock = True
 
     def handle_click(self, position: Vector) -> None:
         '''
@@ -110,6 +199,7 @@ class EditorHandler():
 
             if object_completed:
                 self._focus_object = self._main_window.display_file_handler.objects[-1]
+                self.update_buttons()
                 self._temp_coords.clear()
 
     def set_mode(self, user_data, mode: ObjectType) -> None:
@@ -166,3 +256,88 @@ class EditorHandler():
 
         # TODO: Estudar uma maneira de fazer isso funcionar
         raise NotImplementedError
+
+    def translate(self, user_data) -> None:
+        '''
+        Aplica a translação no objeto em foco.
+        '''
+
+        if self._focus_object is not None:
+
+            translation_x = self._translate_x_button.get_value()
+            translation_y = self._translate_y_button.get_value()
+            translation_z = self._translate_z_button.get_value()
+
+            self._focus_object.translate(Vector(translation_x, translation_y, translation_z))
+            self.update_buttons()
+
+            object_index = self._main_window.display_file_handler.objects.index(self._focus_object)
+            self._main_window.display_file_handler.update_object_info(object_index)
+
+    def rescale(self, user_data) -> None:
+        '''
+        Aplica a escala no objeto em foco.
+        '''
+
+        if self._focus_object is not None:
+
+            scale_x = self._rescale_x_button.get_value()
+            scale_y = self._rescale_y_button.get_value()
+            scale_z = self._rescale_z_button.get_value()
+
+            self._focus_object.rescale(Vector(scale_x, scale_y, scale_z))
+            self.update_buttons()
+
+    def rotate(self, user_data) -> None:
+        '''
+        Aplica a rotação no objeto em foco.
+        '''
+
+        if self._focus_object is not None:
+
+            angle = self._rotation_button.get_value()
+
+            self._focus_object.rotate(angle)
+            self.update_buttons()
+
+    def update_position(self, user_data) -> None:
+        '''
+        Atualiza a posição
+        '''
+
+        if self._user_call_lock and self._focus_object is not None:
+
+            diff_x = self._position_x_button.get_value() - self._focus_object.position.x
+            diff_y = self._position_y_button.get_value() - self._focus_object.position.y
+            diff_z = self._position_z_button.get_value() - self._focus_object.position.z
+
+            self._focus_object.translate(Vector(diff_x, diff_y, diff_z))
+
+            object_index = self._main_window.display_file_handler.objects.index(self._focus_object)
+            self._main_window.display_file_handler.update_object_info(object_index)
+
+    def update_scale(self, user_data) -> None:
+        '''
+        Atualiza a escala
+        '''
+
+        if self._user_call_lock and self._focus_object is not None:
+
+            diff_x = self._scale_x_button.get_value() / self._focus_object.scale.x
+            diff_y = self._scale_y_button.get_value() / self._focus_object.scale.y
+            diff_z = self._scale_z_button.get_value() / self._focus_object.scale.z
+
+            self._focus_object.rescale(Vector(diff_x, diff_y, diff_z))
+
+    def update_rotation(self, user_data) -> None:
+        '''
+        Atualiza a rotação
+        '''
+
+        if self._user_call_lock and self._focus_object is not None:
+
+            # diff_x = self._rotation_x_button.get_value() - self._focus_object.rotation.x
+            # diff_y = self._rotation_y_button.get_value() - self._focus_object.rotation.y
+            diff_z = self._rotation_z_button.get_value() - self._focus_object.rotation.z
+
+            self._focus_object.rotate(diff_z)
