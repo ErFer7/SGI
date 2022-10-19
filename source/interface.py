@@ -39,6 +39,7 @@ class MainWindow(Gtk.Window):
     polygon_button: Gtk.ToggleButton = Gtk.Template.Child()
     width_button: Gtk.SpinButton = Gtk.Template.Child()
     color_button: Gtk.ColorButton = Gtk.Template.Child()
+    edges_button: Gtk.SpinButton = Gtk.Template.Child()
     display_file_list: Gtk.ListStore = Gtk.Template.Child()
     remove_button: Gtk.Button = Gtk.Template.Child()
     position_x_button: Gtk.SpinButton = Gtk.Template.Child()
@@ -77,6 +78,7 @@ class MainWindow(Gtk.Window):
                                             self.polygon_button,
                                             self.width_button,
                                             self.color_button,
+                                            self.edges_button,
                                             self.remove_button,
                                             self.position_x_button,
                                             self.position_y_button,

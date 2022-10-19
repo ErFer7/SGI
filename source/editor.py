@@ -7,7 +7,7 @@ Módulo para o editor.
 import gi
 from source.transform import Vector
 
-from source.wireframe import ObjectType, Object, Point, Line, Triangle, Rectangle
+from source.wireframe import ObjectType, Object, Point, Line, Triangle, Rectangle, Wireframe
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
@@ -26,6 +26,8 @@ class EditorHandler():
     _mode: ObjectType
     _width: float
     _color: list[float]
+    _edges: int
+    _edges_button: Gtk.SpinButton
     _point_button: Gtk.ToggleButton
     _line_button: Gtk.ToggleButton
     _triangle_button: Gtk.ToggleButton
@@ -61,6 +63,7 @@ class EditorHandler():
                  polygon_button: Gtk.ToggleButton,
                  width_button: Gtk.SpinButton,
                  color_button: Gtk.ColorButton,
+                 edges_button: Gtk.SpinButton,
                  remove_button: Gtk.Button,
                  position_x_button: Gtk.SpinButton,
                  position_y_button: Gtk.SpinButton,
@@ -88,11 +91,14 @@ class EditorHandler():
         self._mode = ObjectType.NULL
         self._width = 1.0
         self._color = [1.0, 1.0, 1.0]
+        self._edges = 3
 
         self._width_button = width_button
         self._color_button = color_button
+        self._edges_button = edges_button
         self._width_button.connect("value-changed", self.set_width)
         self._color_button.connect("color-set", self.set_color)
+        self._edges_button.connect("value-changed", self.set_edges)
 
         self._point_button = point_button
         self._line_button = line_button
@@ -223,6 +229,14 @@ class EditorHandler():
                         self._color,
                         self._width))
                 object_completed = True
+            elif self._mode == ObjectType.POLYGON and len(self._temp_coords) >= self._edges:
+                self._main_window.display_file_handler.add_object(
+                    Wireframe(
+                        self._temp_coords.copy(),
+                        "Wireframe",
+                        self._color,
+                        self._width))
+                object_completed = True
 
             if object_completed:
                 self._focus_object = self._main_window.display_file_handler.objects[-1]
@@ -246,6 +260,11 @@ class EditorHandler():
         else:
             self._mode = ObjectType.NULL
 
+        if self._mode == ObjectType.POLYGON:
+            self._edges_button.set_editable(True)
+        else:
+            self._edges_button.set_editable(False)
+
         self._temp_coords.clear()
 
     def set_width(self, user_data) -> None:
@@ -262,6 +281,13 @@ class EditorHandler():
 
         rgba = self._color_button.get_rgba()
         self._color = (rgba.red, rgba.green, rgba.blue)
+
+    def set_edges(self, user_data) -> None:
+        '''
+        Handler da mudança da contagem de arestas.
+        '''
+
+        self._edges = self._edges_button.get_value_as_int()
 
     def remove(self, user_data) -> None:
         '''
