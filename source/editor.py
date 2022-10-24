@@ -316,7 +316,7 @@ class EditorHandler():
         Remove um objeto. (Atualmente remove todos)
         '''
 
-        self._main_window.display_file_handler.remove_all()
+        self._main_window.display_file_handler.remove_last()
 
     def show_explorer(self, user_data) -> None:
         '''

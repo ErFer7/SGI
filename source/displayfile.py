@@ -57,10 +57,10 @@ class DisplayFileHandler():
 
         self._display_file_list[index][1] = str(self.objects[index].position)
 
-    def remove_all(self) -> None:
+    def remove_last(self) -> None:
         '''
         Remove todos os objetos.
         '''
 
-        self.objects.clear()
-        self._display_file_list.clear()
+        self.objects.pop()
+        self._display_file_list.remove(self._display_file_list[-1].iter)
