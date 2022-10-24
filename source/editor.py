@@ -27,6 +27,7 @@ class EditorHandler():
     _width: float
     _color: list[float]
     _edges: int
+    _rotation_anchor: Vector
     _edges_button: Gtk.SpinButton
     _point_button: Gtk.ToggleButton
     _line_button: Gtk.ToggleButton
@@ -51,6 +52,10 @@ class EditorHandler():
     _rescale_y_button: Gtk.SpinButton
     _rescale_z_button: Gtk.SpinButton
     _rotation_button: Gtk.SpinButton
+    _rotation_anchor_button: Gtk.Button
+    _rotation_anchor_button_x: Gtk.SpinButton
+    _rotation_anchor_button_y: Gtk.SpinButton
+    _rotation_anchor_button_z: Gtk.SpinButton
     _user_call_lock: bool
 
     def __init__(self,
@@ -83,7 +88,11 @@ class EditorHandler():
                  rescale_z_button: Gtk.SpinButton,
                  apply_scaling_button: Gtk.Button,
                  rotation_button: Gtk.SpinButton,
-                 apply_rotation_button: Gtk.Button) -> None:
+                 apply_rotation_button: Gtk.Button,
+                 rotation_anchor_button: Gtk.Button,
+                 rotation_anchor_button_x: Gtk.SpinButton,
+                 rotation_anchor_button_y: Gtk.SpinButton,
+                 rotation_anchor_button_z: Gtk.SpinButton) -> None:
 
         self._main_window = main_window
         self._focus_object = None
@@ -92,6 +101,7 @@ class EditorHandler():
         self._width = 1.0
         self._color = [1.0, 1.0, 1.0]
         self._edges = 3
+        self._rotation_anchor = None
 
         self._width_button = width_button
         self._color_button = color_button
@@ -125,6 +135,10 @@ class EditorHandler():
         self._rescale_z_button = rescale_z_button
 
         self._rotation_button = rotation_button
+        self._rotation_anchor_button = rotation_anchor_button
+        self._rotation_anchor_button_x = rotation_anchor_button_x
+        self._rotation_anchor_button_y = rotation_anchor_button_y
+        self._rotation_anchor_button_z = rotation_anchor_button_z
 
         file_button.connect("select", self.show_explorer)
 
@@ -139,6 +153,7 @@ class EditorHandler():
         apply_translation_button.connect("clicked", self.translate)
         apply_scaling_button.connect("clicked", self.rescale)
         apply_rotation_button.connect("clicked", self.rotate)
+        self._rotation_anchor_button.connect("clicked", self.change_rotation_anchor)
 
         self._position_x_button.connect("value-changed", self.update_position)
         self._position_y_button.connect("value-changed", self.update_position)
@@ -149,6 +164,9 @@ class EditorHandler():
         self._rotation_x_button.connect("value-changed", self.update_rotation)
         self._rotation_y_button.connect("value-changed", self.update_rotation)
         self._rotation_z_button.connect("value-changed", self.update_rotation)
+        self._rotation_anchor_button_x.connect("value-changed", self.update_rotation_anchor)
+        self._rotation_anchor_button_y.connect("value-changed", self.update_rotation_anchor)
+        self._rotation_anchor_button_z.connect("value-changed", self.update_rotation_anchor)
 
         self._user_call_lock = True
 
@@ -167,6 +185,9 @@ class EditorHandler():
         self._rotation_x_button.set_value(self._focus_object.rotation.x)
         self._rotation_y_button.set_value(self._focus_object.rotation.y)
         self._rotation_z_button.set_value(self._focus_object.rotation.z)
+        self._rotation_anchor_button_x.set_value(self._rotation_anchor.x)
+        self._rotation_anchor_button_y.set_value(self._rotation_anchor.y)
+        self._rotation_anchor_button_z.set_value(self._rotation_anchor.z)
         self._user_call_lock = True
 
     def update_toggle_buttons(self, mode: ObjectType) -> None:
@@ -240,6 +261,7 @@ class EditorHandler():
 
             if object_completed:
                 self._focus_object = self._main_window.display_file_handler.objects[-1]
+                self._rotation_anchor = self._focus_object.position
                 self.update_spin_buttons()
                 self._temp_coords.clear()
 
@@ -344,8 +366,41 @@ class EditorHandler():
 
             angle = self._rotation_button.get_value()
 
-            self._focus_object.rotate(angle)
+            self._focus_object.rotate(angle, self._rotation_anchor)
             self.update_spin_buttons()
+
+    def change_rotation_anchor(self, user_data) -> None:
+        '''
+        Muda a ancoragem da rotação.
+        '''
+
+        match self._rotation_anchor_button.get_label():
+            case "Object":
+
+                self._rotation_anchor = Vector(0.0, 0.0, 0.0)
+                self.update_spin_buttons()
+                self._rotation_anchor_button.set_label("World")
+            case "World":
+
+                self._rotation_anchor.x = self._rotation_anchor_button_x.get_value()
+                self._rotation_anchor.y = self._rotation_anchor_button_y.get_value()
+                self._rotation_anchor.z = self._rotation_anchor_button_z.get_value()
+                self._rotation_anchor_button_x.set_editable(True)
+                self._rotation_anchor_button_y.set_editable(True)
+                self._rotation_anchor_button_z.set_editable(True)
+                self._rotation_anchor_button.set_label("Specified")
+            case "Specified":
+
+                if self._focus_object is not None:
+                    self._rotation_anchor = self._focus_object.position
+                else:
+                    self._rotation_anchor = Vector(0.0, 0.0, 0.0)
+
+                self._rotation_anchor_button_x.set_editable(False)
+                self._rotation_anchor_button_y.set_editable(False)
+                self._rotation_anchor_button_z.set_editable(False)
+                self.update_spin_buttons()
+                self._rotation_anchor_button.set_label("Object")
 
     def update_position(self, user_data) -> None:
         '''
@@ -388,3 +443,16 @@ class EditorHandler():
             diff_z = self._rotation_z_button.get_value() - self._focus_object.rotation.z
 
             self._focus_object.rotate(diff_z)
+
+    def update_rotation_anchor(self, user_data) -> None:
+        '''
+        Atualiza o ponto de ancoragem da rotação.
+        '''
+
+        if self._user_call_lock:
+
+            anchor_x = self._rotation_anchor_button_x.get_value()
+            anchor_y = self._rotation_anchor_button_y.get_value()
+            anchor_z = self._rotation_anchor_button_z.get_value()
+
+            self._rotation_anchor = Vector(anchor_x, anchor_y, anchor_z)

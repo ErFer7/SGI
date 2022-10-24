@@ -142,19 +142,25 @@ class Transform():
 
         return self._rotation
 
-    def world_to_local(self, coord: Vector) -> Vector:
+    def world_to_local(self, coord: Vector, anchor: Vector = None) -> Vector:
         '''
-        Calcula o ponto relativo à origem.
-        '''
-
-        return coord - self.position
-
-    def local_to_world(self, coord: Vector) -> Vector:
-        '''
-        Calcula o ponto relativo da coordenada.
+        Calcula o ponto relativo a um ponto no mundo. Este ponto é a origem por padrão.
         '''
 
-        return coord + self.position
+        if anchor is None:
+            return coord - self.position
+        else:
+            return coord - anchor
+
+    def local_to_world(self, coord: Vector, anchor: Vector = None) -> Vector:
+        '''
+        Calcula o ponto relativo a um ponto no mundo. Este ponto é a origem por padrão.
+        '''
+
+        if anchor is None:
+            return coord + self.position
+        else:
+            return coord + anchor
 
     # Transformações
     def translate(self, direction: Vector, coord_list: list[Vector]) -> list:
@@ -222,12 +228,14 @@ class Transform():
 
         new_coord_list = []
 
-        # Translação ponto a ponto
-        for coord in coord_list:
+        # Translação ponto a ponto. A posição é adicionada como um ponto
+        for coord in coord_list + [self._position]:
 
-            relative_coord = self.world_to_local(coord)
+            relative_coord = self.world_to_local(coord, anchor)
             new_coord = np.matmul(self._rotation_matrix_z, [relative_coord.x, relative_coord.y, relative_coord.z, 1])
-            relative_new_coord = self.local_to_world(Vector(new_coord[0, 0], new_coord[0, 1], new_coord[0, 2]))
+            relative_new_coord = self.local_to_world(Vector(new_coord[0, 0], new_coord[0, 1], new_coord[0, 2]), anchor)
             new_coord_list.append(relative_new_coord)
 
-        return new_coord_list
+        self._position = new_coord_list[-1]  # Atualiza a posição
+
+        return new_coord_list[:-1]  # Retorna todas as coordenadas menos a posição

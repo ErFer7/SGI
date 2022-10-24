@@ -100,12 +100,12 @@ class Object(ABC):
 
         self.coord_list = self._transform.rescale(scale, self.coord_list)
 
-    def rotate(self, angle: float) -> None:
+    def rotate(self, angle: float, anchor: Vector = None) -> None:
         '''
         Transformação de rotação.
         '''
 
-        self.coord_list = self._transform.rotate(angle, self.coord_list)
+        self.coord_list = self._transform.rotate(angle, self.coord_list, anchor)
 
 
 class Point(Object):

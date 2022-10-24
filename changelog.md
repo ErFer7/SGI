@@ -16,3 +16,4 @@
 * Correção na movimentação
 * Edição da posição, escala e rotação do objeto
 * Transformadas
+* Rotação em torno de pontos arbitrários
