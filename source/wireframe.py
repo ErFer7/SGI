@@ -115,7 +115,6 @@ class Point(Object):
     '''
 
     def __init__(self, position: Vector, name: str = '', color: tuple = (1.0, 1.0, 1.0)) -> None:
-
         super().__init__([position], name, color, 1.0, ObjectType.POINT)
 
     # Métodos utilitários

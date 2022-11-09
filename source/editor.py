@@ -58,41 +58,7 @@ class EditorHandler():
     _rotation_anchor_button_z: Gtk.SpinButton
     _user_call_lock: bool
 
-    def __init__(self,
-                 main_window,
-                 file_button: Gtk.MenuItem,
-                 point_button: Gtk.ToggleButton,
-                 line_button: Gtk.ToggleButton,
-                 triangle_button: Gtk.ToggleButton,
-                 rectangle_button: Gtk.ToggleButton,
-                 polygon_button: Gtk.ToggleButton,
-                 width_button: Gtk.SpinButton,
-                 color_button: Gtk.ColorButton,
-                 edges_button: Gtk.SpinButton,
-                 remove_button: Gtk.Button,
-                 position_x_button: Gtk.SpinButton,
-                 position_y_button: Gtk.SpinButton,
-                 position_z_button: Gtk.SpinButton,
-                 scale_x_button: Gtk.SpinButton,
-                 scale_y_button: Gtk.SpinButton,
-                 scale_z_button: Gtk.SpinButton,
-                 rotation_x_button: Gtk.SpinButton,
-                 rotation_y_button: Gtk.SpinButton,
-                 rotation_z_button: Gtk.SpinButton,
-                 translate_x_button: Gtk.SpinButton,
-                 translate_y_button: Gtk.SpinButton,
-                 translate_z_button: Gtk.SpinButton,
-                 apply_translation_button: Gtk.Button,
-                 rescale_x_button: Gtk.SpinButton,
-                 rescale_y_button: Gtk.SpinButton,
-                 rescale_z_button: Gtk.SpinButton,
-                 apply_scaling_button: Gtk.Button,
-                 rotation_button: Gtk.SpinButton,
-                 apply_rotation_button: Gtk.Button,
-                 rotation_anchor_button: Gtk.Button,
-                 rotation_anchor_button_x: Gtk.SpinButton,
-                 rotation_anchor_button_y: Gtk.SpinButton,
-                 rotation_anchor_button_z: Gtk.SpinButton) -> None:
+    def __init__(self, main_window) -> None:
 
         self._main_window = main_window
         self._focus_object = None
@@ -102,59 +68,49 @@ class EditorHandler():
         self._color = [1.0, 1.0, 1.0]
         self._edges = 3
         self._rotation_anchor = None
+        self._width_button = self._main_window.width_button
+        self._color_button = self._main_window.color_button
+        self._edges_button = self._main_window.edges_button
+        self._point_button = self._main_window.point_button
+        self._line_button = self._main_window.line_button
+        self._triangle_button = self._main_window.triangle_button
+        self._rectangle_button = self._main_window.rectangle_button
+        self._polygon_button = self._main_window.polygon_button
+        self._position_x_button = self._main_window.position_x_button
+        self._position_y_button = self._main_window.position_y_button
+        self._position_z_button = self._main_window.position_z_button
+        self._scale_x_button = self._main_window.scale_x_button
+        self._scale_y_button = self._main_window.scale_y_button
+        self._scale_z_button = self._main_window.scale_z_button
+        self._rotation_x_button = self._main_window.rotation_x_button
+        self._rotation_y_button = self._main_window.rotation_y_button
+        self._rotation_z_button = self._main_window.rotation_z_button
+        self._translate_x_button = self._main_window.translate_x_button
+        self._translate_y_button = self._main_window.translate_y_button
+        self._translate_z_button = self._main_window.translate_z_button
+        self._rescale_x_button = self._main_window.rescale_x_button
+        self._rescale_y_button = self._main_window.rescale_y_button
+        self._rescale_z_button = self._main_window.rescale_z_button
+        self._rotation_button = self._main_window.rotation_button
+        self._rotation_anchor_button = self._main_window.rotation_anchor_button
+        self._rotation_anchor_button_x = self._main_window.rotation_anchor_button_x
+        self._rotation_anchor_button_y = self._main_window.rotation_anchor_button_y
+        self._rotation_anchor_button_z = self._main_window.rotation_anchor_button_z
 
-        self._width_button = width_button
-        self._color_button = color_button
-        self._edges_button = edges_button
         self._width_button.connect("value-changed", self.set_width)
         self._color_button.connect("color-set", self.set_color)
         self._edges_button.connect("value-changed", self.set_edges)
-
-        self._point_button = point_button
-        self._line_button = line_button
-        self._triangle_button = triangle_button
-        self._rectangle_button = rectangle_button
-        self._polygon_button = polygon_button
-
-        self._position_x_button = position_x_button
-        self._position_y_button = position_y_button
-        self._position_z_button = position_z_button
-        self._scale_x_button = scale_x_button
-        self._scale_y_button = scale_y_button
-        self._scale_z_button = scale_z_button
-        self._rotation_x_button = rotation_x_button
-        self._rotation_y_button = rotation_y_button
-        self._rotation_z_button = rotation_z_button
-
-        self._translate_x_button = translate_x_button
-        self._translate_y_button = translate_y_button
-        self._translate_z_button = translate_z_button
-
-        self._rescale_x_button = rescale_x_button
-        self._rescale_y_button = rescale_y_button
-        self._rescale_z_button = rescale_z_button
-
-        self._rotation_button = rotation_button
-        self._rotation_anchor_button = rotation_anchor_button
-        self._rotation_anchor_button_x = rotation_anchor_button_x
-        self._rotation_anchor_button_y = rotation_anchor_button_y
-        self._rotation_anchor_button_z = rotation_anchor_button_z
-
-        file_button.connect("select", self.show_explorer)
-
+        self._main_window.file_button.connect("select", self.show_explorer)
         self._point_button.connect("toggled", self.set_mode, ObjectType.POINT)
         self._line_button.connect("toggled", self.set_mode, ObjectType.LINE)
         self._triangle_button .connect("toggled", self.set_mode, ObjectType.TRIANGLE)
         self._rectangle_button.connect("toggled", self.set_mode, ObjectType.RECTANGLE)
         self._polygon_button.connect("toggled", self.set_mode, ObjectType.POLYGON)
-
-        remove_button.connect("clicked", self.remove)
-
-        apply_translation_button.connect("clicked", self.translate)
-        apply_scaling_button.connect("clicked", self.rescale)
-        apply_rotation_button.connect("clicked", self.rotate)
+        self._main_window.remove_button.connect("clicked", self.remove)
+        self._main_window.apply_translation_button.connect("clicked", self.translate)
+        self._main_window.apply_scaling_button.connect("clicked", self.rescale)
+        self._main_window.apply_rotation_button.connect("clicked", self.rotate)
         self._rotation_anchor_button.connect("clicked", self.change_rotation_anchor)
-
         self._position_x_button.connect("value-changed", self.update_position)
         self._position_y_button.connect("value-changed", self.update_position)
         self._position_z_button.connect("value-changed", self.update_position)
@@ -373,6 +329,8 @@ class EditorHandler():
         '''
         Muda a ancoragem da rotação.
         '''
+
+        # TODO: Corrigir o bug da ancoragem incorreta quando um novo objeto é adicionado
 
         match self._rotation_anchor_button.get_label():
             case "Object":

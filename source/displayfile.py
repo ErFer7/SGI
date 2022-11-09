@@ -7,6 +7,7 @@ Módulo para o handler do display file.
 import gi
 
 from source.wireframe import Object
+from source.file_system import FileSystem
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
@@ -24,7 +25,7 @@ class DisplayFileHandler():
     # Atributos privados
     _display_file_list: Gtk.ListStore
 
-    def __init__(self, display_file_list: Gtk.ListStore) -> None:
+    def __init__(self, display_file_list: Gtk.ListStore, file_system: FileSystem) -> None:
 
         self.objects = []
         self._display_file_list = display_file_list
@@ -62,5 +63,13 @@ class DisplayFileHandler():
         Remove todos os objetos.
         '''
 
-        self.objects.pop()
-        self._display_file_list.remove(self._display_file_list[-1].iter)
+        if len(self.objects) > 0:
+            self.objects.pop()
+            self._display_file_list.remove(self._display_file_list[-1].iter)
+
+    def save_world(self) -> None:
+        '''
+        ...
+        '''
+
+        # file_system.afafjka

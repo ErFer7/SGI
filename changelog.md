@@ -17,3 +17,9 @@
 * Edição da posição, escala e rotação do objeto
 * Transformadas
 * Rotação em torno de pontos arbitrários
+
+---
+
+## v0.3
+
+* _Em desenvolvimento_
