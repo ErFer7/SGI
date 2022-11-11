@@ -8,6 +8,7 @@ import gi
 
 from source.wireframe import Object
 from source.file_system import FileSystem
+from source.transform import Vector
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
@@ -30,7 +31,7 @@ class DisplayFileHandler():
         self.objects = []
         self._display_file_list = display_file_list
 
-    # Métodos utilitários
+    # Métodos
     def add_object(self, obj: Object) -> None:
         '''
         Adiciona um objeto.
@@ -73,3 +74,7 @@ class DisplayFileHandler():
         '''
 
         # file_system.afafjka
+
+    def normalize_objects(self, window_center: Vector) -> None:
+        '''
+        '''

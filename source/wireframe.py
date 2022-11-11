@@ -33,19 +33,21 @@ class Object(ABC):
     name: str
     color: tuple
     line_width: float
-    coord_list: list[Vector]
+    coords: list[Vector]
     object_type: ObjectType
+    normalized_coords: list[Vector]
 
     # Atributos privados
     _transform: Transform
 
-    def __init__(self, coord_list: list, name: str, color: tuple, line_width: float, object_type: ObjectType) -> None:
+    def __init__(self, coords: list, name: str, color: tuple, line_width: float, object_type: ObjectType) -> None:
 
         super().__init__()
         self.name = name
         self.color = color
         self.line_width = line_width
-        self.coord_list = coord_list
+        self.coords = coords
+        self.normalized_coords = []
         self.object_type = object_type
         self._transform = Transform(self.center(), Vector(0.0, 0.0, 0.0), Vector(1.0, 1.0, 1.0))
 
@@ -80,10 +82,10 @@ class Object(ABC):
 
         coord_sum = Vector(0.0, 0.0, 0.0)
 
-        for coord in self.coord_list:
+        for coord in self.coords:
             coord_sum += coord
 
-        return coord_sum / len(self.coord_list)
+        return coord_sum / len(self.coords)
 
     # Métodos de transformação
     def translate(self, translation: Vector) -> None:
@@ -91,21 +93,21 @@ class Object(ABC):
         Método para transladar o objeto (Transform::translate).
         '''
 
-        self.coord_list = self._transform.translate(translation, self.coord_list)
+        self.coords = self._transform.translate(translation, self.coords)
 
     def rescale(self, scale: Vector) -> None:
         '''
         Transformação de escala.
         '''
 
-        self.coord_list = self._transform.rescale(scale, self.coord_list)
+        self.coords = self._transform.rescale(scale, self.coords)
 
     def rotate(self, angle: float, anchor: Vector = None) -> None:
         '''
         Transformação de rotação.
         '''
 
-        self.coord_list = self._transform.rotate(angle, self.coord_list, anchor)
+        self.coords = self._transform.rotate(angle, self.coords, anchor)
 
 
 class Point(Object):
@@ -124,7 +126,7 @@ class Point(Object):
         Retorna a posição.
         '''
 
-        return self.coord_list[0]
+        return self.coords[0]
 
 
 class Line(Object):
@@ -149,7 +151,7 @@ class Line(Object):
         Obtém o ponto inicial.
         '''
 
-        return self.coord_list[0]
+        return self.coords[0]
 
     @property
     def end(self) -> Vector:
@@ -157,7 +159,7 @@ class Line(Object):
         Obtém o ponto final.
         '''
 
-        return self.coord_list[1]
+        return self.coords[1]
 
 class Wireframe(Object):
 
@@ -197,7 +199,7 @@ class Triangle(Wireframe):
         Retorna a coordenada A.
         '''
 
-        return self.coord_list[0]
+        return self.coords[0]
 
     @property
     def corner_b(self) -> Vector:
@@ -205,7 +207,7 @@ class Triangle(Wireframe):
         Retorna a coordenada B.
         '''
 
-        return self.coord_list[1]
+        return self.coords[1]
 
     @property
     def corner_c(self) -> Vector:
@@ -213,7 +215,7 @@ class Triangle(Wireframe):
         Retorna a coordenada C.
         '''
 
-        return self.coord_list[2]
+        return self.coords[2]
 
 
 class Rectangle(Wireframe):
@@ -239,7 +241,7 @@ class Rectangle(Wireframe):
         Retorna a coordenada da origem.
         '''
 
-        return self.coord_list[0]
+        return self.coords[0]
 
     @property
     def corner_a(self) -> Vector:
@@ -247,7 +249,7 @@ class Rectangle(Wireframe):
         Retorna a coordenada do canto verticalmente alinhado à origem.
         '''
 
-        return self.coord_list[1]
+        return self.coords[1]
 
     @property
     def extension(self) -> Vector:
@@ -255,7 +257,7 @@ class Rectangle(Wireframe):
         Retorna a coordenada da extensão.
         '''
 
-        return self.coord_list[2]
+        return self.coords[2]
 
     @property
     def corner_b(self) -> Vector:
@@ -263,4 +265,4 @@ class Rectangle(Wireframe):
         Retorna a coordenada do canto verticalmente alinhado à extensão.
         '''
 
-        return self.coord_list[3]
+        return self.coords[3]

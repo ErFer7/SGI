@@ -163,7 +163,7 @@ class Transform():
             return coord + anchor
 
     # Transformações
-    def translate(self, direction: Vector, coord_list: list[Vector]) -> list:
+    def translate(self, direction: Vector, coords: list[Vector]) -> list:
         '''
         Translação de um objeto. Retorna uma nova lista de coordenadas.
         '''
@@ -174,17 +174,17 @@ class Transform():
         self._translation_matrix[1, 3] = direction.y
         self._translation_matrix[2, 3] = direction.z
 
-        new_coord_list = []
+        new_coords = []
 
         # Translação ponto a ponto
-        for coord in coord_list:
+        for coord in coords:
 
             new_coord = np.matmul(self._translation_matrix, [coord.x, coord.y, coord.z, 1])
-            new_coord_list.append(Vector(new_coord[0, 0], new_coord[0, 1], new_coord[0, 2]))
+            new_coords.append(Vector(new_coord[0, 0], new_coord[0, 1], new_coord[0, 2]))
 
-        return new_coord_list
+        return new_coords
 
-    def rescale(self, scale: Vector, coord_list: list[Vector]) -> list:
+    def rescale(self, scale: Vector, coords: list[Vector]) -> list:
         '''
         Transformação de escala.
         '''
@@ -197,19 +197,19 @@ class Transform():
         self._scaling_matrix[1, 1] = scale.y
         self._scaling_matrix[2, 2] = scale.z
 
-        new_coord_list = []
+        new_coords = []
 
         # Translação ponto a ponto
-        for coord in coord_list:
+        for coord in coords:
 
             relative_coord = self.world_to_local(coord)
             new_coord = np.matmul(self._scaling_matrix, [relative_coord.x, relative_coord.y, relative_coord.z, 1])
             relative_new_coord = self.local_to_world(Vector(new_coord[0, 0], new_coord[0, 1], new_coord[0, 2]))
-            new_coord_list.append(relative_new_coord)
+            new_coords.append(relative_new_coord)
 
-        return new_coord_list
+        return new_coords
 
-    def rotate(self, angle: float, coord_list: list[Vector], anchor: Vector = None) -> list:
+    def rotate(self, angle: float, coords: list[Vector], anchor: Vector = None) -> list:
         '''
         Rotaciona o objeto em relação à um ponto.
         '''
@@ -226,16 +226,16 @@ class Transform():
         self._rotation_matrix_z[1, 0] = angle_sin
         self._rotation_matrix_z[1, 1] = angle_cos
 
-        new_coord_list = []
+        new_coords = []
 
         # Translação ponto a ponto. A posição é adicionada como um ponto
-        for coord in coord_list + [self._position]:
+        for coord in coords + [self._position]:
 
             relative_coord = self.world_to_local(coord, anchor)
             new_coord = np.matmul(self._rotation_matrix_z, [relative_coord.x, relative_coord.y, relative_coord.z, 1])
             relative_new_coord = self.local_to_world(Vector(new_coord[0, 0], new_coord[0, 1], new_coord[0, 2]), anchor)
-            new_coord_list.append(relative_new_coord)
+            new_coords.append(relative_new_coord)
 
-        self._position = new_coord_list[-1]  # Atualiza a posição
+        self._position = new_coords[-1]  # Atualiza a posição
 
-        return new_coord_list[:-1]  # Retorna todas as coordenadas menos a posição
+        return new_coords[:-1]  # Retorna todas as coordenadas menos a posição
