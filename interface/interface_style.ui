@@ -496,7 +496,9 @@
                                 <property name="can-focus">True</property>
                                 <property name="max-width-chars">5</property>
                                 <property name="text" translatable="yes">1,00</property>
+                                <property name="caps-lock-warning">False</property>
                                 <property name="placeholder-text" translatable="yes">Width</property>
+                                <property name="input-purpose">number</property>
                                 <property name="adjustment">width_values</property>
                                 <property name="digits">2</property>
                                 <property name="snap-to-ticks">True</property>
@@ -1590,7 +1592,7 @@
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
                         <property name="margin-bottom">10</property>
-                        <property name="label" translatable="yes">SGI v0.2 - Eric Fernandes Evaristo and Luis Henrique Goulart Stemmer</property>
+                        <property name="label" translatable="yes">SGI v0.3 - Eric Fernandes Evaristo and Luis Henrique Goulart Stemmer</property>
                         <attributes>
                           <attribute name="style" value="italic"/>
                           <attribute name="weight" value="light"/>

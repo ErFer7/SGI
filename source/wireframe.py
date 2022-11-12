@@ -47,9 +47,9 @@ class Object(ABC):
         self.color = color
         self.line_width = line_width
         self.coords = coords
-        self.normalized_coords = []
+        self.normalized_coords = coords
         self.object_type = object_type
-        self._transform = Transform(self.center(), Vector(0.0, 0.0, 0.0), Vector(1.0, 1.0, 1.0))
+        self._transform = Transform(self.calculate_center(), Vector(0.0, 0.0, 0.0), Vector(1.0, 1.0, 1.0))
 
     @property
     def position(self) -> Vector:
@@ -75,7 +75,7 @@ class Object(ABC):
 
         return self._transform.rotation
 
-    def center(self) -> Vector:
+    def calculate_center(self) -> Vector:
         '''
         Retorna o centro do objeto.
         '''
@@ -108,6 +108,13 @@ class Object(ABC):
         '''
 
         self.coords = self._transform.rotate(angle, self.coords, anchor)
+
+    def normalize(self, window_center: Vector, window_rotation: float) -> None:
+        '''
+        Normaliza as coordenadas.
+        '''
+
+        self.normalized_coords = self._transform.normalize(window_center, window_rotation, None, self.coords)
 
 
 class Point(Object):
@@ -266,3 +273,61 @@ class Rectangle(Wireframe):
         '''
 
         return self.coords[3]
+
+
+class Window(Rectangle):
+
+    '''
+    Janela.
+    '''
+
+    def __init__(self,
+                 origin: Vector,
+                 extension: Vector,
+                 color: tuple = (0.5, 0.0, 0.5),
+                 line_width: float = 2.0) -> None:
+        super().__init__(origin, extension, "Window", color, line_width)
+
+    def normalized_translate(self, translation: Vector) -> None:
+        '''
+        Translada as coordenadas normalizadas da Window.
+        '''
+
+        self.normalized_coords = self._transform.translate(translation, self.coords, False)
+
+    def normalized_rescale(self, scale: Vector) -> None:
+        '''
+        Escala normalizada
+        '''
+
+        self.normalized_coords = self._transform.rescale(scale, self.coords, False)
+
+    def normalized_rotate(self, angle: float) -> None:
+        '''
+        Rotação normalizada.
+        '''
+
+        self.normalized_coords = self._transform.rotate(angle, self.coords, Vector(0.0, 0.0, 0.0), False)
+
+    def calculate_up_vector(self) -> Vector:
+        '''
+        Retorna o vetor que aponta para cima.
+        '''
+
+        return self.coords[1] - self.coords[0]
+
+    @property
+    def normalized_origin(self) -> Vector:
+        '''
+        Retorna a coordenada normalizada da origem.
+        '''
+
+        return self.normalized_coords[0]
+
+    @property
+    def normalized_extension(self) -> Vector:
+        '''
+        Retorna a coordenada normalizada da extensão.
+        '''
+
+        return self.normalized_coords[2]

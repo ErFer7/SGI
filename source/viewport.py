@@ -5,7 +5,7 @@ Neste módulo estão definidos os funcionamentos do viewport.
 '''
 
 from source.transform import Vector
-from source.wireframe import Rectangle
+from source.wireframe import Window
 from source.displayfile import DisplayFileHandler
 
 import gi
@@ -24,7 +24,7 @@ class ViewportHandler():
     _main_window: None
     _drawing_area: Gtk.DrawingArea
     _bg_color: tuple
-    _window: Rectangle
+    _window: Window
     _drag_coord: Vector
 
     def __init__(self,
@@ -42,11 +42,7 @@ class ViewportHandler():
         self._drawing_area.connect("scroll-event", self.on_scroll)
         self._drawing_area.connect("size-allocate", self.on_size_allocate)
         self._bg_color = bg_color
-        self._window = Rectangle(Vector(0.0, 0.0),
-                                 Vector(922.0, 623.0),
-                                 "Window",
-                                 (0.5, 0.0, 0.5),
-                                 2.0)
+        self._window = Window(Vector(-461.0, -311.5), Vector(461.0, 311.5), (0.5, 0.0, 0.5), 2.0)
         self._drag_coord = None
 
     # Métodos utilitários
@@ -55,8 +51,8 @@ class ViewportHandler():
         Converte a coordenada de mundo para uma coordenada de tela.
         '''
 
-        origin = self._window.origin
-        extension = self._window.extension
+        origin = self._window.normalized_origin
+        extension = self._window.normalized_extension
 
         x_s = ((coord.x - origin.x) / (extension.x - origin.x)) * self._drawing_area.get_allocated_width()
         y_s = (1 - (coord.y - origin.y) / (extension.y - origin.y)) * self._drawing_area.get_allocated_height()
@@ -68,8 +64,8 @@ class ViewportHandler():
         Converte a coordenada de tela para uma coordenada de mundo.
         '''
 
-        origin = self._window.origin
-        extension = self._window.extension
+        origin = self._window.normalized_origin
+        extension = self._window.normalized_extension
 
         x_w = (coord.x / self._drawing_area.get_allocated_width()) * (extension.x - origin.x) + origin.x
         y_w = (1.0 - (coord.y / self._drawing_area.get_allocated_height())) * (extension.y - origin.y) + origin.y
@@ -103,6 +99,9 @@ class ViewportHandler():
         Método para a renderização.
         '''
 
+        # Normaliza os objetos
+        self._main_window.display_file_handler.normalize_objects(self._window)
+
         # Preenche o fundo
         context.set_source_rgb(self._bg_color[0], self._bg_color[1], self._bg_color[2])
         context.rectangle(0, 0, area.get_allocated_width(), area.get_allocated_height())
@@ -111,7 +110,7 @@ class ViewportHandler():
         # Renderiza todos os objetos do display file
         for obj in self._main_window.display_file_handler.objects + [self._window]:
 
-            screen_coords = list(map(self.world_to_screen, obj.coords))
+            screen_coords = list(map(self.world_to_screen, obj.normalized_coords))
             lines = self.coords_to_lines(screen_coords)
             color = obj.color
             line_width = obj.line_width
@@ -145,14 +144,13 @@ class ViewportHandler():
         Evento de movimento.
         '''
 
-
         if self._drag_coord is not None:
 
             position = Vector(event.x, event.y)
             diff = self._drag_coord - position
             diff.y = -diff.y
             diff *= self._window.scale.x
-            self._window.translate(diff)
+            self.move_window(diff)
             self._drag_coord = position
 
     def on_button_release(self, widget, event) -> None:
@@ -175,6 +173,8 @@ class ViewportHandler():
         else:
             self._window.rescale(Vector(0.97, 0.97, 1.0))
 
+        self._main_window.display_file_handler.request_normalization()
+
     def on_size_allocate(self, allocation, user_data):
         '''
         Evento de alocação.
@@ -187,6 +187,59 @@ class ViewportHandler():
         diff.z /= self._window.scale.z
 
         self._window.rescale(diff)
-        self._window.rescale(Vector(user_data.width / self._window.extension.x,
-                                    user_data.height / self._window.extension.y,
+        self._window.rescale(Vector(user_data.width / (self._window.extension.x - self._window.origin.x),
+                                    user_data.height / (self._window.extension.y - self._window.origin.y),
                                     1.0))
+        self._main_window.display_file_handler.request_normalization()
+
+    def move_window(self, direction: Vector) -> None:
+        '''
+        Move a window.
+        '''
+
+        self._window.translate(direction)
+        self._main_window.display_file_handler.request_normalization()
+
+    def reset_window_position(self) -> None:
+        '''
+        Redefine a posição da window.
+        '''
+
+        self._window.translate(self._window.position * -1)
+        self._main_window.display_file_handler.request_normalization()
+
+    def rotate_window(self, angle: float) -> None:
+        '''
+        Rotaciona a window.
+        '''
+
+        self._window.rotate(angle)
+        self._main_window.display_file_handler.request_normalization()
+
+    def reset_window_rotation(self) -> None:
+        '''
+        Redefine a rotação da window.
+        '''
+
+        self._window.rotate(-self._window.rotation.z)
+        self._main_window.display_file_handler.request_normalization()
+
+    def reescale_window(self, scale: Vector) -> None:
+        '''
+        Reescala a window.
+        '''
+
+        self._window.rescale(scale)
+        self._main_window.display_file_handler.request_normalization()
+
+    def reset_window_scale(self) -> None:
+        '''
+        Redefine a escala da window.
+        '''
+
+        diff_x = 1.0 / self._window.scale.x
+        diff_y = 1.0 / self._window.scale.y
+        diff_z = 1.0 / self._window.scale.z
+
+        self._window.rescale(Vector(diff_x, diff_y, diff_z))
+        self._main_window.display_file_handler.request_normalization()

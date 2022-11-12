@@ -12,7 +12,7 @@ from source.viewport import ViewportHandler
 from source.file_system import FileSystem
 
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk
+from gi.repository import Gtk, Gdk
 
 
 @Gtk.Template(filename=os.path.join(os.getcwd(), "interface", "interface_style.ui"))
@@ -79,4 +79,12 @@ class MainWindow(Gtk.Window):
         self.editor_handler = EditorHandler(self)
         self.viewport_handler = ViewportHandler(self, self.viewport_drawing_area)
 
+        self.connect("key-press-event", self.on_key_press)
         self.connect("destroy", Gtk.main_quit)
+
+    def on_key_press(self, widget, event) -> None:
+        '''
+        Evento de pressionamento de tecla
+        '''
+
+        self.editor_handler.handle_key_press(event.string)
