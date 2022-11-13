@@ -88,12 +88,16 @@ class Object(ABC):
         return coord_sum / len(self.coords)
 
     # Métodos de transformação
-    def translate(self, translation: Vector) -> None:
+    def translate(self, direction: Vector, normalized: bool = False) -> None:
         '''
         Método para transladar o objeto (Transform::translate).
         '''
 
-        self.coords = self._transform.translate(translation, self.coords)
+        if normalized:
+            direction = self._transform.rotate(self.rotation.z, [direction + self.position], None, False)[0]
+            direction -= self.position
+
+        self.coords = self._transform.translate(direction, self.coords)
 
     def rescale(self, scale: Vector) -> None:
         '''
@@ -109,12 +113,19 @@ class Object(ABC):
 
         self.coords = self._transform.rotate(angle, self.coords, anchor)
 
-    def normalize(self, window_center: Vector, window_rotation: float) -> None:
+    def normalize(self, window_center: Vector, window_scale: Vector, window_rotation: float) -> None:
         '''
         Normaliza as coordenadas.
         '''
 
-        self.normalized_coords = self._transform.normalize(window_center, window_rotation, None, self.coords)
+        diff_x = 1.0 / window_scale.x
+        diff_y = 1.0 / window_scale.y
+        diff_z = 1.0 / window_scale.z
+
+        self.normalized_coords = self._transform.normalize(window_center,
+                                                           window_rotation,
+                                                           Vector(diff_x, diff_y, diff_z),
+                                                           self.coords)
 
 
 class Point(Object):
@@ -167,6 +178,7 @@ class Line(Object):
         '''
 
         return self.coords[1]
+
 
 class Wireframe(Object):
 
@@ -287,27 +299,6 @@ class Window(Rectangle):
                  color: tuple = (0.5, 0.0, 0.5),
                  line_width: float = 2.0) -> None:
         super().__init__(origin, extension, "Window", color, line_width)
-
-    def normalized_translate(self, translation: Vector) -> None:
-        '''
-        Translada as coordenadas normalizadas da Window.
-        '''
-
-        self.normalized_coords = self._transform.translate(translation, self.coords, False)
-
-    def normalized_rescale(self, scale: Vector) -> None:
-        '''
-        Escala normalizada
-        '''
-
-        self.normalized_coords = self._transform.rescale(scale, self.coords, False)
-
-    def normalized_rotate(self, angle: float) -> None:
-        '''
-        Rotação normalizada.
-        '''
-
-        self.normalized_coords = self._transform.rotate(angle, self.coords, Vector(0.0, 0.0, 0.0), False)
 
     def calculate_up_vector(self) -> Vector:
         '''

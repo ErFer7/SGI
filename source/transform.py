@@ -131,9 +131,9 @@ class Transform():
                                              [0.0, 0.0, 0.0, 1.0]])
 
 
-        self._normalization_matrix = np.matrix([[cos_0, -sin_0, 0.0, self._position.x],
-                                                [sin_0, cos_0, 0.0, self._position.y],
-                                                [0.0, 0.0, 1.0, self._position.z],
+        self._normalization_matrix = np.matrix([[cos_0 * self._scale.x, -sin_0 * self._scale.y, 0.0, self._position.x],
+                                                [sin_0 * self._scale.x, cos_0 * self._scale.y, 0.0, self._position.y],
+                                                [0.0, 0.0, self._scale.z, self._position.z],
                                                 [0.0, 0.0, 0.0, 1.0]])
 
     def __repr__(self) -> str:
@@ -215,6 +215,7 @@ class Transform():
     def rescale(self,
                 scale: Vector,
                 coords: list[Vector],
+                anchor: Vector = None,
                 update_internal_vectors: bool = True) -> list[Vector]:
         '''
         Transformação de escala.
@@ -234,9 +235,9 @@ class Transform():
         # Translação ponto a ponto
         for coord in coords:
 
-            relative_coord = self.world_to_local(coord)
+            relative_coord = self.world_to_local(coord, anchor)
             new_coord = np.matmul(self._scaling_matrix, [relative_coord.x, relative_coord.y, relative_coord.z, 1])
-            relative_new_coord = self.local_to_world(Vector(new_coord[0, 0], new_coord[0, 1], new_coord[0, 2]))
+            relative_new_coord = self.local_to_world(Vector(new_coord[0, 0], new_coord[0, 1], new_coord[0, 2]), anchor)
             new_coords.append(relative_new_coord)
 
         return new_coords
@@ -291,6 +292,7 @@ class Transform():
 
         new_coords = []
 
+        # Translação
         self._normalization_matrix[0, 3] = -window_center.x
         self._normalization_matrix[1, 3] = -window_center.y
         self._normalization_matrix[2, 3] = -window_center.z
@@ -298,10 +300,12 @@ class Transform():
         angle_cos = cos(radians(-window_rotation))
         angle_sin = sin(radians(-window_rotation))
 
-        self._normalization_matrix[0, 0] = angle_cos
-        self._normalization_matrix[0, 1] = -angle_sin
-        self._normalization_matrix[1, 0] = angle_sin
-        self._normalization_matrix[1, 1] = angle_cos
+        # Escala e rotação
+        self._normalization_matrix[0, 0] = angle_cos * scale.x
+        self._normalization_matrix[0, 1] = -angle_sin * scale.y
+        self._normalization_matrix[1, 0] = angle_sin * scale.x
+        self._normalization_matrix[1, 1] = angle_cos * scale.y
+        self._normalization_matrix[2, 2] = angle_cos * scale.z
 
         for coord in coords:
 

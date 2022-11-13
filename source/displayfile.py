@@ -95,14 +95,11 @@ class DisplayFileHandler():
         if not self._all_objects_normalized:
             self._all_objects_normalized = True
 
-            window.normalized_translate(window.position * -1)
-            window.normalized_rotate(-window.rotation.z)
-
             window_up = window.calculate_up_vector()
             rotation = degrees(window_up * Vector(0.0, 1.0, 0.0))
 
             if window_up.x > 0.0:
                 rotation = 360 - rotation
 
-            for obj in self.objects:
-                obj.normalize(window.position, rotation)
+            for obj in self.objects + [window]:
+                obj.normalize(window.position, window.scale, rotation)

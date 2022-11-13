@@ -7,6 +7,7 @@ Neste módulo estão definidos os funcionamentos do viewport.
 from source.transform import Vector
 from source.wireframe import Window
 from source.displayfile import DisplayFileHandler
+from source.transform import Transform
 
 import gi
 
@@ -64,8 +65,10 @@ class ViewportHandler():
         Converte a coordenada de tela para uma coordenada de mundo.
         '''
 
-        origin = self._window.normalized_origin
-        extension = self._window.normalized_extension
+        # TODO: Fazer a conversão completa entre tela -> SCN -> mundo
+
+        origin = self._window.origin
+        extension = self._window.extension
 
         x_w = (coord.x / self._drawing_area.get_allocated_width()) * (extension.x - origin.x) + origin.x
         y_w = (1.0 - (coord.y / self._drawing_area.get_allocated_height())) * (extension.y - origin.y) + origin.y
@@ -180,16 +183,14 @@ class ViewportHandler():
         Evento de alocação.
         '''
 
-        diff = Vector(1.0, 1.0, 1.0)
+        self.reset_window_scale()
 
-        diff.x /= self._window.scale.x
-        diff.y /= self._window.scale.y
-        diff.z /= self._window.scale.z
+        # TODO: Achar maneira melhor de atualizar o tamanho da tela.
 
-        self._window.rescale(diff)
-        self._window.rescale(Vector(user_data.width / (self._window.extension.x - self._window.origin.x),
-                                    user_data.height / (self._window.extension.y - self._window.origin.y),
-                                    1.0))
+        # self._window.rescale(Vector(user_data.width / (self._window.extension.x - self._window.origin.x),
+        #                             user_data.height / (self._window.extension.y - self._window.origin.y),
+        #                             1.0))
+
         self._main_window.display_file_handler.request_normalization()
 
     def move_window(self, direction: Vector) -> None:
@@ -197,7 +198,7 @@ class ViewportHandler():
         Move a window.
         '''
 
-        self._window.translate(direction)
+        self._window.translate(direction, True)
         self._main_window.display_file_handler.request_normalization()
 
     def reset_window_position(self) -> None:
