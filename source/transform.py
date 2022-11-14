@@ -106,33 +106,33 @@ class Transform():
                                           [0.0, 0.0, self._scale.z, 0.0],
                                           [0.0, 0.0, 0.0, 1.0]])
 
-        cos_0 = cos(rotation.x)
-        sin_0 = sin(rotation.x)
+        cos_ = cos(rotation.x)
+        sin_ = sin(rotation.x)
 
         self._rotation_matrix_x = np.matrix([[1.0, 0.0, 0.0, 0.0],
-                                             [0.0, cos_0, sin_0, 0.0],
-                                             [0.0, sin_0, cos_0, 0.0],
+                                             [0.0, cos_, sin_, 0.0],
+                                             [0.0, sin_, cos_, 0.0],
                                              [0.0, 0.0, 0.0, 1.0]])
 
-        cos_0 = cos(rotation.y)
-        sin_0 = sin(rotation.y)
+        cos_ = cos(rotation.y)
+        sin_ = sin(rotation.y)
 
-        self._rotation_matrix_y = np.matrix([[cos_0, 0.0, sin_0, 0.0],
+        self._rotation_matrix_y = np.matrix([[cos_, 0.0, sin_, 0.0],
                                              [0.0, 1.0, 0.0, 0.0],
-                                             [-sin_0, 0.0, cos_0, 0.0],
+                                             [-sin_, 0.0, cos_, 0.0],
                                              [0.0, 0.0, 0.0, 1.0]])
 
-        cos_0 = cos(rotation.z)
-        sin_0 = sin(rotation.z)
+        cos_ = cos(rotation.z)
+        sin_ = sin(rotation.z)
 
-        self._rotation_matrix_z = np.matrix([[cos_0, -sin_0, 0.0, 0.0],
-                                             [sin_0, cos_0, 0.0, 0.0],
+        self._rotation_matrix_z = np.matrix([[cos_, -sin_, 0.0, 0.0],
+                                             [sin_, cos_, 0.0, 0.0],
                                              [0.0, 0.0, 1.0, 0.0],
                                              [0.0, 0.0, 0.0, 1.0]])
 
 
-        self._normalization_matrix = np.matrix([[cos_0 * self._scale.x, -sin_0 * self._scale.y, 0.0, self._position.x],
-                                                [sin_0 * self._scale.x, cos_0 * self._scale.y, 0.0, self._position.y],
+        self._normalization_matrix = np.matrix([[cos_ * self._scale.x, -sin_ * self._scale.y, 0.0, self._position.x],
+                                                [sin_ * self._scale.x, cos_ * self._scale.y, 0.0, self._position.y],
                                                 [0.0, 0.0, self._scale.z, self._position.z],
                                                 [0.0, 0.0, 0.0, 1.0]])
 
@@ -166,25 +166,70 @@ class Transform():
 
         return self._rotation
 
-    def world_to_local(self, coord: Vector, anchor: Vector = None) -> Vector:
+    @staticmethod
+    def world_to_local(coord: Vector, anchor: Vector) -> Vector:
         '''
         Calcula o ponto relativo a um ponto no mundo. Este ponto é a origem por padrão.
         '''
-
-        if anchor is None:
-            return coord - self._position
 
         return coord - anchor
 
-    def local_to_world(self, coord: Vector, anchor: Vector = None) -> Vector:
+    @staticmethod
+    def local_to_world(coord: Vector, anchor: Vector) -> Vector:
         '''
         Calcula o ponto relativo a um ponto no mundo. Este ponto é a origem por padrão.
         '''
 
-        if anchor is None:
-            return coord + self._position
-
         return coord + anchor
+
+    @staticmethod
+    def translate_vector(direction: Vector, vector: Vector) -> Vector:
+        '''
+        Translada um vetor (método estático utilitário).
+        '''
+
+        translation_matrix = np.matrix([[1.0, 0.0, 0.0, direction.x],
+                                        [0.0, 1.0, 0.0, direction.y],
+                                        [0.0, 0.0, 1.0, direction.z],
+                                        [0.0, 0.0, 0.0, 1.0]])
+
+        new_vector = np.matmul(translation_matrix, [vector.x, vector.y, vector.z, 1])
+
+        return Vector(new_vector[0, 0], new_vector[0, 1], new_vector[0, 2])
+
+    @staticmethod
+    def reescale_vector(scale: Vector, vector: Vector, anchor: Vector) -> Vector:
+        '''
+        Reescala um vetor (método estático utilitário).
+        '''
+
+        scaling_matrix = np.matrix([[scale.x, 0.0, 0.0, 0.0],
+                                    [0.0, scale.y, 0.0, 0.0],
+                                    [0.0, 0.0, scale.z, 0.0],
+                                    [0.0, 0.0, 0.0, 1.0]])
+
+        relative_vector = Transform.world_to_local(vector, anchor)
+
+        new_vector = np.matmul(scaling_matrix, [relative_vector.x, relative_vector.y, relative_vector.z, 1])
+        return Transform.local_to_world(Vector(new_vector[0, 0], new_vector[0, 1], new_vector[0, 2]), new_vector)
+
+    @staticmethod
+    def rotate_vector(angle: float, vector: Vector, anchor: Vector) -> Vector:
+        '''
+        Rotaciona um vetor (método estático utilitário).
+        '''
+
+        angle_cos = cos(radians(angle))
+        angle_sin = sin(radians(angle))
+
+        rotation_matrix_z = np.matrix([[angle_cos, -angle_sin, 0.0, 0.0],
+                                       [angle_sin, angle_cos, 0.0, 0.0],
+                                       [0.0, 0.0, 1.0, 0.0],
+                                       [0.0, 0.0, 0.0, 1.0]])
+
+        relative_vector = Transform.world_to_local(vector, anchor)
+        new_vector = np.matmul(rotation_matrix_z, [relative_vector.x, relative_vector.y, relative_vector.z, 1])
+        return Transform.local_to_world(Vector(new_vector[0, 0], new_vector[0, 1], new_vector[0, 2]), anchor)
 
     # Transformações
     def translate(self,
@@ -206,7 +251,6 @@ class Transform():
 
         # Translação ponto a ponto
         for coord in coords:
-
             new_coord = np.matmul(self._translation_matrix, [coord.x, coord.y, coord.z, 1])
             new_coords.append(Vector(new_coord[0, 0], new_coord[0, 1], new_coord[0, 2]))
 
@@ -232,9 +276,11 @@ class Transform():
 
         new_coords = []
 
+        if anchor is None:
+            anchor = self._position
+
         # Translação ponto a ponto
         for coord in coords:
-
             relative_coord = self.world_to_local(coord, anchor)
             new_coord = np.matmul(self._scaling_matrix, [relative_coord.x, relative_coord.y, relative_coord.z, 1])
             relative_new_coord = self.local_to_world(Vector(new_coord[0, 0], new_coord[0, 1], new_coord[0, 2]), anchor)
@@ -267,9 +313,11 @@ class Transform():
         corrected_coords = coords + [self._position] if update_internal_vectors else coords
         new_coords = []
 
+        if anchor is None:
+            anchor = self._position
+
         # Translação ponto a ponto. A posição é adicionada como um ponto
         for coord in corrected_coords:
-
             relative_coord = self.world_to_local(coord, anchor)
             new_coord = np.matmul(self._rotation_matrix_z, [relative_coord.x, relative_coord.y, relative_coord.z, 1])
             relative_new_coord = self.local_to_world(Vector(new_coord[0, 0], new_coord[0, 1], new_coord[0, 2]), anchor)
@@ -308,7 +356,6 @@ class Transform():
         self._normalization_matrix[2, 2] = angle_cos * scale.z
 
         for coord in coords:
-
             relative_coord = self.world_to_local(coord, Vector(0.0, 0.0, 0.0))
             new_coord = np.matmul(self._normalization_matrix, [relative_coord.x, relative_coord.y, relative_coord.z, 1])
             relative_new_coord = self.local_to_world(Vector(new_coord[0, 0], new_coord[0, 1], new_coord[0, 2]),

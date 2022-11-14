@@ -7,7 +7,6 @@ Neste módulo estão definidos os funcionamentos do viewport.
 from source.transform import Vector
 from source.wireframe import Window
 from source.displayfile import DisplayFileHandler
-from source.transform import Transform
 
 import gi
 
@@ -43,7 +42,7 @@ class ViewportHandler():
         self._drawing_area.connect("scroll-event", self.on_scroll)
         self._drawing_area.connect("size-allocate", self.on_size_allocate)
         self._bg_color = bg_color
-        self._window = Window(Vector(-461.0, -311.5), Vector(461.0, 311.5), (0.5, 0.0, 0.5), 2.0)
+        self._window = Window(Vector(-500.0, -500.0), Vector(500.0, 500.0), (0.5, 0.0, 0.5), 2.0)
         self._drag_coord = None
 
     # Métodos utilitários
@@ -87,11 +86,10 @@ class ViewportHandler():
         else:
 
             for i, _ in enumerate(coords):
-
                 if i < len(coords) - 1:
                     lines.append((coords[i], coords[i + 1]))
 
-            if (len(coords) // 3) % 2 != 0:
+            if len(coords) > 2:
                 lines.append((coords[-1], coords[0]))
 
         return lines
