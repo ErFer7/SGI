@@ -4,6 +4,8 @@
 Neste módulo estão definidos os funcionamentos do viewport.
 '''
 
+from enum import Enum
+
 from source.transform import Vector
 from source.wireframe import Window
 from source.displayfile import DisplayFileHandler
@@ -12,6 +14,27 @@ import gi
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
+
+
+class ClippingMethod(Enum):
+    '''
+    Algoritmos de clipping.
+    '''
+
+    COHEN_SUTHERLAND = 1
+    LIANG_BARSKY = 2
+    NICHOLL_LEE_NICHOLL = 3
+
+
+class Intersection(Enum):
+    '''
+    Tipos de interseção.
+    '''
+
+    LEFT = 1
+    RIGHT = 2
+    TOP = 3
+    BOTTOM = 4
 
 
 class ViewportHandler():
@@ -26,10 +49,13 @@ class ViewportHandler():
     _bg_color: tuple
     _window: Window
     _drag_coord: Vector
+    _viewport_padding: Vector
+    _clipping_method: ClippingMethod
 
     def __init__(self,
                  main_window: DisplayFileHandler,
                  drawing_area: Gtk.DrawingArea,
+                 viewport_padding: Vector = Vector(0.0, 0.0, 0.0),
                  bg_color: tuple = (0, 0, 0)) -> None:
 
         self._main_window = main_window
@@ -44,6 +70,8 @@ class ViewportHandler():
         self._bg_color = bg_color
         self._window = Window(Vector(-500.0, -500.0), Vector(500.0, 500.0), (0.5, 0.0, 0.5), 2.0)
         self._drag_coord = None
+        self._viewport_padding = viewport_padding
+        self._clipping_method = ClippingMethod.COHEN_SUTHERLAND
 
     # Métodos utilitários
     def world_to_screen(self, coord: Vector) -> Vector:
@@ -51,10 +79,10 @@ class ViewportHandler():
         Converte a coordenada de mundo para uma coordenada de tela.
         '''
 
-        origin = self._window.normalized_origin
-        extension = self._window.normalized_extension
+        origin = self._window.normalized_origin - self._viewport_padding
+        extension = self._window.normalized_extension + self._viewport_padding
 
-        x_s = ((coord.x - origin.x) / (extension.x - origin.x)) * self._drawing_area.get_allocated_width()
+        x_s = ((coord.x - origin.x) / (extension.x - origin.x)) * (self._drawing_area.get_allocated_width())
         y_s = (1 - (coord.y - origin.y) / (extension.y - origin.y)) * self._drawing_area.get_allocated_height()
 
         return Vector(x_s, y_s)
@@ -64,15 +92,100 @@ class ViewportHandler():
         Converte a coordenada de tela para uma coordenada de mundo.
         '''
 
-        # TODO: Fazer a conversão completa entre tela -> SCN -> mundo
-
-        origin = self._window.origin
-        extension = self._window.extension
+        origin = self._window.origin - self._viewport_padding
+        extension = self._window.extension + self._viewport_padding
 
         x_w = (coord.x / self._drawing_area.get_allocated_width()) * (extension.x - origin.x) + origin.x
         y_w = (1.0 - (coord.y / self._drawing_area.get_allocated_height())) * (extension.y - origin.y) + origin.y
 
         return Vector(x_w, y_w)
+
+    def clip(self, coords: list[Vector]) -> list[Vector]:
+        '''
+        Faz o clipping de um objeto.
+        '''
+
+        clipped_coords = []
+
+        if len(coords) == 1:
+            if (self._window.normalized_origin.x <= coords[0].x <= self._window.normalized_extension.x) and \
+               (self._window.normalized_origin.y <= coords[0].y <= self._window.normalized_extension.y):
+                clipped_coords.append(Vector(coords[0].x + 1, coords[0].y))
+        else:
+
+            match self._clipping_method:
+                case ClippingMethod.COHEN_SUTHERLAND:
+
+                    if len(coords) == 2:
+                        clipped_coords = self.cohen_sutherland(coords)
+                    else:
+                        clipped_coords = coords
+                case _:
+                    raise NotImplementedError("Algoritmo inválido")
+
+        return clipped_coords
+
+    def intersection(self, line: list[Vector], inter_a: Intersection, inter_b: Intersection) -> list[Vector]:
+        '''
+        Cacula a interseção do vetor com a window.
+        '''
+
+        # TODO: Terminar isso aqui
+
+        new_ax = line[0].x
+        new_ay = line[0].y
+        new_bx = line[1].x
+        new_by = line[1].y
+
+        angular_coeff = (line[1].y - line[0].y) / (line[1].x - line[0].x)
+
+        match inter_a:
+            case Intersection.LEFT:
+                new_ax = self._window.normalized_origin.x
+                new_ay = angular_coeff * (self._window.normalized_origin.x - line[0].x) + line[0].y
+
+                if new_ay < self._window.normalized_origin.y or new_ay > self._window.normalized_extension.y:
+                    return []
+
+        match inter_b:
+            case Intersection.TOP:
+                new_bx = line[0].x + (1.0 / angular_coeff) * (self._window.normalized_extension.y - line[0].y)
+                new_by = self._window.normalized_extension.y
+
+                if new_bx < self._window.normalized_origin.x or new_bx > self._window.normalized_extension.x:
+                    return []
+
+        return [Vector(new_ax, new_ay), Vector(new_bx, new_by)]
+
+    def cohen_sutherland(self, line: list[Vector]) -> list[Vector]:
+        '''
+        Clipping de linha com o algoritmo de Cohen-Shuterland.
+        '''
+
+        clipped_line = []
+        region_codes = []
+
+        for coord in line:
+
+            region_code = 0b0000
+            region_code |= 0b0001 if coord.x < self._window.normalized_origin.x else 0b0000
+            region_code |= 0b0010 if coord.x > self._window.normalized_extension.x else 0b0000
+            region_code |= 0b0100 if coord.y < self._window.normalized_origin.y else 0b0000
+            region_code |= 0b1000 if coord.y > self._window.normalized_extension.y else 0b0000
+            region_codes.append(region_code)
+
+        if region_codes[0] | region_codes[1] == 0b0000:
+            clipped_line = line
+        elif region_codes[0] & region_codes[1] == 0b0000:
+
+            if region_codes[0] == 0b0001 and region_codes[1] == 0b0000:
+                clipped_line = self.intersection(line, Intersection.LEFT, None)
+            elif region_codes[0] == 0b0001 and region_codes[1] == 0b1000:
+                clipped_line = self.intersection(line, Intersection.LEFT, Intersection.TOP)
+            else:
+                clipped_line = line
+
+        return clipped_line
 
     def coords_to_lines(self, coords: list[Vector]) -> list[tuple]:
         '''
@@ -111,7 +224,8 @@ class ViewportHandler():
         # Renderiza todos os objetos do display file
         for obj in self._main_window.display_file_handler.objects + [self._window]:
 
-            screen_coords = list(map(self.world_to_screen, obj.normalized_coords))
+            clipped_coords = self.clip(obj.normalized_coords)
+            screen_coords = list(map(self.world_to_screen, clipped_coords))
             lines = self.coords_to_lines(screen_coords)
             color = obj.color
             line_width = obj.line_width

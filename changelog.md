@@ -25,3 +25,9 @@
 * Sistema de coordenadas normalizado
 * Atalhos de navegação
 * Rotações na window
+
+---
+
+## v0.4
+
+* _Em desenvolvimento_

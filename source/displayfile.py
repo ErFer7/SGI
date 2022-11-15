@@ -4,9 +4,10 @@
 Módulo para o handler do display file.
 '''
 
+from math import degrees
+
 import gi
 
-from math import degrees
 from source.wireframe import Object, Window
 from source.file_system import FileSystem
 from source.transform import Vector

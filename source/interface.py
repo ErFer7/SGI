@@ -10,6 +10,7 @@ from source.displayfile import DisplayFileHandler
 from source.editor import EditorHandler
 from source.viewport import ViewportHandler
 from source.file_system import FileSystem
+from source.transform import Vector
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
@@ -77,7 +78,7 @@ class MainWindow(Gtk.Window):
         self.file_system = FileSystem()
         self.display_file_handler = DisplayFileHandler(self.display_file_list, self.file_system)
         self.editor_handler = EditorHandler(self)
-        self.viewport_handler = ViewportHandler(self, self.viewport_drawing_area)
+        self.viewport_handler = ViewportHandler(self, self.viewport_drawing_area, Vector(25.0, 25.0, 0.0))
 
         self.connect("key-press-event", self.on_key_press)
         self.connect("destroy", Gtk.main_quit)
