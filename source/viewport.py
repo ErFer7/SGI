@@ -31,10 +31,11 @@ class Intersection(Enum):
     Tipos de interseção.
     '''
 
-    LEFT = 1
-    RIGHT = 2
-    TOP = 3
-    BOTTOM = 4
+    NULL = 1
+    LEFT = 2
+    RIGHT = 3
+    TOP = 4
+    BOTTOM = 5
 
 
 class ViewportHandler():
@@ -131,37 +132,51 @@ class ViewportHandler():
         '''
 
         # TODO: Terminar isso aqui
-
-        new_ax = line[0].x
-        new_ay = line[0].y
-        new_bx = line[1].x
-        new_by = line[1].y
-
         angular_coeff = (line[1].y - line[0].y) / (line[1].x - line[0].x)
 
-        match inter_a:
-            case Intersection.LEFT:
-                new_ax = self._window.normalized_origin.x
-                new_ay = angular_coeff * (self._window.normalized_origin.x - line[0].x) + line[0].y
+        new_line = []
 
-                if new_ay < self._window.normalized_origin.y or new_ay > self._window.normalized_extension.y:
-                    return []
+        for inter, vector in zip([inter_a, inter_b], line):
 
-        match inter_b:
-            case Intersection.TOP:
-                new_bx = line[0].x + (1.0 / angular_coeff) * (self._window.normalized_extension.y - line[0].y)
-                new_by = self._window.normalized_extension.y
+            new_x = vector.x
+            new_y = vector.y
 
-                if new_bx < self._window.normalized_origin.x or new_bx > self._window.normalized_extension.x:
-                    return []
+            match inter:
+                case Intersection.LEFT:
+                    new_x = self._window.normalized_origin.x
+                    new_y = angular_coeff * (self._window.normalized_origin.x - vector.x) + vector.y
 
-        return [Vector(new_ax, new_ay), Vector(new_bx, new_by)]
+                    if new_y < self._window.normalized_origin.y or new_y > self._window.normalized_extension.y:
+                        return []
+                case Intersection.RIGHT:
+                    new_x = self._window.normalized_extension.x
+                    new_y = angular_coeff * (self._window.normalized_extension.x - vector.x) + vector.y
+
+                    if new_y < self._window.normalized_origin.y or new_y > self._window.normalized_extension.y:
+                        return []
+                case Intersection.TOP:
+                    new_x = vector.x + (1.0 / angular_coeff) * (self._window.normalized_extension.y - vector.y)
+                    new_y = self._window.normalized_extension.y
+
+                    if new_x < self._window.normalized_origin.x or new_x > self._window.normalized_extension.x:
+                        return []
+                case Intersection.BOTTOM:
+                    new_x = vector.x + (1.0 / angular_coeff) * (self._window.normalized_origin.y - vector.y)
+                    new_y = self._window.normalized_origin.y
+
+                    if new_x < self._window.normalized_origin.x or new_x > self._window.normalized_extension.x:
+                        return []
+
+            new_line.append(Vector(new_x, new_y))
+
+        return new_line
 
     def cohen_sutherland(self, line: list[Vector]) -> list[Vector]:
         '''
         Clipping de linha com o algoritmo de Cohen-Shuterland.
         '''
 
+        # As linhas abaixo podem causar danos psicológicos
         clipped_line = []
         region_codes = []
 
@@ -178,12 +193,52 @@ class ViewportHandler():
             clipped_line = line
         elif region_codes[0] & region_codes[1] == 0b0000:
 
-            if region_codes[0] == 0b0001 and region_codes[1] == 0b0000:
-                clipped_line = self.intersection(line, Intersection.LEFT, None)
-            elif region_codes[0] == 0b0001 and region_codes[1] == 0b1000:
-                clipped_line = self.intersection(line, Intersection.LEFT, Intersection.TOP)
+            intersections = []
+
+            for region_code in region_codes:
+                match region_code:
+                    case 0b0000:
+                        intersections.append(Intersection.NULL)
+                    case 0b0001:
+                        intersections.append(Intersection.LEFT)
+                    case 0b0010:
+                        intersections.append(Intersection.RIGHT)
+                    case 0b1000:
+                        intersections.append(Intersection.TOP)
+                    case 0b0100:
+                        intersections.append(Intersection.BOTTOM)
+                    case _:
+                        intersections.append(None)
+
+            if intersections[0] is not None and intersections[1] is not None:
+                clipped_line = self.intersection(line, intersections[0], intersections[1])
             else:
-                clipped_line = line
+
+                double_try_intersections = []
+
+                for intersection, region_code in zip(intersections, region_codes):
+
+                    if intersection is None:
+                        match region_code:
+                            case 0b1001:
+                                double_try_intersections.append((Intersection.LEFT, Intersection.TOP))
+                            case 0b0101:
+                                double_try_intersections.append((Intersection.LEFT, Intersection.BOTTOM))
+                            case 0b0110:
+                                double_try_intersections.append((Intersection.RIGHT, Intersection.BOTTOM))
+                            case 0b1010:
+                                double_try_intersections.append((Intersection.RIGHT, Intersection.TOP))
+                    else:
+                        double_try_intersections.append((intersection, None))
+
+                for try_index in [(0, 0), (0, 1), (1, 0), (1, 1)]:
+                    print(try_index)
+                    clipped_line = self.intersection(line,
+                                                     double_try_intersections[0][try_index[0]],
+                                                     double_try_intersections[1][try_index[1]])
+
+                    if len(clipped_line) > 0:
+                        break
 
         return clipped_line
 
