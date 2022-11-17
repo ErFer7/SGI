@@ -195,7 +195,8 @@ class EditorHandler():
                         self._temp_coords[2],
                         "Triangle",
                         self._color,
-                        self._width))
+                        self._width,
+                        True))
                 object_completed = True
             elif self._mode == ObjectType.RECTANGLE and len(self._temp_coords) >= 2:
                 self._main_window.display_file_handler.add_object(
@@ -204,7 +205,8 @@ class EditorHandler():
                         self._temp_coords[1],
                         "Rectangle",
                         self._color,
-                        self._width))
+                        self._width,
+                        True))
                 object_completed = True
             elif self._mode == ObjectType.POLYGON and len(self._temp_coords) >= self._edges:
                 self._main_window.display_file_handler.add_object(
@@ -212,7 +214,9 @@ class EditorHandler():
                         self._temp_coords.copy(),
                         "Wireframe",
                         self._color,
-                        self._width))
+                        self._width,
+                        ObjectType.POLYGON,
+                        True))
                 object_completed = True
 
             if object_completed:

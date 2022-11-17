@@ -36,11 +36,18 @@ class Object(ABC):
     coords: list[Vector]
     object_type: ObjectType
     normalized_coords: list[Vector]
+    fill: bool
 
     # Atributos privados
     _transform: Transform
 
-    def __init__(self, coords: list, name: str, color: tuple, line_width: float, object_type: ObjectType) -> None:
+    def __init__(self,
+                 coords: list,
+                 name: str,
+                 color: tuple,
+                 line_width: float,
+                 object_type: ObjectType,
+                 fill: bool) -> None:
 
         super().__init__()
         self.name = name
@@ -49,6 +56,7 @@ class Object(ABC):
         self.coords = coords
         self.normalized_coords = coords
         self.object_type = object_type
+        self.fill = fill
         self._transform = Transform(self.calculate_center(), Vector(0.0, 0.0, 0.0), Vector(1.0, 1.0, 1.0))
 
     @property
@@ -135,7 +143,7 @@ class Point(Object):
     '''
 
     def __init__(self, position: Vector, name: str = '', color: tuple = (1.0, 1.0, 1.0)) -> None:
-        super().__init__([position], name, color, 1.0, ObjectType.POINT)
+        super().__init__([position], name, color, 1.0, ObjectType.POINT, False)
 
     # Métodos utilitários
     @property
@@ -160,7 +168,7 @@ class Line(Object):
                  color: tuple = (1.0, 1.0, 1.0),
                  line_width: float = 1.0) -> None:
 
-        super().__init__([position_a, position_b], name, color, line_width, ObjectType.LINE)
+        super().__init__([position_a, position_b], name, color, line_width, ObjectType.LINE, False)
 
     # Métodos utilitários
     @property
@@ -191,9 +199,10 @@ class Wireframe(Object):
                  name: str = '',
                  color: tuple = (1.0, 1.0, 1.0),
                  line_width: float = 1.0,
-                 object_type: ObjectType = ObjectType.POLYGON) -> None:
+                 object_type: ObjectType = ObjectType.POLYGON,
+                 fill: bool = False) -> None:
 
-        super().__init__(coords, name, color, line_width, object_type)
+        super().__init__(coords, name, color, line_width, object_type, fill)
 
 
 class Triangle(Wireframe):
@@ -208,9 +217,10 @@ class Triangle(Wireframe):
                  position_c: Vector,
                  name: str = '',
                  color: tuple = (1.0, 1.0, 1.0),
-                 line_width: float = 1.0) -> None:
+                 line_width: float = 1.0,
+                 fill: bool = False) -> None:
 
-        super().__init__([position_a, position_b, position_c], name, color, line_width, ObjectType.TRIANGLE)
+        super().__init__([position_a, position_b, position_c], name, color, line_width, ObjectType.TRIANGLE, fill)
 
     @property
     def corner_a(self) -> Vector:
@@ -248,11 +258,18 @@ class Rectangle(Wireframe):
                  extension: Vector,
                  name: str = '',
                  color: tuple = (1.0, 1.0, 1.0),
-                 line_width: float = 1.0) -> None:
+                 line_width: float = 1.0,
+                 fill: bool = False) -> None:
 
-        super().__init__(
-            [origin, Vector(origin.x, extension.y), extension, Vector(extension.x, origin.y)],
-            name, color, line_width, ObjectType.RECTANGLE)
+        super().__init__([origin,
+                         Vector(origin.x, extension.y),
+                         extension,
+                         Vector(extension.x, origin.y)],
+                         name,
+                         color,
+                         line_width,
+                         ObjectType.RECTANGLE,
+                         fill)
 
     @property
     def origin(self) -> Vector:
@@ -298,7 +315,7 @@ class Window(Rectangle):
                  extension: Vector,
                  color: tuple = (0.5, 0.0, 0.5),
                  line_width: float = 2.0) -> None:
-        super().__init__(origin, extension, "Window", color, line_width)
+        super().__init__(origin, extension, "Window", color, line_width, False)
 
     def calculate_up_vector(self) -> Vector:
         '''

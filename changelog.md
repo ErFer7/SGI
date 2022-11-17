@@ -30,4 +30,5 @@
 
 ## v0.4
 
-* _Em desenvolvimento_
+* Clipping de pontos
+* Clipping de segmentos de reta

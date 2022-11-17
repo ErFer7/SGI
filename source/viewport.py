@@ -23,7 +23,6 @@ class ClippingMethod(Enum):
 
     COHEN_SUTHERLAND = 1
     LIANG_BARSKY = 2
-    NICHOLL_LEE_NICHOLL = 3
 
 
 class Intersection(Enum):
@@ -72,7 +71,7 @@ class ViewportHandler():
         self._window = Window(Vector(-500.0, -500.0), Vector(500.0, 500.0), (0.5, 0.0, 0.5), 2.0)
         self._drag_coord = None
         self._viewport_padding = viewport_padding
-        self._clipping_method = ClippingMethod.COHEN_SUTHERLAND
+        self._clipping_method = ClippingMethod.LIANG_BARSKY
 
     # Métodos utilitários
     def world_to_screen(self, coord: Vector) -> Vector:
@@ -104,25 +103,51 @@ class ViewportHandler():
     def clip(self, coords: list[Vector]) -> list[Vector]:
         '''
         Faz o clipping de um objeto.
+
+        O algoritmo de clipping de polígonos é o Weiler-Atherton.
         '''
 
         clipped_coords = []
+        coords_size = len(coords)
 
-        if len(coords) == 1:
+        if coords_size == 1:
             if (self._window.normalized_origin.x <= coords[0].x <= self._window.normalized_extension.x) and \
                (self._window.normalized_origin.y <= coords[0].y <= self._window.normalized_extension.y):
                 clipped_coords.append(Vector(coords[0].x + 1, coords[0].y))
+        elif coords_size == 2:
+
+            if self._clipping_method == ClippingMethod.COHEN_SUTHERLAND:
+                clipped_coords = self.cohen_sutherland(coords)
+            else:
+                clipped_coords = self.liang_barsky(coords)
         else:
 
-            match self._clipping_method:
-                case ClippingMethod.COHEN_SUTHERLAND:
+            # TODO: Arrumar isso aqui
 
-                    if len(coords) == 2:
-                        clipped_coords = self.cohen_sutherland(coords)
-                    else:
-                        clipped_coords = coords
-                case _:
-                    raise NotImplementedError("Algoritmo inválido")
+            # Esta é só uma implementação experimental, a implementação oficial será feita depois
+            lines = []
+
+            for i, _ in enumerate(coords):
+                if i < len(coords) - 1:
+                    lines.append([coords[i], coords[i + 1]])
+
+            lines.append([coords[-1], coords[0]])
+
+            clipped_lines = []
+
+            for line in lines:
+                if self._clipping_method == ClippingMethod.COHEN_SUTHERLAND:
+                    clipped_lines.append(self.cohen_sutherland(line))
+                else:
+                    clipped_lines.append(self.liang_barsky(line))
+
+            if len(clipped_lines) > 0:
+
+                for line in clipped_lines:
+
+                    if len(line) > 0:
+                        clipped_coords.append(line[0])
+                        clipped_coords.append(line[1])
 
         return clipped_coords
 
@@ -131,7 +156,6 @@ class ViewportHandler():
         Cacula a interseção do vetor com a window.
         '''
 
-        # TODO: Terminar isso aqui
         angular_coeff = (line[1].y - line[0].y) / (line[1].x - line[0].x)
 
         new_line = []
@@ -176,7 +200,6 @@ class ViewportHandler():
         Clipping de linha com o algoritmo de Cohen-Shuterland.
         '''
 
-        # As linhas abaixo podem causar danos psicológicos
         clipped_line = []
         region_codes = []
 
@@ -232,7 +255,6 @@ class ViewportHandler():
                         double_try_intersections.append((intersection, None))
 
                 for try_index in [(0, 0), (0, 1), (1, 0), (1, 1)]:
-                    print(try_index)
                     clipped_line = self.intersection(line,
                                                      double_try_intersections[0][try_index[0]],
                                                      double_try_intersections[1][try_index[1]])
@@ -241,6 +263,62 @@ class ViewportHandler():
                         break
 
         return clipped_line
+
+    def liang_barsky(self, line: list[Vector]) -> list[Vector]:
+        '''
+        Clipping de linha com o algoritmo de Liang-Barsky.
+        '''
+
+        p1 = -(line[1].x - line[0].x)
+        p2 = -p1
+        p3 = -(line[1].y - line[0].y)
+        p4 = -p3
+
+        q1 = line[0].x - self._window.normalized_origin.x
+        q2 = self._window.normalized_extension.x - line[0].x
+        q3 = line[0].y - self._window.normalized_origin.y
+        q4 = self._window.normalized_extension.y - line[0].y
+
+        positives = [1]
+        negatives = [0]
+
+        if (p1 == 0 and q1 < 0) or (p2 == 0 and q2 < 0) or (p3 == 0 and q3 < 0) or (p4 == 0 and q4 < 0):
+            return []
+
+        if p1 != 0:
+
+            ratio_1 = q1 / p1
+            ratio_2 = q2 / p2
+
+            if p1 < 0:
+                positives.append(ratio_2)
+                negatives.append(ratio_1)
+            else:
+                positives.append(ratio_1)
+                negatives.append(ratio_2)
+
+        if p3 != 0:
+
+            ratio_3 = q3 / p3
+            ratio_4 = q4 / p4
+
+            if p3 < 0:
+                positives.append(ratio_4)
+                negatives.append(ratio_3)
+            else:
+                positives.append(ratio_3)
+                negatives.append(ratio_4)
+
+        max_negative = max(negatives)
+        min_positive = min(positives)
+
+        if max_negative > min_positive:
+            return []
+
+        new_vector_a = Vector(line[0].x + p2 * max_negative, line[0].y + p4 * max_negative)
+        new_vector_b = Vector(line[0].x + p2 * min_positive, line[0].y + p4 * min_positive)
+
+        return [new_vector_a, new_vector_b]
 
     def coords_to_lines(self, coords: list[Vector]) -> list[tuple]:
         '''
@@ -286,14 +364,23 @@ class ViewportHandler():
             line_width = obj.line_width
 
             # Define cor e largura do pincel
+            context.new_path()
             context.set_source_rgb(color[0], color[1], color[2])
             context.set_line_width(line_width)
 
-
             for line in lines:
-                context.move_to(line[0].x, line[0].y)
-                context.line_to(line[1].x, line[1].y)
-                context.stroke()
+
+                if obj.fill:
+                    context.line_to(line[1].x, line[1].y)
+                else:
+                    context.move_to(line[0].x, line[0].y)
+                    context.line_to(line[1].x, line[1].y)
+                    context.stroke()
+
+            context.close_path()
+
+            if obj.fill:
+                context.fill()
 
         self._drawing_area.queue_draw()
 
