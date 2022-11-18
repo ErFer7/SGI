@@ -8,7 +8,7 @@ Eric Fernandes Evaristo (ErFer7)
 Luis Henrique Goulart Stemmer (lust2k)
 '''
 
-VERSION = "v0.3"
+VERSION = "v0.4"
 
 import gi
 

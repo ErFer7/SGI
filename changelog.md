@@ -32,3 +32,4 @@
 
 * Clipping de pontos
 * Clipping de segmentos de reta
+* Clipping de polígonos

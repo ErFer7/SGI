@@ -1592,7 +1592,7 @@
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
                         <property name="margin-bottom">10</property>
-                        <property name="label" translatable="yes">SGI v0.3 - Eric Fernandes Evaristo and Luis Henrique Goulart Stemmer</property>
+                        <property name="label" translatable="yes">SGI v0.4 - Eric Fernandes Evaristo and Luis Henrique Goulart Stemmer</property>
                         <attributes>
                           <attribute name="style" value="italic"/>
                           <attribute name="weight" value="light"/>

@@ -5,6 +5,7 @@ Neste módulo estão definidos os funcionamentos do viewport.
 '''
 
 from enum import Enum
+from math import inf
 
 from source.transform import Vector
 from source.wireframe import Window
@@ -87,6 +88,13 @@ class ViewportHandler():
 
         return Vector(x_s, y_s)
 
+    def world_line_to_screen(self, line: list[Vector]) -> tuple[Vector]:
+        '''
+        Converte uma linha no mundo para uma linha na tela.
+        '''
+
+        return (self.world_to_screen(line[0]), self.world_to_screen(line[1]))
+
     def screen_to_world(self, coord: Vector) -> Vector:
         '''
         Converte a coordenada de tela para uma coordenada de mundo.
@@ -100,63 +108,125 @@ class ViewportHandler():
 
         return Vector(x_w, y_w)
 
-    def clip(self, coords: list[Vector]) -> list[Vector]:
+    def clip_to_lines(self, coords: list[Vector]) -> list[Vector]:
         '''
-        Faz o clipping de um objeto.
+        Faz o clipping de um objeto e o converte para a representação em linhas.
 
-        O algoritmo de clipping de polígonos é o Weiler-Atherton.
+        O algoritmo de clipping de polígonos é o Sutherland-Hodgeman.
         '''
 
-        clipped_coords = []
+        clipped_lines = []
         coords_size = len(coords)
 
         if coords_size == 1:
             if (self._window.normalized_origin.x <= coords[0].x <= self._window.normalized_extension.x) and \
                (self._window.normalized_origin.y <= coords[0].y <= self._window.normalized_extension.y):
-                clipped_coords.append(Vector(coords[0].x + 1, coords[0].y))
+                clipped_lines.append([Vector(coords[0].x, coords[0].y), Vector(coords[0].x + 1, coords[0].y)])
         elif coords_size == 2:
 
             if self._clipping_method == ClippingMethod.COHEN_SUTHERLAND:
-                clipped_coords = self.cohen_sutherland(coords)
+
+                clipped_line = self.cohen_sutherland(coords)
+                if len(clipped_line) > 0:
+                    clipped_lines.append(clipped_line)
             else:
-                clipped_coords = self.liang_barsky(coords)
+
+                clipped_line = self.liang_barsky(coords)
+                if len(clipped_line) > 0:
+                    clipped_lines.append(clipped_line)
         else:
 
-            # TODO: Arrumar isso aqui
+            # TODO: Deixar isso minimamente aceitável
 
-            # Esta é só uma implementação experimental, a implementação oficial será feita depois
-            lines = []
+            clipped_lines = self.coords_to_lines(coords)
+            clipped_coords = []
 
-            for i, _ in enumerate(coords):
-                if i < len(coords) - 1:
-                    lines.append([coords[i], coords[i + 1]])
+            # Clip left:
+            for line in clipped_lines:
 
-            lines.append([coords[-1], coords[0]])
+                if line[0].x > self._window.normalized_origin.x and line[1].x > self._window.normalized_origin.x:
+                    clipped_coords.append(line[0])
+                    clipped_coords.append(line[1])
+                elif line[0].x > self._window.normalized_origin.x:
+                    intersection = self.intersection(line, None, Intersection.LEFT, False)
+                    clipped_coords.append(intersection[0])
+                    clipped_coords.append(intersection[1])
+                elif line[1].x > self._window.normalized_origin.x:
+                    intersection = self.intersection(line, Intersection.LEFT, None, False)
+                    clipped_coords.append(intersection[0])
+                    clipped_coords.append(intersection[1])
 
-            clipped_lines = []
+            clipped_lines = self.coords_to_lines(clipped_coords)
+            clipped_coords.clear()
 
-            for line in lines:
-                if self._clipping_method == ClippingMethod.COHEN_SUTHERLAND:
-                    clipped_lines.append(self.cohen_sutherland(line))
-                else:
-                    clipped_lines.append(self.liang_barsky(line))
+            # Clip right:
+            for line in clipped_lines:
 
-            if len(clipped_lines) > 0:
+                if line[0].x < self._window.normalized_extension.x and line[1].x < self._window.normalized_extension.x:
+                    clipped_coords.append(line[0])
+                    clipped_coords.append(line[1])
+                elif line[0].x < self._window.normalized_extension.x:
+                    intersection = self.intersection(line, None, Intersection.RIGHT, False)
+                    clipped_coords.append(intersection[0])
+                    clipped_coords.append(intersection[1])
+                elif line[1].x < self._window.normalized_extension.x:
+                    intersection = self.intersection(line, Intersection.RIGHT, None, False)
+                    clipped_coords.append(intersection[0])
+                    clipped_coords.append(intersection[1])
 
-                for line in clipped_lines:
+            clipped_lines = self.coords_to_lines(clipped_coords)
+            clipped_coords.clear()
 
-                    if len(line) > 0:
-                        clipped_coords.append(line[0])
-                        clipped_coords.append(line[1])
+            # Clip bottom:
+            for line in clipped_lines:
 
-        return clipped_coords
+                if line[0].y > self._window.normalized_origin.y and line[1].y > self._window.normalized_origin.y:
+                    clipped_coords.append(line[0])
+                    clipped_coords.append(line[1])
+                elif line[0].y > self._window.normalized_origin.y:
+                    intersection = self.intersection(line, None, Intersection.BOTTOM, False)
+                    clipped_coords.append(intersection[0])
+                    clipped_coords.append(intersection[1])
+                elif line[1].y > self._window.normalized_origin.y:
+                    intersection = self.intersection(line, Intersection.BOTTOM, None, False)
+                    clipped_coords.append(intersection[0])
+                    clipped_coords.append(intersection[1])
 
-    def intersection(self, line: list[Vector], inter_a: Intersection, inter_b: Intersection) -> list[Vector]:
+            clipped_lines = self.coords_to_lines(clipped_coords)
+            clipped_coords.clear()
+
+            # Clip top
+            for line in clipped_lines:
+
+                if line[0].y < self._window.normalized_extension.y and line[1].y < self._window.normalized_extension.y:
+                    clipped_coords.append(line[0])
+                    clipped_coords.append(line[1])
+                elif line[0].y < self._window.normalized_extension.y:
+                    intersection = self.intersection(line, None, Intersection.TOP, False)
+                    clipped_coords.append(intersection[0])
+                    clipped_coords.append(intersection[1])
+                elif line[1].y < self._window.normalized_extension.y:
+                    intersection = self.intersection(line, Intersection.TOP, None, False)
+                    clipped_coords.append(intersection[0])
+                    clipped_coords.append(intersection[1])
+
+            clipped_lines = self.coords_to_lines(clipped_coords)
+
+        return clipped_lines
+
+    def intersection(self,
+                     line: list[Vector],
+                     inter_a: Intersection,
+                     inter_b: Intersection,
+                     drop_line: bool = True) -> list[Vector]:
         '''
         Cacula a interseção do vetor com a window.
         '''
 
-        angular_coeff = (line[1].y - line[0].y) / (line[1].x - line[0].x)
+        angular_coeff = inf
+
+        if (line[1].x - line[0].x) != 0:
+            angular_coeff = (line[1].y - line[0].y) / (line[1].x - line[0].x)
 
         new_line = []
 
@@ -170,25 +240,29 @@ class ViewportHandler():
                     new_x = self._window.normalized_origin.x
                     new_y = angular_coeff * (self._window.normalized_origin.x - vector.x) + vector.y
 
-                    if new_y < self._window.normalized_origin.y or new_y > self._window.normalized_extension.y:
+                    if (new_y < self._window.normalized_origin.y or new_y > self._window.normalized_extension.y) and \
+                       drop_line:
                         return []
                 case Intersection.RIGHT:
                     new_x = self._window.normalized_extension.x
                     new_y = angular_coeff * (self._window.normalized_extension.x - vector.x) + vector.y
 
-                    if new_y < self._window.normalized_origin.y or new_y > self._window.normalized_extension.y:
+                    if (new_y < self._window.normalized_origin.y or new_y > self._window.normalized_extension.y) and \
+                       drop_line:
                         return []
                 case Intersection.TOP:
                     new_x = vector.x + (1.0 / angular_coeff) * (self._window.normalized_extension.y - vector.y)
                     new_y = self._window.normalized_extension.y
 
-                    if new_x < self._window.normalized_origin.x or new_x > self._window.normalized_extension.x:
+                    if (new_x < self._window.normalized_origin.x or new_x > self._window.normalized_extension.x) and \
+                       drop_line:
                         return []
                 case Intersection.BOTTOM:
                     new_x = vector.x + (1.0 / angular_coeff) * (self._window.normalized_origin.y - vector.y)
                     new_y = self._window.normalized_origin.y
 
-                    if new_x < self._window.normalized_origin.x or new_x > self._window.normalized_extension.x:
+                    if (new_x < self._window.normalized_origin.x or new_x > self._window.normalized_extension.x) and \
+                       drop_line:
                         return []
 
             new_line.append(Vector(new_x, new_y))
@@ -320,7 +394,7 @@ class ViewportHandler():
 
         return [new_vector_a, new_vector_b]
 
-    def coords_to_lines(self, coords: list[Vector]) -> list[tuple]:
+    def coords_to_lines(self, coords: list[Vector]) -> list[list[Vector]]:
         '''
         Converte coordenadas normais para linhas.
         '''
@@ -328,15 +402,15 @@ class ViewportHandler():
         lines = []
 
         if len(coords) == 1:
-            lines.append((coords[0], Vector(coords[0].x + 1, coords[0].y)))
+            lines.append([coords[0], Vector(coords[0].x + 1, coords[0].y)])
         else:
 
             for i, _ in enumerate(coords):
                 if i < len(coords) - 1:
-                    lines.append((coords[i], coords[i + 1]))
+                    lines.append([coords[i], coords[i + 1]])
 
             if len(coords) > 2:
-                lines.append((coords[-1], coords[0]))
+                lines.append([coords[-1], coords[0]])
 
         return lines
 
@@ -357,9 +431,14 @@ class ViewportHandler():
         # Renderiza todos os objetos do display file
         for obj in self._main_window.display_file_handler.objects + [self._window]:
 
-            clipped_coords = self.clip(obj.normalized_coords)
-            screen_coords = list(map(self.world_to_screen, clipped_coords))
-            lines = self.coords_to_lines(screen_coords)
+            clipped_coords = []
+
+            if obj != self._window:
+                clipped_coords = self.clip_to_lines(obj.normalized_coords)
+            else:
+                clipped_coords = self.coords_to_lines(obj.normalized_coords)
+
+            screen_lines = list(map(self.world_line_to_screen, clipped_coords))
             color = obj.color
             line_width = obj.line_width
 
@@ -368,7 +447,7 @@ class ViewportHandler():
             context.set_source_rgb(color[0], color[1], color[2])
             context.set_line_width(line_width)
 
-            for line in lines:
+            for line in screen_lines:
 
                 if obj.fill:
                     context.line_to(line[1].x, line[1].y)
