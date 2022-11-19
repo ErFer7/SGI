@@ -136,81 +136,53 @@ class ViewportHandler():
                     clipped_lines.append(clipped_line)
         else:
 
-            # TODO: Deixar isso minimamente aceitável
-
             clipped_lines = self.coords_to_lines(coords)
             clipped_coords = []
 
-            # Clip left:
-            for line in clipped_lines:
+            for inter in [Intersection.LEFT, Intersection.RIGHT, Intersection.BOTTOM, Intersection.TOP]:
 
-                if line[0].x > self._window.normalized_origin.x and line[1].x > self._window.normalized_origin.x:
-                    clipped_coords.append(line[0])
-                    clipped_coords.append(line[1])
-                elif line[0].x > self._window.normalized_origin.x:
-                    intersection = self.intersection(line, None, Intersection.LEFT, False)
-                    clipped_coords.append(intersection[0])
-                    clipped_coords.append(intersection[1])
-                elif line[1].x > self._window.normalized_origin.x:
-                    intersection = self.intersection(line, Intersection.LEFT, None, False)
-                    clipped_coords.append(intersection[0])
-                    clipped_coords.append(intersection[1])
+                for line in clipped_lines:
 
-            clipped_lines = self.coords_to_lines(clipped_coords)
-            clipped_coords.clear()
+                    comp_inside = None
+                    comp_a = None
+                    comp_b = None
 
-            # Clip right:
-            for line in clipped_lines:
+                    match inter:
+                        case Intersection.LEFT:
+                            comp_inside = line[0].x > self._window.normalized_origin.x and \
+                                          line[1].x > self._window.normalized_origin.x
+                            comp_a = line[0].x > self._window.normalized_origin.x
+                            comp_b = line[1].x > self._window.normalized_origin.x
+                        case Intersection.RIGHT:
+                            comp_inside = line[0].x < self._window.normalized_extension.x and \
+                                          line[1].x < self._window.normalized_extension.x
+                            comp_a = line[0].x < self._window.normalized_extension.x
+                            comp_b = line[1].x < self._window.normalized_extension.x
+                        case Intersection.BOTTOM:
+                            comp_inside = line[0].y > self._window.normalized_origin.y and \
+                                          line[1].y > self._window.normalized_origin.y
+                            comp_a = line[0].y > self._window.normalized_origin.y
+                            comp_b = line[1].y > self._window.normalized_origin.y
+                        case Intersection.TOP:
+                            comp_inside = line[0].y < self._window.normalized_extension.y and \
+                                          line[1].y < self._window.normalized_extension.y
+                            comp_a = line[0].y < self._window.normalized_extension.y
+                            comp_b = line[1].y < self._window.normalized_extension.y
 
-                if line[0].x < self._window.normalized_extension.x and line[1].x < self._window.normalized_extension.x:
-                    clipped_coords.append(line[0])
-                    clipped_coords.append(line[1])
-                elif line[0].x < self._window.normalized_extension.x:
-                    intersection = self.intersection(line, None, Intersection.RIGHT, False)
-                    clipped_coords.append(intersection[0])
-                    clipped_coords.append(intersection[1])
-                elif line[1].x < self._window.normalized_extension.x:
-                    intersection = self.intersection(line, Intersection.RIGHT, None, False)
-                    clipped_coords.append(intersection[0])
-                    clipped_coords.append(intersection[1])
+                    if comp_inside:
+                        clipped_coords.append(line[0])
+                        clipped_coords.append(line[1])
+                    elif comp_a:
+                        intersection = self.intersection(line, None, inter, False)
+                        clipped_coords.append(intersection[0])
+                        clipped_coords.append(intersection[1])
+                    elif comp_b:
+                        intersection = self.intersection(line, inter, None, False)
+                        clipped_coords.append(intersection[0])
+                        clipped_coords.append(intersection[1])
 
-            clipped_lines = self.coords_to_lines(clipped_coords)
-            clipped_coords.clear()
-
-            # Clip bottom:
-            for line in clipped_lines:
-
-                if line[0].y > self._window.normalized_origin.y and line[1].y > self._window.normalized_origin.y:
-                    clipped_coords.append(line[0])
-                    clipped_coords.append(line[1])
-                elif line[0].y > self._window.normalized_origin.y:
-                    intersection = self.intersection(line, None, Intersection.BOTTOM, False)
-                    clipped_coords.append(intersection[0])
-                    clipped_coords.append(intersection[1])
-                elif line[1].y > self._window.normalized_origin.y:
-                    intersection = self.intersection(line, Intersection.BOTTOM, None, False)
-                    clipped_coords.append(intersection[0])
-                    clipped_coords.append(intersection[1])
-
-            clipped_lines = self.coords_to_lines(clipped_coords)
-            clipped_coords.clear()
-
-            # Clip top
-            for line in clipped_lines:
-
-                if line[0].y < self._window.normalized_extension.y and line[1].y < self._window.normalized_extension.y:
-                    clipped_coords.append(line[0])
-                    clipped_coords.append(line[1])
-                elif line[0].y < self._window.normalized_extension.y:
-                    intersection = self.intersection(line, None, Intersection.TOP, False)
-                    clipped_coords.append(intersection[0])
-                    clipped_coords.append(intersection[1])
-                elif line[1].y < self._window.normalized_extension.y:
-                    intersection = self.intersection(line, Intersection.TOP, None, False)
-                    clipped_coords.append(intersection[0])
-                    clipped_coords.append(intersection[1])
-
-            clipped_lines = self.coords_to_lines(clipped_coords)
+                clipped_lines = self.coords_to_lines(clipped_coords)
+                clipped_coords.clear()
 
         return clipped_lines
 
