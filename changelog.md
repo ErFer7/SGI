@@ -33,3 +33,10 @@
 * Clipping de pontos
 * Clipping de segmentos de reta
 * Clipping de polígonos
+
+---
+
+## v0.5
+
+* Curvas de Bezier
+* Mudanças na interface

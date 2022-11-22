@@ -40,9 +40,13 @@ class MainWindow(Gtk.Window):
     triangle_button: Gtk.ToggleButton = Gtk.Template.Child()
     rectangle_button: Gtk.ToggleButton = Gtk.Template.Child()
     polygon_button: Gtk.ToggleButton = Gtk.Template.Child()
+    bezier_curve_button: Gtk.ToggleButton = Gtk.Template.Child()
     width_button: Gtk.SpinButton = Gtk.Template.Child()
     color_button: Gtk.ColorButton = Gtk.Template.Child()
     edges_button: Gtk.SpinButton = Gtk.Template.Child()
+    fill_button: Gtk.CheckButton = Gtk.Template.Child()
+    curve_point_count_button: Gtk.SpinButton = Gtk.Template.Child()
+    curve_step_count_button: Gtk.SpinButton = Gtk.Template.Child()
     display_file_list: Gtk.ListStore = Gtk.Template.Child()
     remove_button: Gtk.Button = Gtk.Template.Child()
     position_x_button: Gtk.SpinButton = Gtk.Template.Child()
@@ -68,6 +72,7 @@ class MainWindow(Gtk.Window):
     rotation_anchor_button_x: Gtk.SpinButton = Gtk.Template.Child()
     rotation_anchor_button_y: Gtk.SpinButton = Gtk.Template.Child()
     rotation_anchor_button_z: Gtk.SpinButton = Gtk.Template.Child()
+    clipping_method_button: Gtk.ToggleButton = Gtk.Template.Child()
 
     def __init__(self) -> None:
 

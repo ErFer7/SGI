@@ -6,6 +6,9 @@ Módulo para wireframes.
 
 from abc import ABC
 from enum import Enum
+
+import numpy as np
+
 from source.transform import Transform, Vector
 
 
@@ -21,6 +24,7 @@ class ObjectType(Enum):
     TRIANGLE = 3
     RECTANGLE = 4
     POLYGON = 5
+    BEZIER_CURVE = 6
 
 
 class Object(ABC):
@@ -37,6 +41,7 @@ class Object(ABC):
     object_type: ObjectType
     normalized_coords: list[Vector]
     fill: bool
+    closed: bool
 
     # Atributos privados
     _transform: Transform
@@ -47,7 +52,8 @@ class Object(ABC):
                  color: tuple,
                  line_width: float,
                  object_type: ObjectType,
-                 fill: bool) -> None:
+                 fill: bool,
+                 closed: bool) -> None:
 
         super().__init__()
         self.name = name
@@ -57,6 +63,7 @@ class Object(ABC):
         self.normalized_coords = coords
         self.object_type = object_type
         self.fill = fill
+        self.closed = closed
         self._transform = Transform(self.calculate_center(), Vector(0.0, 0.0, 0.0), Vector(1.0, 1.0, 1.0))
 
     @property
@@ -143,7 +150,7 @@ class Point(Object):
     '''
 
     def __init__(self, position: Vector, name: str = '', color: tuple = (1.0, 1.0, 1.0)) -> None:
-        super().__init__([position], name, color, 1.0, ObjectType.POINT, False)
+        super().__init__([position], name, color, 1.0, ObjectType.POINT, False, False)
 
     # Métodos utilitários
     @property
@@ -168,7 +175,7 @@ class Line(Object):
                  color: tuple = (1.0, 1.0, 1.0),
                  line_width: float = 1.0) -> None:
 
-        super().__init__([position_a, position_b], name, color, line_width, ObjectType.LINE, False)
+        super().__init__([position_a, position_b], name, color, line_width, ObjectType.LINE, False, False)
 
     # Métodos utilitários
     @property
@@ -202,7 +209,7 @@ class Wireframe(Object):
                  object_type: ObjectType = ObjectType.POLYGON,
                  fill: bool = False) -> None:
 
-        super().__init__(coords, name, color, line_width, object_type, fill)
+        super().__init__(coords, name, color, line_width, object_type, fill, True)
 
 
 class Triangle(Wireframe):
@@ -220,7 +227,12 @@ class Triangle(Wireframe):
                  line_width: float = 1.0,
                  fill: bool = False) -> None:
 
-        super().__init__([position_a, position_b, position_c], name, color, line_width, ObjectType.TRIANGLE, fill)
+        super().__init__([position_a, position_b, position_c],
+                         name,
+                         color,
+                         line_width,
+                         ObjectType.TRIANGLE,
+                         fill)
 
     @property
     def corner_a(self) -> Vector:
@@ -303,6 +315,65 @@ class Rectangle(Wireframe):
 
         return self.coords[3]
 
+
+class BezierCurve(Object):
+
+    '''
+    Curva de Bezier.
+    '''
+
+    _curve_points: list[tuple[Vector]]
+
+    def __init__(self,
+                 curve_points: list[Vector],
+                 steps: int,
+                 name: str = '',
+                 color: tuple = (1.0, 1.0, 1.0),
+                 line_width: float = 1.0) -> None:
+
+        self._curve_points = []
+        curve_coords = []
+
+        for i in range(0, len(curve_points), 3):
+
+            if i == len(curve_points) - 1:
+                break
+
+            self._curve_points.append((curve_points[i], curve_points[i + 1], curve_points[i + 2], curve_points[i + 3]))
+            curve_coords += self.generate_curve_coords(curve_points[i],
+                                                       curve_points[i + 1: i + 3],
+                                                       curve_points[i + 3],
+                                                       steps)
+
+        super().__init__(curve_coords, name, color, line_width, ObjectType.BEZIER_CURVE, False, False)
+
+    def generate_curve_coords(self, start: Vector, control_points: list[Vector], end: Vector, steps: int):
+        '''
+        Gera a curva de Bezier.
+        '''
+
+        bezier_points_x = np.matrix([[start.x], [control_points[0].x], [control_points[1].x], [end.x]])
+        bezier_points_y = np.matrix([[start.y], [control_points[0].y], [control_points[1].y], [end.y]])
+
+        bezier_matrix = np.matrix([[-1, 3, -3, 1],
+                                   [3, -6, 3, 0],
+                                   [-3, 3, 0, 0],
+                                   [1, 0, 0, 0]])
+
+        curve = []
+
+        for step in range(steps):
+
+            t = step / steps
+
+            step_matrix = np.matrix([t**3, t**2, t, 1])
+
+            new_x = step_matrix * bezier_matrix * bezier_points_x
+            new_y = step_matrix * bezier_matrix * bezier_points_y
+
+            curve.append(Vector(new_x[0, 0], new_y[0, 0], 0.0))
+
+        return curve
 
 class Window(Rectangle):
 

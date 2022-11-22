@@ -108,7 +108,7 @@ class ViewportHandler():
 
         return Vector(x_w, y_w)
 
-    def clip_to_lines(self, coords: list[Vector]) -> list[Vector]:
+    def clip_to_lines(self, coords: list[Vector], closed: bool) -> list[Vector]:
         '''
         Faz o clipping de um objeto e o converte para a representação em linhas.
 
@@ -136,7 +136,7 @@ class ViewportHandler():
                     clipped_lines.append(clipped_line)
         else:
 
-            clipped_lines = self.coords_to_lines(coords)
+            clipped_lines = self.coords_to_lines(coords, closed)
             clipped_coords = []
 
             for inter in [Intersection.LEFT, Intersection.RIGHT, Intersection.BOTTOM, Intersection.TOP]:
@@ -181,7 +181,7 @@ class ViewportHandler():
                         clipped_coords.append(intersection[0])
                         clipped_coords.append(intersection[1])
 
-                clipped_lines = self.coords_to_lines(clipped_coords)
+                clipped_lines = self.coords_to_lines(clipped_coords, closed)
                 clipped_coords.clear()
 
         return clipped_lines
@@ -366,7 +366,7 @@ class ViewportHandler():
 
         return [new_vector_a, new_vector_b]
 
-    def coords_to_lines(self, coords: list[Vector]) -> list[list[Vector]]:
+    def coords_to_lines(self, coords: list[Vector], closed: bool) -> list[list[Vector]]:
         '''
         Converte coordenadas normais para linhas.
         '''
@@ -381,7 +381,7 @@ class ViewportHandler():
                 if i < len(coords) - 1:
                     lines.append([coords[i], coords[i + 1]])
 
-            if len(coords) > 2:
+            if len(coords) > 2 and closed:
                 lines.append([coords[-1], coords[0]])
 
         return lines
@@ -406,9 +406,9 @@ class ViewportHandler():
             clipped_coords = []
 
             if obj != self._window:
-                clipped_coords = self.clip_to_lines(obj.normalized_coords)
+                clipped_coords = self.clip_to_lines(obj.normalized_coords, obj.closed)
             else:
-                clipped_coords = self.coords_to_lines(obj.normalized_coords)
+                clipped_coords = self.coords_to_lines(obj.normalized_coords, obj.closed)
 
             screen_lines = list(map(self.world_line_to_screen, clipped_coords))
             color = obj.color
@@ -549,3 +549,13 @@ class ViewportHandler():
 
         self._window.rescale(Vector(diff_x, diff_y, diff_z))
         self._main_window.display_file_handler.request_normalization()
+
+    def change_clipping_method(self) -> None:
+        '''
+        Muda o método de clipping.
+        '''
+
+        if self._clipping_method == ClippingMethod.COHEN_SUTHERLAND:
+            self._clipping_method = ClippingMethod.LIANG_BARSKY
+        else:
+            self._clipping_method = ClippingMethod.COHEN_SUTHERLAND

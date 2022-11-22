@@ -4,10 +4,12 @@
 Módulo para o editor.
 '''
 
-import gi
-from source.transform import Vector
+# from math import degrees, atan
 
-from source.wireframe import ObjectType, Object, Point, Line, Triangle, Rectangle, Wireframe
+import gi
+
+from source.transform import Vector
+from source.wireframe import ObjectType, Object, Point, Line, Triangle, Rectangle, Wireframe, BezierCurve
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
@@ -27,13 +29,20 @@ class EditorHandler():
     _width: float
     _color: list[float]
     _edges: int
+    _fill: bool
+    _curve_point_count: int
+    _curve_step_count: int
     _rotation_anchor: Vector
     _edges_button: Gtk.SpinButton
+    _curve_point_count_button: Gtk.SpinButton
+    _curve_step_count_button: Gtk.SpinButton
+    _fill_button: Gtk.CheckButton
     _point_button: Gtk.ToggleButton
     _line_button: Gtk.ToggleButton
     _triangle_button: Gtk.ToggleButton
     _rectangle_button: Gtk.ToggleButton
     _polygon_button: Gtk.ToggleButton
+    _bezier_curve_button: Gtk.ToggleButton
     _width_button: Gtk.SpinButton
     _color_button: Gtk.ColorButton
     _position_x_button: Gtk.SpinButton
@@ -56,6 +65,7 @@ class EditorHandler():
     _rotation_anchor_button_x: Gtk.SpinButton
     _rotation_anchor_button_y: Gtk.SpinButton
     _rotation_anchor_button_z: Gtk.SpinButton
+    _clipping_method_button: Gtk.ToggleButton
     _user_call_lock: bool
 
     def __init__(self, main_window) -> None:
@@ -67,15 +77,22 @@ class EditorHandler():
         self._width = 1.0
         self._color = [1.0, 1.0, 1.0]
         self._edges = 3
+        self._fill = True
+        self._curve_point_count = 4
+        self._curve_step_count = 4
         self._rotation_anchor = None
         self._width_button = self._main_window.width_button
         self._color_button = self._main_window.color_button
         self._edges_button = self._main_window.edges_button
+        self._fill_button = self._main_window.fill_button
+        self._curve_point_count_button = self._main_window.curve_point_count_button
+        self._curve_step_count_button = self._main_window.curve_step_count_button
         self._point_button = self._main_window.point_button
         self._line_button = self._main_window.line_button
         self._triangle_button = self._main_window.triangle_button
         self._rectangle_button = self._main_window.rectangle_button
         self._polygon_button = self._main_window.polygon_button
+        self._bezier_curve_button = self._main_window.bezier_curve_button
         self._position_x_button = self._main_window.position_x_button
         self._position_y_button = self._main_window.position_y_button
         self._position_z_button = self._main_window.position_z_button
@@ -96,16 +113,21 @@ class EditorHandler():
         self._rotation_anchor_button_x = self._main_window.rotation_anchor_button_x
         self._rotation_anchor_button_y = self._main_window.rotation_anchor_button_y
         self._rotation_anchor_button_z = self._main_window.rotation_anchor_button_z
+        self._clipping_method_button = self._main_window.clipping_method_button
 
         self._width_button.connect("value-changed", self.set_width)
         self._color_button.connect("color-set", self.set_color)
         self._edges_button.connect("value-changed", self.set_edges)
+        self._fill_button.connect("toggled", self.set_fill)
+        self._curve_point_count_button.connect("value-changed", self.set_curve_point_count)
+        self._curve_step_count_button.connect("value-changed", self.set_curve_step_count)
         self._main_window.file_button.connect("select", self.show_explorer)
         self._point_button.connect("toggled", self.set_mode, ObjectType.POINT)
         self._line_button.connect("toggled", self.set_mode, ObjectType.LINE)
         self._triangle_button .connect("toggled", self.set_mode, ObjectType.TRIANGLE)
         self._rectangle_button.connect("toggled", self.set_mode, ObjectType.RECTANGLE)
         self._polygon_button.connect("toggled", self.set_mode, ObjectType.POLYGON)
+        self._bezier_curve_button.connect("toggled", self.set_mode, ObjectType.BEZIER_CURVE)
         self._main_window.remove_button.connect("clicked", self.remove)
         self._main_window.apply_translation_button.connect("clicked", self.translate)
         self._main_window.apply_scaling_button.connect("clicked", self.rescale)
@@ -123,6 +145,7 @@ class EditorHandler():
         self._rotation_anchor_button_x.connect("value-changed", self.update_rotation_anchor)
         self._rotation_anchor_button_y.connect("value-changed", self.update_rotation_anchor)
         self._rotation_anchor_button_z.connect("value-changed", self.update_rotation_anchor)
+        self._clipping_method_button.connect("toggled", self.toggle_clipping_method)
 
         self._user_call_lock = True
 
@@ -163,6 +186,8 @@ class EditorHandler():
                 self._rectangle_button.set_active(False)
             case ObjectType.POLYGON:
                 self._polygon_button.set_active(False)
+            case ObjectType.BEZIER_CURVE:
+                self._bezier_curve_button.set_active(False)
         self._user_call_lock = True
 
     def handle_click(self, position: Vector) -> None:
@@ -196,7 +221,7 @@ class EditorHandler():
                         "Triangle",
                         self._color,
                         self._width,
-                        True))
+                        self._fill))
                 object_completed = True
             elif self._mode == ObjectType.RECTANGLE and len(self._temp_coords) >= 2:
                 self._main_window.display_file_handler.add_object(
@@ -206,7 +231,7 @@ class EditorHandler():
                         "Rectangle",
                         self._color,
                         self._width,
-                        True))
+                        self._fill))
                 object_completed = True
             elif self._mode == ObjectType.POLYGON and len(self._temp_coords) >= self._edges:
                 self._main_window.display_file_handler.add_object(
@@ -216,8 +241,20 @@ class EditorHandler():
                         self._color,
                         self._width,
                         ObjectType.POLYGON,
-                        True))
+                        self._fill))
                 object_completed = True
+            elif self._mode == ObjectType.BEZIER_CURVE:
+
+                self.check_curve_requirements()
+
+                if len(self._temp_coords) >= self._curve_point_count:
+                    self._main_window.display_file_handler.add_object(
+                        BezierCurve(self._temp_coords,
+                                    self._curve_step_count,
+                                    "Bezier Curve",
+                                    self._color,
+                                    self._width))
+                    object_completed = True
 
             if object_completed:
                 self._focus_object = self._main_window.display_file_handler.objects[-1]
@@ -273,10 +310,19 @@ class EditorHandler():
         else:
             self._mode = ObjectType.NULL
 
-        if self._mode == ObjectType.POLYGON:
-            self._edges_button.set_editable(True)
-        else:
-            self._edges_button.set_editable(False)
+        match self._mode:
+            case ObjectType.POLYGON:
+                self._edges_button.set_editable(True)
+                self._curve_point_count_button.set_editable(False)
+                self._curve_step_count_button.set_editable(False)
+            case ObjectType.BEZIER_CURVE:
+                self._edges_button.set_editable(False)
+                self._curve_point_count_button.set_editable(True)
+                self._curve_step_count_button.set_editable(True)
+            case _:
+                self._edges_button.set_editable(False)
+                self._curve_point_count_button.set_editable(False)
+                self._curve_step_count_button.set_editable(False)
 
         self._temp_coords.clear()
 
@@ -301,6 +347,49 @@ class EditorHandler():
         '''
 
         self._edges = self._edges_button.get_value_as_int()
+
+    def set_fill(self, user_data) -> None:
+        '''
+        Handler da definição de preenchimento.
+        '''
+
+        self._fill = not self._fill
+
+    def set_curve_point_count(self, user_data) -> None:
+        '''
+        Handler da mudança da contagem de pontos de controle da curva de Bezier.
+        '''
+
+        self._curve_point_count = self._curve_point_count_button.get_value_as_int()
+
+    def set_curve_step_count(self, user_data) -> None:
+        '''
+        handler da mudança da contagem de passos no processamento de curvas.
+        '''
+
+        self._curve_step_count = self._curve_step_count_button.get_value_as_int()
+
+    def check_curve_requirements(self) -> None:
+        '''
+        Verifica se os pontos de controle são colineares.
+        '''
+
+        # TODO: Checar a colinearidade
+
+        # if len(self._temp_coords) >= 7:
+
+        #     slope_a = (self._temp_coords[-4].y - self._temp_coords[-5].y) / \
+        #               (self._temp_coords[-4].x - self._temp_coords[-5].x)
+
+        #     slope_b = (self._temp_coords[-3].y - self._temp_coords[-4].y) / \
+        #               (self._temp_coords[-3].x - self._temp_coords[-4].x)
+
+        #     angle = degrees(atan((slope_b - slope_a) / (1.0 + (slope_b * slope_a))))
+
+        #     print(angle)
+
+        #     if abs(angle) > 5.0:
+        #         self._temp_coords.clear()
 
     def remove(self, user_data) -> None:
         '''
@@ -455,3 +544,15 @@ class EditorHandler():
             anchor_z = self._rotation_anchor_button_z.get_value()
 
             self._rotation_anchor = Vector(anchor_x, anchor_y, anchor_z)
+
+    def toggle_clipping_method(self, user_data) -> None:
+        '''
+        Muda o método de clipping.
+        '''
+
+        self._main_window.viewport_handler.change_clipping_method()
+
+        if self._clipping_method_button.get_label() == "Liang-Barsky":
+            self._clipping_method_button.set_label("Cohen-Sutherland")
+        else:
+            self._clipping_method_button.set_label("Liang-Barsky")
