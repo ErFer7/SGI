@@ -4,12 +4,10 @@
 Módulo para o editor.
 '''
 
-# from math import degrees, atan
-
 import gi
 
 from source.transform import Vector
-from source.wireframe import ObjectType, Object, Point, Line, Triangle, Rectangle, Wireframe, BezierCurve
+from source.wireframe import ObjectType, Object, Point, Line, Triangle, Rectangle, Wireframe, BezierCurve, SplineCurve
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
@@ -32,10 +30,14 @@ class EditorHandler():
     _fill: bool
     _curve_point_count: int
     _curve_step_count: int
+    _spline_point_count: int
+    _spline_step_count: int
     _rotation_anchor: Vector
     _edges_button: Gtk.SpinButton
     _curve_point_count_button: Gtk.SpinButton
     _curve_step_count_button: Gtk.SpinButton
+    _spline_point_count_button: Gtk.SpinButton
+    _spline_step_count_button: Gtk.SpinButton
     _fill_button: Gtk.CheckButton
     _point_button: Gtk.ToggleButton
     _line_button: Gtk.ToggleButton
@@ -43,6 +45,8 @@ class EditorHandler():
     _rectangle_button: Gtk.ToggleButton
     _polygon_button: Gtk.ToggleButton
     _bezier_curve_button: Gtk.ToggleButton
+    _spline_curve_button: Gtk.ToggleButton
+    _closed_spline_button: Gtk.CheckButton
     _width_button: Gtk.SpinButton
     _color_button: Gtk.ColorButton
     _position_x_button: Gtk.SpinButton
@@ -77,9 +81,12 @@ class EditorHandler():
         self._width = 1.0
         self._color = [1.0, 1.0, 1.0]
         self._edges = 3
-        self._fill = True
+        self._fill = False
         self._curve_point_count = 4
-        self._curve_step_count = 4
+        self._curve_step_count = 15
+        self._spline_point_count = 4
+        self._spline_step_count = 10
+        self._closed_spline = False
         self._rotation_anchor = None
         self._width_button = self._main_window.width_button
         self._color_button = self._main_window.color_button
@@ -87,12 +94,16 @@ class EditorHandler():
         self._fill_button = self._main_window.fill_button
         self._curve_point_count_button = self._main_window.curve_point_count_button
         self._curve_step_count_button = self._main_window.curve_step_count_button
+        self._spline_point_count_button = self._main_window.spline_point_count_button
+        self._spline_step_count_button = self._main_window.spline_step_count_button
+        self._closed_spline_button = self._main_window.closed_spline_button
         self._point_button = self._main_window.point_button
         self._line_button = self._main_window.line_button
         self._triangle_button = self._main_window.triangle_button
         self._rectangle_button = self._main_window.rectangle_button
         self._polygon_button = self._main_window.polygon_button
         self._bezier_curve_button = self._main_window.bezier_curve_button
+        self._spline_curve_button = self._main_window.spline_curve_button
         self._position_x_button = self._main_window.position_x_button
         self._position_y_button = self._main_window.position_y_button
         self._position_z_button = self._main_window.position_z_button
@@ -121,6 +132,9 @@ class EditorHandler():
         self._fill_button.connect("toggled", self.set_fill)
         self._curve_point_count_button.connect("value-changed", self.set_curve_point_count)
         self._curve_step_count_button.connect("value-changed", self.set_curve_step_count)
+        self._spline_point_count_button.connect("value-changed", self.set_spline_point_count)
+        self._spline_step_count_button.connect("value-changed", self.set_spline_step_count)
+        self._closed_spline_button.connect("toggled", self.set_closed_spline)
         self._main_window.file_button.connect("select", self.show_explorer)
         self._point_button.connect("toggled", self.set_mode, ObjectType.POINT)
         self._line_button.connect("toggled", self.set_mode, ObjectType.LINE)
@@ -128,6 +142,7 @@ class EditorHandler():
         self._rectangle_button.connect("toggled", self.set_mode, ObjectType.RECTANGLE)
         self._polygon_button.connect("toggled", self.set_mode, ObjectType.POLYGON)
         self._bezier_curve_button.connect("toggled", self.set_mode, ObjectType.BEZIER_CURVE)
+        self._spline_curve_button.connect("toggled", self.set_mode, ObjectType.SPLINE_CURVE)
         self._main_window.remove_button.connect("clicked", self.remove)
         self._main_window.apply_translation_button.connect("clicked", self.translate)
         self._main_window.apply_scaling_button.connect("clicked", self.rescale)
@@ -188,6 +203,8 @@ class EditorHandler():
                 self._polygon_button.set_active(False)
             case ObjectType.BEZIER_CURVE:
                 self._bezier_curve_button.set_active(False)
+            case ObjectType.SPLINE_CURVE:
+                self._spline_curve_button.set_active(False)
         self._user_call_lock = True
 
     def handle_click(self, position: Vector) -> None:
@@ -255,6 +272,16 @@ class EditorHandler():
                                     self._color,
                                     self._width))
                     object_completed = True
+            elif self._mode == ObjectType.SPLINE_CURVE and len(self._temp_coords) >= self._spline_point_count:
+                self._main_window.display_file_handler.add_object(
+                    SplineCurve(self._temp_coords,
+                                self._fill,
+                                self._closed_spline,
+                                self._spline_step_count,
+                                "Bezier Curve",
+                                self._color,
+                                self._width))
+                object_completed = True
 
             if object_completed:
                 self._focus_object = self._main_window.display_file_handler.objects[-1]
@@ -310,19 +337,21 @@ class EditorHandler():
         else:
             self._mode = ObjectType.NULL
 
+        self._edges_button.set_editable(False)
+        self._curve_point_count_button.set_editable(False)
+        self._curve_step_count_button.set_editable(False)
+        self._spline_point_count_button.set_editable(False)
+        self._spline_step_count_button.set_editable(False)
+
         match self._mode:
             case ObjectType.POLYGON:
                 self._edges_button.set_editable(True)
-                self._curve_point_count_button.set_editable(False)
-                self._curve_step_count_button.set_editable(False)
             case ObjectType.BEZIER_CURVE:
-                self._edges_button.set_editable(False)
                 self._curve_point_count_button.set_editable(True)
                 self._curve_step_count_button.set_editable(True)
-            case _:
-                self._edges_button.set_editable(False)
-                self._curve_point_count_button.set_editable(False)
-                self._curve_step_count_button.set_editable(False)
+            case ObjectType.SPLINE_CURVE:
+                self._spline_point_count_button.set_editable(True)
+                self._spline_step_count_button.set_editable(True)
 
         self._temp_coords.clear()
 
@@ -369,27 +398,45 @@ class EditorHandler():
 
         self._curve_step_count = self._curve_step_count_button.get_value_as_int()
 
+    def set_spline_point_count(self, user_data) -> None:
+        '''
+        Handler da mudança da contagem de pontos do Spline.
+        '''
+
+        self._spline_point_count = self._spline_point_count_button.get_value_as_int()
+
+    def set_spline_step_count(self, user_data) -> None:
+        '''
+        handler da mudança da contagem de passos no processamento de Splines.
+        '''
+
+        self._spline_step_count = self._spline_step_count_button.get_value_as_int()
+
+    def set_closed_spline(self, user_data) -> None:
+        '''
+        Handler para definir se o Spline é fechado ou não.
+        '''
+
+        self._closed_spline = not self._closed_spline
+
     def check_curve_requirements(self) -> None:
         '''
         Verifica se os pontos de controle são colineares.
         '''
 
-        # TODO: Checar a colinearidade
+        temp_len = len(self._temp_coords)
 
-        # if len(self._temp_coords) >= 7:
+        if temp_len > 4 and (temp_len - 4) % 3 == 0:
 
-        #     slope_a = (self._temp_coords[-4].y - self._temp_coords[-5].y) / \
-        #               (self._temp_coords[-4].x - self._temp_coords[-5].x)
+            if self._temp_coords[-4].y == self._temp_coords[-5].y:
+                return
 
-        #     slope_b = (self._temp_coords[-3].y - self._temp_coords[-4].y) / \
-        #               (self._temp_coords[-3].x - self._temp_coords[-4].x)
+            slope_a = (self._temp_coords[-4].y - self._temp_coords[-5].y) / \
+                      (self._temp_coords[-4].x - self._temp_coords[-5].x)
 
-        #     angle = degrees(atan((slope_b - slope_a) / (1.0 + (slope_b * slope_a))))
-
-        #     print(angle)
-
-        #     if abs(angle) > 5.0:
-        #         self._temp_coords.clear()
+            self._temp_coords[-3].y = slope_a * \
+                                      (self._temp_coords[-3].x - self._temp_coords[-4].x) + \
+                                      self._temp_coords[-4].y
 
     def remove(self, user_data) -> None:
         '''

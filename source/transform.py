@@ -289,7 +289,7 @@ class Transform():
         return new_coords
 
     def rotate(self,
-               angle: float,
+               rotation: Vector,
                coords: list[Vector],
                anchor: Vector = None,
                update_internal_vectors: bool = True) -> list[Vector]:
@@ -300,10 +300,10 @@ class Transform():
         #TODO: Adicionar a rotação em múltiplos eixos
 
         if update_internal_vectors:
-            self._rotation.z = (self._rotation.z + angle) % 360
+            self._rotation.z = (self._rotation.z + rotation.z) % 360
 
-        angle_cos = cos(radians(angle))
-        angle_sin = sin(radians(angle))
+        angle_cos = cos(radians(rotation.z))
+        angle_sin = sin(radians(rotation.z))
 
         self._rotation_matrix_z[0, 0] = angle_cos
         self._rotation_matrix_z[0, 1] = -angle_sin

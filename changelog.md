@@ -40,3 +40,9 @@
 
 * Curvas de Bezier
 * Mudanças na interface
+
+---
+
+## v0.6
+
+* Curvas Spline com forward differences
