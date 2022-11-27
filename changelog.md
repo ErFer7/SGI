@@ -46,3 +46,9 @@
 ## v0.6
 
 * Curvas Spline com forward differences
+
+---
+
+## v0.7
+
+_Em desenvolvimento_

@@ -7,7 +7,7 @@ Módulo para o editor.
 import gi
 
 from source.transform import Vector
-from source.wireframe import ObjectType, Object, Point, Line, Triangle, Rectangle, Wireframe, BezierCurve, SplineCurve
+from source.wireframe import ObjectType, Object, Point, Line, Triangle, Rectangle, Wireframe2D, BezierCurve, SplineCurve
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
@@ -252,7 +252,7 @@ class EditorHandler():
                 object_completed = True
             elif self._mode == ObjectType.POLYGON and len(self._temp_coords) >= self._edges:
                 self._main_window.display_file_handler.add_object(
-                    Wireframe(
+                    Wireframe2D(
                         self._temp_coords.copy(),
                         "Wireframe",
                         self._color,
@@ -495,7 +495,7 @@ class EditorHandler():
 
             angle = self._rotation_button.get_value()
 
-            self._focus_object.rotate(angle, self._rotation_anchor)
+            self._focus_object.rotate(Vector(0.0, 0.0, angle), self._rotation_anchor)
             self.update_spin_buttons()
             self._main_window.display_file_handler.request_normalization()
 
@@ -572,11 +572,11 @@ class EditorHandler():
 
         if self._user_call_lock and self._focus_object is not None:
 
-            # diff_x = self._rotation_x_button.get_value() - self._focus_object.rotation.x
-            # diff_y = self._rotation_y_button.get_value() - self._focus_object.rotation.y
+            diff_x = self._rotation_x_button.get_value() - self._focus_object.rotation.x
+            diff_y = self._rotation_y_button.get_value() - self._focus_object.rotation.y
             diff_z = self._rotation_z_button.get_value() - self._focus_object.rotation.z
 
-            self._focus_object.rotate(diff_z)
+            self._focus_object.rotate(Vector(diff_x, diff_y, diff_z))
             self._main_window.display_file_handler.request_normalization()
 
     def update_rotation_anchor(self, user_data) -> None:

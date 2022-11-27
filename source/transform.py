@@ -110,7 +110,7 @@ class Transform():
         sin_ = sin(rotation.x)
 
         self._rotation_matrix_x = np.matrix([[1.0, 0.0, 0.0, 0.0],
-                                             [0.0, cos_, sin_, 0.0],
+                                             [0.0, cos_, -sin_, 0.0],
                                              [0.0, sin_, cos_, 0.0],
                                              [0.0, 0.0, 0.0, 1.0]])
 
@@ -297,10 +297,26 @@ class Transform():
         Rotaciona o objeto em relação à um ponto.
         '''
 
-        #TODO: Adicionar a rotação em múltiplos eixos
-
         if update_internal_vectors:
+            self._rotation.x = (self._rotation.x + rotation.x) % 360
+            self._rotation.y = (self._rotation.y + rotation.y) % 360
             self._rotation.z = (self._rotation.z + rotation.z) % 360
+
+        angle_cos = cos(radians(rotation.x))
+        angle_sin = sin(radians(rotation.x))
+
+        self._rotation_matrix_x[1, 1] = angle_cos
+        self._rotation_matrix_x[1, 2] = -angle_sin
+        self._rotation_matrix_x[2, 1] = angle_sin
+        self._rotation_matrix_x[2, 2] = angle_cos
+
+        angle_cos = cos(radians(rotation.y))
+        angle_sin = sin(radians(rotation.y))
+
+        self._rotation_matrix_y[0, 0] = angle_cos
+        self._rotation_matrix_y[0, 2] = angle_sin
+        self._rotation_matrix_y[2, 0] = -angle_sin
+        self._rotation_matrix_y[2, 2] = angle_cos
 
         angle_cos = cos(radians(rotation.z))
         angle_sin = sin(radians(rotation.z))
@@ -309,6 +325,8 @@ class Transform():
         self._rotation_matrix_z[0, 1] = -angle_sin
         self._rotation_matrix_z[1, 0] = angle_sin
         self._rotation_matrix_z[1, 1] = angle_cos
+
+        rotation_matrix = self._rotation_matrix_x * self._rotation_matrix_y * self._rotation_matrix_z
 
         corrected_coords = coords + [self._position] if update_internal_vectors else coords
         new_coords = []
@@ -319,7 +337,7 @@ class Transform():
         # Translação ponto a ponto. A posição é adicionada como um ponto
         for coord in corrected_coords:
             relative_coord = self.world_to_local(coord, anchor)
-            new_coord = np.matmul(self._rotation_matrix_z, [relative_coord.x, relative_coord.y, relative_coord.z, 1])
+            new_coord = np.matmul(rotation_matrix, [relative_coord.x, relative_coord.y, relative_coord.z, 1])
             relative_new_coord = self.local_to_world(Vector(new_coord[0, 0], new_coord[0, 1], new_coord[0, 2]), anchor)
             new_coords.append(relative_new_coord)
 

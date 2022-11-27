@@ -8,7 +8,7 @@ from math import degrees
 
 import gi
 
-from source.wireframe import Object, Window
+from source.wireframe import Object, Window, Parallelepiped
 from source.file_system import FileSystem
 from source.transform import Vector
 

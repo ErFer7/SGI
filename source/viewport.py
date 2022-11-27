@@ -8,7 +8,7 @@ from enum import Enum
 from math import inf
 
 from source.transform import Vector
-from source.wireframe import Window
+from source.wireframe import Window, Object
 from source.displayfile import DisplayFileHandler
 
 import gi
@@ -108,12 +108,14 @@ class ViewportHandler():
 
         return Vector(x_w, y_w)
 
-    def clip_to_lines(self, coords: list[Vector], closed: bool) -> list[Vector]:
+    def clip_to_lines(self, obj: Object) -> list[list[Vector]]:
         '''
         Faz o clipping de um objeto e o converte para a representação em linhas.
 
         O algoritmo de clipping de polígonos é o Sutherland-Hodgeman.
         '''
+
+        coords = obj.normalized_coords
 
         clipped_lines = []
         coords_size = len(coords)
@@ -121,23 +123,23 @@ class ViewportHandler():
         if coords_size == 1:
             if (self._window.normalized_origin.x <= coords[0].x <= self._window.normalized_extension.x) and \
                (self._window.normalized_origin.y <= coords[0].y <= self._window.normalized_extension.y):
-                clipped_lines.append([Vector(coords[0].x, coords[0].y), Vector(coords[0].x + 1, coords[0].y)])
+                clipped_lines.append(obj.lines)
         elif coords_size == 2:
 
             if self._clipping_method == ClippingMethod.COHEN_SUTHERLAND:
 
-                clipped_line = self.cohen_sutherland(coords)
+                clipped_line = self.cohen_sutherland(obj.lines)
                 if len(clipped_line) > 0:
                     clipped_lines.append(clipped_line)
             else:
 
-                clipped_line = self.liang_barsky(coords)
+                clipped_line = self.liang_barsky(obj.lines)
                 if len(clipped_line) > 0:
                     clipped_lines.append(clipped_line)
         else:
 
-            clipped_lines = self.coords_to_lines(coords, closed)
-            clipped_coords = []
+            clipped_lines = obj.lines
+            clipped_lines_temp = []
 
             for inter in [Intersection.LEFT, Intersection.RIGHT, Intersection.BOTTOM, Intersection.TOP]:
 
@@ -170,19 +172,27 @@ class ViewportHandler():
                             comp_b = line[1].y < self._window.normalized_extension.y
 
                     if comp_inside:
-                        clipped_coords.append(line[0])
-                        clipped_coords.append(line[1])
+                        clipped_lines_temp.append(line)
                     elif comp_a:
                         intersection = self.intersection(line, None, inter, False)
-                        clipped_coords.append(intersection[0])
-                        clipped_coords.append(intersection[1])
+                        clipped_lines_temp.append(intersection)
                     elif comp_b:
                         intersection = self.intersection(line, inter, None, False)
-                        clipped_coords.append(intersection[0])
-                        clipped_coords.append(intersection[1])
+                        clipped_lines_temp.append(intersection)
 
-                clipped_lines = self.coords_to_lines(clipped_coords, closed)
-                clipped_coords.clear()
+                # Patch de linhas
+                if obj.fill:
+                    for i, _ in enumerate(clipped_lines_temp):
+                        if i < len(clipped_lines_temp) - 1:
+                            if clipped_lines_temp[i][1] != clipped_lines_temp[i + 1][0]:
+                                clipped_lines_temp.insert(i + 1,
+                                                         [clipped_lines_temp[i][1], clipped_lines_temp[i + 1][0]])
+                        else:
+                            if clipped_lines_temp[i][1] != clipped_lines_temp[0][0]:
+                                clipped_lines_temp.append([clipped_lines_temp[i][1], clipped_lines_temp[0][0]])
+
+                clipped_lines = clipped_lines_temp.copy()
+                clipped_lines_temp.clear()
 
         return clipped_lines
 
@@ -366,26 +376,6 @@ class ViewportHandler():
 
         return [new_vector_a, new_vector_b]
 
-    def coords_to_lines(self, coords: list[Vector], closed: bool) -> list[list[Vector]]:
-        '''
-        Converte coordenadas normais para linhas.
-        '''
-
-        lines = []
-
-        if len(coords) == 1:
-            lines.append([coords[0], Vector(coords[0].x + 1, coords[0].y)])
-        else:
-
-            for i, _ in enumerate(coords):
-                if i < len(coords) - 1:
-                    lines.append([coords[i], coords[i + 1]])
-
-            if len(coords) > 2 and closed:
-                lines.append([coords[-1], coords[0]])
-
-        return lines
-
     # Handlers
     def on_draw(self, area, context) -> None:
         '''
@@ -406,9 +396,9 @@ class ViewportHandler():
             clipped_coords = []
 
             if obj != self._window:
-                clipped_coords = self.clip_to_lines(obj.normalized_coords, obj.closed)
+                clipped_coords = self.clip_to_lines(obj)
             else:
-                clipped_coords = self.coords_to_lines(obj.normalized_coords, obj.closed)
+                clipped_coords = obj.lines
 
             screen_lines = list(map(self.world_line_to_screen, clipped_coords))
             color = obj.color
@@ -418,6 +408,9 @@ class ViewportHandler():
             context.new_path()
             context.set_source_rgb(color[0], color[1], color[2])
             context.set_line_width(line_width)
+
+            if obj.fill and len(screen_lines) > 0:
+                context.move_to(screen_lines[0][0].x, screen_lines[0][0].y)
 
             for line in screen_lines:
 
@@ -519,7 +512,7 @@ class ViewportHandler():
         Rotaciona a window.
         '''
 
-        self._window.rotate(angle)
+        self._window.rotate(Vector(0.0, 0.0, angle))
         self._main_window.display_file_handler.request_normalization()
 
     def reset_window_rotation(self) -> None:
@@ -527,7 +520,7 @@ class ViewportHandler():
         Redefine a rotação da window.
         '''
 
-        self._window.rotate(-self._window.rotation.z)
+        self._window.rotate(Vector(0.0, 0.0, -self._window.rotation.z))
         self._main_window.display_file_handler.request_normalization()
 
     def reescale_window(self, scale: Vector) -> None:
