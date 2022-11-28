@@ -787,7 +787,6 @@ class Window(Rectangle):
         self.cop = coords[-1]
 
     def project(self, cop: Vector, normal: Vector, cop_distance) -> None:
-
         coords = self._transform.project(cop, normal, cop_distance, self.coords + [cop, self.position], True)
         self.projected_coords = coords[:-2]
         self.projected_cop = coords[-2]
