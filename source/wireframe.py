@@ -157,12 +157,12 @@ class Object(ABC):
                                                            self.projected_coords)
         self.generate_lines()
 
-    def project(self, cop: Vector, normal: Vector) -> None:
+    def project(self, cop: Vector, normal: Vector, cop_distance: float) -> None:
         '''
         Gera as coordenadas de projeção.
         '''
 
-        self.projected_coords = self._transform.project(cop, normal, self.coords)
+        self.projected_coords = self._transform.project(cop, normal, cop_distance, self.coords)
 
 
 class Point(Object):
@@ -679,6 +679,7 @@ class Window(Rectangle):
     '''
 
     cop: Vector
+    projected_cop: Vector
     projected_position: Vector
 
     def __init__(self,
@@ -690,6 +691,7 @@ class Window(Rectangle):
         super().__init__(origin, extension, "Window", color, line_width, False)
 
         self.cop = cop
+        self.projected_cop = self.cop
         self.projected_position = self.position
 
     @property
@@ -722,13 +724,6 @@ class Window(Rectangle):
 
         return self.coords[1] - self.coords[0]
 
-    def calculate_y_projected_vector(self) -> Vector:
-        '''
-        Retorna o vetor projetado que aponta para cima.
-        '''
-
-        return self.projected_coords[1] - self.projected_coords[0]
-
     def calculate_z_vector(self) -> Vector:
         '''
         Retorna o vetor normal da window.
@@ -736,9 +731,56 @@ class Window(Rectangle):
 
         return (self.calculate_x_axis() / 2.0).cross_product(self.calculate_y_vector() / 2.0)
 
-    def project(self, cop: Vector, normal: Vector) -> None:
+    def calculate_x_projected_axis(self) -> Vector:
+        '''
+        Calcula o eixo x projetado da window.
+        '''
 
-        coords = self._transform.project(cop, normal, self.coords + [cop, self.position])
+        return self.projected_coords[2] - self.projected_coords[1]
+
+    def calculate_y_projected_vector(self) -> Vector:
+        '''
+        Retorna o vetor projetado que aponta para cima.
+        '''
+
+        return self.projected_coords[1] - self.projected_coords[0]
+
+    def calculate_z_projected_vector(self) -> Vector:
+        '''
+        Retorna o vetor normal projetado da window.
+        '''
+
+        return (self.calculate_x_projected_axis() / 2.0).cross_product(self.calculate_y_projected_vector() / 2.0)
+
+    def calculate_cop_distance(self) -> float:
+        '''
+        Retorna a distância do cop (projetado) até o centro da window.
+        '''
+
+        return (self.projected_position - self.projected_cop).magnitude()
+
+    def translate(self, direction: Vector, normalized: bool = False) -> None:
+        if normalized:
+            direction = self._transform.rotate(self.rotation, [direction + self.position], None, False)[0]
+            direction -= self.position
+
+        coords = self._transform.translate(direction, self.coords + [self.cop])
+        self.coords = coords[:-1]
+        self.cop = coords[-1]
+
+    def rescale(self, scale: Vector) -> None:
+        coords = self._transform.rescale(scale, self.coords + [self.cop])
+        self.coords = coords[:-1]
+        self.cop = coords[-1]
+
+    def rotate(self, rotation: Vector, anchor: Vector = None) -> None:
+        coords = self._transform.rotate(rotation, self.coords + [self.cop], anchor)
+        self.coords = coords[:-1]
+        self.cop = coords[-1]
+
+    def project(self, cop: Vector, normal: Vector, cop_distance) -> None:
+
+        coords = self._transform.project(cop, normal, cop_distance, self.coords + [cop, self.position], True)
         self.projected_coords = coords[:-2]
-        self.cop = coords[-2]
+        self.projected_cop = coords[-2]
         self.projected_position = coords[-1]

@@ -417,7 +417,7 @@ class Transform():
 
         return new_coords
 
-    def project(self, cop: Vector, normal: Vector, coords: list[Vector]) -> list[Vector]:
+    def project(self, cop: Vector, normal: Vector, cop_distance: float, coords: list[Vector], win: bool = False) -> list[Vector]:
         '''
         Projeta as coordendas.
         '''
@@ -461,6 +461,17 @@ class Transform():
 
         for coord in coords:
             new_coord = np.matmul(self._projection_matrix, [coord.x, coord.y, coord.z, 1])
-            new_coords.append(Vector(new_coord[0, 0], new_coord[0, 1], new_coord[0, 2]))
+            new_vec = Vector(new_coord[0, 0], new_coord[0, 1], new_coord[0, 2])
+
+            new_projected_vec = None
+
+            if not win:
+                new_projected_vec = Vector(new_vec.x / (new_vec.z / cop_distance),
+                                           new_vec.y / (new_vec.z / cop_distance),
+                                           cop_distance)
+            else:
+                new_projected_vec = new_vec
+
+            new_coords.append(new_projected_vec)
 
         return new_coords

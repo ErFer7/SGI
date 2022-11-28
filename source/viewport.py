@@ -71,7 +71,7 @@ class ViewportHandler():
         self._bg_color = bg_color
         self._window = Window(Vector(-500.0, -500.0),
                               Vector(500.0, 500.0),
-                              Vector(0.0, 0.0, -100.0),
+                              Vector(0.0, 0.0, -500.0),
                               (0.5, 0.0, 0.5),
                               2.0)
         self._drag_coord = None
@@ -553,6 +553,7 @@ class ViewportHandler():
         '''
 
         normal = self._window.calculate_z_vector()
+        cop_distance = self._window.calculate_cop_distance()
 
         for obj in self._main_window.display_file_handler.objects + [self._window]:
-            obj.project(self._window.cop, normal)
+            obj.project(self._window.cop, normal, cop_distance)
