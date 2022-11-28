@@ -296,9 +296,9 @@ class EditorHandler():
 
         match key:
             case 'q':
-                self._main_window.viewport_handler.rotate_window(-10)
+                self._main_window.viewport_handler.rotate_window(Vector(0.0, 0.0, -10))
             case 'e':
-                self._main_window.viewport_handler.rotate_window(10)
+                self._main_window.viewport_handler.rotate_window(Vector(0.0, 0.0, 10))
             case 'w':
                 self._main_window.viewport_handler.move_window(Vector(0.0, 10.0, 0.0))
             case 'a':
@@ -307,6 +307,18 @@ class EditorHandler():
                 self._main_window.viewport_handler.move_window(Vector(0.0, -10.0, 0.0))
             case 'd':
                 self._main_window.viewport_handler.move_window(Vector(10.0, 0.0, 0.0))
+            case 'f':
+                self._main_window.viewport_handler.move_window(Vector(0.0, 0.0, 10.0))
+            case 'g':
+                self._main_window.viewport_handler.move_window(Vector(0.0, 0.0, -10.0))
+            case 'h':
+                self._main_window.viewport_handler.rotate_window(Vector(-10.0, 0.0, 0.0))
+            case 'j':
+                self._main_window.viewport_handler.rotate_window(Vector(10.0, 0.0, 0.0))
+            case 'k':
+                self._main_window.viewport_handler.rotate_window(Vector(0.0, -10.0, 0.0))
+            case 'l':
+                self._main_window.viewport_handler.rotate_window(Vector(0.0, 10.0, 0.0))
             case 'r':
                 self._main_window.viewport_handler.reset_window_position()
             case 't':
@@ -469,7 +481,6 @@ class EditorHandler():
 
             object_index = self._main_window.display_file_handler.objects.index(self._focus_object)
             self._main_window.display_file_handler.update_object_info(object_index)
-            self._main_window.display_file_handler.request_normalization()
 
     def rescale(self, user_data) -> None:
         '''
@@ -484,7 +495,6 @@ class EditorHandler():
 
             self._focus_object.rescale(Vector(scale_x, scale_y, scale_z))
             self.update_spin_buttons()
-            self._main_window.display_file_handler.request_normalization()
 
     def rotate(self, user_data) -> None:
         '''
@@ -497,7 +507,6 @@ class EditorHandler():
 
             self._focus_object.rotate(Vector(0.0, 0.0, angle), self._rotation_anchor)
             self.update_spin_buttons()
-            self._main_window.display_file_handler.request_normalization()
 
     def change_rotation_anchor(self, user_data) -> None:
         '''
@@ -549,7 +558,6 @@ class EditorHandler():
 
             object_index = self._main_window.display_file_handler.objects.index(self._focus_object)
             self._main_window.display_file_handler.update_object_info(object_index)
-            self._main_window.display_file_handler.request_normalization()
 
     def update_scale(self, user_data) -> None:
         '''
@@ -563,7 +571,6 @@ class EditorHandler():
             diff_z = self._scale_z_button.get_value() / self._focus_object.scale.z
 
             self._focus_object.rescale(Vector(diff_x, diff_y, diff_z))
-            self._main_window.display_file_handler.request_normalization()
 
     def update_rotation(self, user_data) -> None:
         '''
@@ -577,7 +584,6 @@ class EditorHandler():
             diff_z = self._rotation_z_button.get_value() - self._focus_object.rotation.z
 
             self._focus_object.rotate(Vector(diff_x, diff_y, diff_z))
-            self._main_window.display_file_handler.request_normalization()
 
     def update_rotation_anchor(self, user_data) -> None:
         '''

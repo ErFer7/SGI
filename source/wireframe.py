@@ -41,9 +41,10 @@ class Object(ABC):
     color: tuple
     line_width: float
     coords: list[Vector]
-    object_type: ObjectType
     normalized_coords: list[Vector]
+    projected_coords: list[Vector]
     lines: list[list[Vector]]
+    object_type: ObjectType
     fill: bool
     closed: bool
 
@@ -64,9 +65,10 @@ class Object(ABC):
         self.color = color
         self.line_width = line_width
         self.coords = coords
-        self.object_type = object_type
         self.normalized_coords = coords
+        self.projected_coords = coords
         self.lines = []
+        self.object_type = object_type
         self.fill = fill
         self.closed = closed
         self._transform = Transform(self.calculate_center(), Vector(0.0, 0.0, 0.0), Vector(1.0, 1.0, 1.0))
@@ -152,8 +154,15 @@ class Object(ABC):
         self.normalized_coords = self._transform.normalize(window_center,
                                                            window_rotation,
                                                            Vector(diff_x, diff_y, diff_z),
-                                                           self.coords)
+                                                           self.projected_coords)
         self.generate_lines()
+
+    def project(self, cop: Vector, normal: Vector) -> None:
+        '''
+        Gera as coordenadas de projeção.
+        '''
+
+        self.projected_coords = self._transform.project(cop, normal, self.coords)
 
 
 class Point(Object):
@@ -595,18 +604,17 @@ class Wireframe3D(Object):
     Wireframe 3D.
     '''
 
+    _lines_indexes: list[tuple[int]]
+
     def __init__(self,
-                 lines: list[list[Vector]],
+                 coords: list[Vector],
+                 line_indexes: list[list[Vector]],
                  name: str = '',
                  color: tuple = (1.0, 1.0, 1.0),
                  line_width: float = 1.0,
                  object_type: ObjectType = ObjectType.POLYGON3D) -> None:
 
-        coords = [lines[0][0]]
-
-        for i, line in enumerate(lines):
-            if i < len(lines) - 1:
-                coords.append(line[1])
+        self._lines_indexes = line_indexes
 
         super().__init__(coords, name, color, line_width, object_type, False, True)
 
@@ -614,10 +622,8 @@ class Wireframe3D(Object):
 
         lines = []
 
-        for i in range(len(self.normalized_coords) - 1):
-            lines.append([self.normalized_coords[i], self.normalized_coords[i + 1]])
-
-        lines.append([self.normalized_coords[-1], self.normalized_coords[0]])
+        for i, j in self._lines_indexes:
+            lines.append([self.normalized_coords[i], self.normalized_coords[j]])
 
         self.lines = lines
 
@@ -635,35 +641,35 @@ class Parallelepiped(Wireframe3D):
                  color: tuple = (1.0, 1.0, 1.0),
                  line_width: float = 1.0) -> None:
 
-        lines = []
+        coords = []
+        line_indexes = []
 
-        lines.append([origin, Vector(origin.x, extension.y)])
-        lines.append([Vector(origin.x, extension.y), extension])
-        lines.append([extension, Vector(extension.x, origin.y)])
-        lines.append([Vector(extension.x, origin.y), origin])
+        coords.append(origin)
+        coords.append(Vector(origin.x, extension.y))
+        coords.append(extension)
+        coords.append(Vector(extension.x, origin.y))
 
-        lines.append([origin, origin + Vector(0.0, 0.0, 100.0)])
-        lines.append([Vector(origin.x, extension.y), Vector(origin.x, extension.y) + Vector(0.0, 0.0, 100.0)])
-        lines.append([extension, extension + Vector(0.0, 0.0, 100.0)])
-        lines.append([Vector(extension.x, origin.y), Vector(extension.x, origin.y) + Vector(0.0, 0.0, 100.0)])
+        coords.append(origin + Vector(0.0, 0.0, extension.x - origin.x))
+        coords.append(Vector(origin.x, extension.y, extension.x - origin.x))
+        coords.append(extension + Vector(0.0, 0.0, extension.x - origin.x))
+        coords.append(Vector(extension.x, origin.y, extension.x - origin.x))
 
-        lines.append([origin + Vector(0.0, 0.0, 100.0), Vector(origin.x, extension.y) + Vector(0.0, 0.0, 100.0)])
-        lines.append([Vector(origin.x, extension.y) + Vector(0.0, 0.0, 100.0), extension + Vector(0.0, 0.0, 100.0)])
-        lines.append([extension + Vector(0.0, 0.0, 100.0), Vector(extension.x, origin.y) + Vector(0.0, 0.0, 100.0)])
-        lines.append([Vector(extension.x, origin.y) + Vector(0.0, 0.0, 100.0), origin + Vector(0.0, 0.0, 100.0)])
+        line_indexes.append((0, 1))
+        line_indexes.append((1, 2))
+        line_indexes.append((2, 3))
+        line_indexes.append((3, 0))
 
-        super().__init__(lines, name, color, line_width, ObjectType.PARALLELEPIPED)
+        line_indexes.append((0, 4))
+        line_indexes.append((1, 5))
+        line_indexes.append((2, 6))
+        line_indexes.append((3, 7))
 
-    def generate_lines(self) -> None:
+        line_indexes.append((4, 5))
+        line_indexes.append((5, 6))
+        line_indexes.append((6, 7))
+        line_indexes.append((7, 4))
 
-        lines = []
-
-        for i in range(len(self.normalized_coords) - 1):
-            lines.append([self.normalized_coords[i], self.normalized_coords[i + 1]])
-
-        lines.append([self.normalized_coords[-1], self.normalized_coords[0]])
-
-        self.lines = lines
+        super().__init__(coords, line_indexes, name, color, line_width, ObjectType.PARALLELEPIPED)
 
 
 class Window(Rectangle):
@@ -672,19 +678,19 @@ class Window(Rectangle):
     Janela.
     '''
 
+    cop: Vector
+    projected_position: Vector
+
     def __init__(self,
                  origin: Vector,
                  extension: Vector,
+                 cop: Vector,
                  color: tuple = (0.5, 0.0, 0.5),
                  line_width: float = 2.0) -> None:
         super().__init__(origin, extension, "Window", color, line_width, False)
 
-    def calculate_up_vector(self) -> Vector:
-        '''
-        Retorna o vetor que aponta para cima.
-        '''
-
-        return self.coords[1] - self.coords[0]
+        self.cop = cop
+        self.projected_position = self.position
 
     @property
     def normalized_origin(self) -> Vector:
@@ -701,3 +707,38 @@ class Window(Rectangle):
         '''
 
         return self.normalized_coords[2]
+
+    def calculate_x_axis(self) -> Vector:
+        '''
+        Calcula o eixo x da window.
+        '''
+
+        return self.coords[2] - self.coords[1]
+
+    def calculate_y_vector(self) -> Vector:
+        '''
+        Retorna o vetor que aponta para cima.
+        '''
+
+        return self.coords[1] - self.coords[0]
+
+    def calculate_y_projected_vector(self) -> Vector:
+        '''
+        Retorna o vetor projetado que aponta para cima.
+        '''
+
+        return self.projected_coords[1] - self.projected_coords[0]
+
+    def calculate_z_vector(self) -> Vector:
+        '''
+        Retorna o vetor normal da window.
+        '''
+
+        return (self.calculate_x_axis() / 2.0).cross_product(self.calculate_y_vector() / 2.0)
+
+    def project(self, cop: Vector, normal: Vector) -> None:
+
+        coords = self._transform.project(cop, normal, self.coords + [cop, self.position])
+        self.projected_coords = coords[:-2]
+        self.cop = coords[-2]
+        self.projected_position = coords[-1]

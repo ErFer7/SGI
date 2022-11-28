@@ -51,4 +51,10 @@
 
 ## v0.7
 
+* Projeção paralela
+
+---
+
+## v0.8
+
 _Em desenvolvimento_

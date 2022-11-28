@@ -69,7 +69,11 @@ class ViewportHandler():
         self._drawing_area.connect("scroll-event", self.on_scroll)
         self._drawing_area.connect("size-allocate", self.on_size_allocate)
         self._bg_color = bg_color
-        self._window = Window(Vector(-500.0, -500.0), Vector(500.0, 500.0), (0.5, 0.0, 0.5), 2.0)
+        self._window = Window(Vector(-500.0, -500.0),
+                              Vector(500.0, 500.0),
+                              Vector(0.0, 0.0, -100.0),
+                              (0.5, 0.0, 0.5),
+                              2.0)
         self._drag_coord = None
         self._viewport_padding = viewport_padding
         self._clipping_method = ClippingMethod.LIANG_BARSKY
@@ -382,7 +386,7 @@ class ViewportHandler():
         Método para a renderização.
         '''
 
-        # Normaliza os objetos
+        self.project()
         self._main_window.display_file_handler.normalize_objects(self._window)
 
         # Preenche o fundo
@@ -474,8 +478,6 @@ class ViewportHandler():
         else:
             self._window.rescale(Vector(0.97, 0.97, 1.0))
 
-        self._main_window.display_file_handler.request_normalization()
-
     def on_size_allocate(self, allocation, user_data):
         '''
         Evento de alocação.
@@ -489,15 +491,12 @@ class ViewportHandler():
         #                             user_data.height / (self._window.extension.y - self._window.origin.y),
         #                             1.0))
 
-        self._main_window.display_file_handler.request_normalization()
-
     def move_window(self, direction: Vector) -> None:
         '''
         Move a window.
         '''
 
         self._window.translate(direction, True)
-        self._main_window.display_file_handler.request_normalization()
 
     def reset_window_position(self) -> None:
         '''
@@ -505,23 +504,20 @@ class ViewportHandler():
         '''
 
         self._window.translate(self._window.position * -1)
-        self._main_window.display_file_handler.request_normalization()
 
-    def rotate_window(self, angle: float) -> None:
+    def rotate_window(self, rotation: Vector) -> None:
         '''
         Rotaciona a window.
         '''
 
-        self._window.rotate(Vector(0.0, 0.0, angle))
-        self._main_window.display_file_handler.request_normalization()
+        self._window.rotate(rotation)
 
     def reset_window_rotation(self) -> None:
         '''
         Redefine a rotação da window.
         '''
 
-        self._window.rotate(Vector(0.0, 0.0, -self._window.rotation.z))
-        self._main_window.display_file_handler.request_normalization()
+        self._window.rotate(self._window.rotation * -1)
 
     def reescale_window(self, scale: Vector) -> None:
         '''
@@ -529,7 +525,6 @@ class ViewportHandler():
         '''
 
         self._window.rescale(scale)
-        self._main_window.display_file_handler.request_normalization()
 
     def reset_window_scale(self) -> None:
         '''
@@ -541,7 +536,6 @@ class ViewportHandler():
         diff_z = 1.0 / self._window.scale.z
 
         self._window.rescale(Vector(diff_x, diff_y, diff_z))
-        self._main_window.display_file_handler.request_normalization()
 
     def change_clipping_method(self) -> None:
         '''
@@ -552,3 +546,13 @@ class ViewportHandler():
             self._clipping_method = ClippingMethod.LIANG_BARSKY
         else:
             self._clipping_method = ClippingMethod.COHEN_SUTHERLAND
+
+    def project(self) -> None:
+        '''
+        Faz a projeção em perspectiva dos objetos.
+        '''
+
+        normal = self._window.calculate_z_vector()
+
+        for obj in self._main_window.display_file_handler.objects + [self._window]:
+            obj.project(self._window.cop, normal)
