@@ -184,7 +184,10 @@ class Point(Object):
         return self.coords[0]
 
     def generate_lines(self) -> None:
-        self.lines = [self.normalized_coords[0], Vector(self.normalized_coords[0].x + 1, self.normalized_coords[0].y)]
+
+        if len(self.normalized_coords) > 0:
+            self.lines = [self.normalized_coords[0],
+                          Vector(self.normalized_coords[0].x + 1, self.normalized_coords[0].y)]
 
 
 class Line(Object):
@@ -220,7 +223,9 @@ class Line(Object):
         return self.coords[1]
 
     def generate_lines(self) -> list[list[Vector]]:
-        self.lines = [self.normalized_coords[0], self.normalized_coords[1]]
+
+        if len(self.normalized_coords) == 2:
+            self.lines = [self.normalized_coords[0], self.normalized_coords[1]]
 
 
 class Wireframe2D(Object):
@@ -243,10 +248,11 @@ class Wireframe2D(Object):
 
         lines = []
 
-        for i in range(len(self.normalized_coords) - 1):
-            lines.append([self.normalized_coords[i], self.normalized_coords[i + 1]])
-
-        lines.append([self.normalized_coords[-1], self.normalized_coords[0]])
+        for i, _ in enumerate(self.normalized_coords):
+            if i < len(self.normalized_coords) - 1:
+                lines.append([self.normalized_coords[i], self.normalized_coords[i + 1]])
+            else:
+                lines.append([self.normalized_coords[-1], self.normalized_coords[0]])
 
         self.lines = lines
 
@@ -456,9 +462,8 @@ class SplineCurve(Object):
         for i, _ in enumerate(self.normalized_coords):
             if i < len(self.normalized_coords) - 1:
                 lines.append([self.normalized_coords[i], self.normalized_coords[i + 1]])
-
-        if self.closed:
-            lines.append([self.normalized_coords[-1], self.normalized_coords[0]])
+            elif self.closed:
+                lines.append([self.normalized_coords[-1], self.normalized_coords[0]])
 
         self.lines = lines
 
@@ -622,8 +627,11 @@ class Wireframe3D(Object):
 
         lines = []
 
+        len_normalized = len(self.normalized_coords)
+
         for i, j in self._lines_indexes:
-            lines.append([self.normalized_coords[i], self.normalized_coords[j]])
+            if i < len_normalized and j < len_normalized:
+                lines.append([self.normalized_coords[i], self.normalized_coords[j]])
 
         self.lines = lines
 

@@ -417,7 +417,12 @@ class Transform():
 
         return new_coords
 
-    def project(self, cop: Vector, normal: Vector, cop_distance: float, coords: list[Vector], win: bool = False) -> list[Vector]:
+    def project(self,
+                cop: Vector,
+                normal: Vector,
+                cop_distance: float,
+                coords: list[Vector],
+                is_window: bool = False) -> list[Vector]:
         '''
         Projeta as coordendas.
         '''
@@ -455,6 +460,11 @@ class Transform():
                                        [-siny, 0.0, cosy, 0.0],
                                        [0.0, 0.0, 0.0, 1.0]])
 
+        perspective_matrix = np.matrix([[1.0, 0.0, 0.0, 0.0],
+                                        [0.0, 1.0, 0.0, 0.0],
+                                        [0.0, 0.0, 1.0, 0.0],
+                                        [0.0, 0.0, 1.0 / cop_distance, 0.0]])
+
         self._projection_matrix = rotation_matrix_x * rotation_matrix_y * translation_matrix
 
         new_coords = []
@@ -463,15 +473,17 @@ class Transform():
             new_coord = np.matmul(self._projection_matrix, [coord.x, coord.y, coord.z, 1])
             new_vec = Vector(new_coord[0, 0], new_coord[0, 1], new_coord[0, 2])
 
-            new_projected_vec = None
+            if not is_window:
 
-            if not win:
-                new_projected_vec = Vector(new_vec.x / (new_vec.z / cop_distance),
-                                           new_vec.y / (new_vec.z / cop_distance),
-                                           cop_distance)
+                new_coord = perspective_matrix * new_coord.transpose()
+
+                if new_coord[2, 0] >= 0.0 and new_coord[3, 0] > 0.0:
+
+                    new_vec = Vector(new_coord[0, 0] / new_coord[3, 0],
+                                     new_coord[1, 0] / new_coord[3, 0],
+                                     new_coord[2, 0] / new_coord[3, 0])
+                    new_coords.append(new_vec)
             else:
-                new_projected_vec = new_vec
-
-            new_coords.append(new_projected_vec)
+                new_coords.append(new_vec)
 
         return new_coords

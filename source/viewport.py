@@ -8,7 +8,7 @@ from enum import Enum
 from math import inf
 
 from source.transform import Vector
-from source.wireframe import Window, Object
+from source.wireframe import Window, Object, ObjectType
 from source.displayfile import DisplayFileHandler
 
 import gi
@@ -122,13 +122,14 @@ class ViewportHandler():
         coords = obj.normalized_coords
 
         clipped_lines = []
-        coords_size = len(coords)
 
-        if coords_size == 1:
-            if (self._window.normalized_origin.x <= coords[0].x <= self._window.normalized_extension.x) and \
-               (self._window.normalized_origin.y <= coords[0].y <= self._window.normalized_extension.y):
-                clipped_lines.append(obj.lines)
-        elif coords_size == 2:
+        if obj.object_type == ObjectType.POINT:
+
+            if len(coords) > 0:
+                if (self._window.normalized_origin.x <= coords[0].x <= self._window.normalized_extension.x) and \
+                   (self._window.normalized_origin.y <= coords[0].y <= self._window.normalized_extension.y):
+                    clipped_lines.append(obj.lines)
+        elif obj.object_type == ObjectType.LINE:
 
             if self._clipping_method == ClippingMethod.COHEN_SUTHERLAND:
 

@@ -57,4 +57,10 @@
 
 ## v0.8
 
+* Projeção em perspectiva
+
+---
+
+## v0.9
+
 _Em desenvolvimento_
