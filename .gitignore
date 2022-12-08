@@ -132,4 +132,3 @@ dmypy.json
 /interface/*.ui~
 /interface/*.ui#
 .zip
-/objects
