@@ -43,7 +43,7 @@ class Object(ABC):
     coords: list[Vector]
     normalized_coords: list[Vector]
     projected_coords: list[Vector]
-    lines: list[list[Vector]]
+    lines: list[tuple[int]]
     object_type: ObjectType
     fill: bool
     closed: bool
@@ -222,7 +222,7 @@ class Line(Object):
 
         return self.coords[1]
 
-    def generate_lines(self) -> list[list[Vector]]:
+    def generate_lines(self) -> list[tuple[int]]:
 
         if len(self.normalized_coords) == 2:
             self.lines = [self.normalized_coords[0], self.normalized_coords[1]]
@@ -613,7 +613,7 @@ class Wireframe3D(Object):
 
     def __init__(self,
                  coords: list[Vector],
-                 line_indexes: list[list[Vector]],
+                 line_indexes: list[tuple[int]],
                  name: str = '',
                  color: tuple = (1.0, 1.0, 1.0),
                  line_width: float = 1.0,
