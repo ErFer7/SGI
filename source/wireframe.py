@@ -28,6 +28,7 @@ class ObjectType(Enum):
     BEZIER_CURVE = 7
     SPLINE_CURVE = 8
     PARALLELEPIPED = 9
+    SURFACE = 10
 
 
 class Object(ABC):
@@ -319,9 +320,9 @@ class Rectangle(Wireframe2D):
                  fill: bool = False) -> None:
 
         super().__init__([origin,
-                         Vector(origin.x, extension.y),
+                         Vector(origin.x, extension.y, origin.z),
                          extension,
-                         Vector(extension.x, origin.y)],
+                         Vector(extension.x, origin.y, origin.z)],
                          name,
                          color,
                          line_width,
@@ -401,7 +402,11 @@ class BezierCurve(Object):
 
         self.lines = lines
 
-    def generate_curve_coords(self, start: Vector, control_points: list[Vector], end: Vector, steps: int):
+    def generate_curve_coords(self,
+                              start: Vector,
+                              control_points: list[Vector],
+                              end: Vector,
+                              steps: int) -> list[Vector]:
         '''
         Gera a curva de Bezier.
         '''
@@ -467,7 +472,7 @@ class SplineCurve(Object):
 
         self.lines = lines
 
-    def generate_spline_coords_fwd(self, points: list[Vector], steps: int, closed: bool):
+    def generate_spline_coords_fwd(self, points: list[Vector], steps: int, closed: bool) -> list[Vector]:
         '''
         Gera a curva spline com forward differeces.
         '''
@@ -550,7 +555,7 @@ class SplineCurve(Object):
 
         return spline_coords
 
-    def generate_spline_coords(self, points: list[Vector], steps: int, closed: bool):
+    def generate_spline_coords(self, points: list[Vector], steps: int, closed: bool) -> list[Vector]:
         '''
         Gera a curva spline.
         '''
@@ -678,6 +683,106 @@ class Parallelepiped(Wireframe3D):
         line_indexes.append((7, 4))
 
         super().__init__(coords, line_indexes, name, color, line_width, ObjectType.PARALLELEPIPED)
+
+
+class Surface(Wireframe3D):
+
+    '''
+    Superfície.
+    '''
+
+    def __init__(self,
+                 points: list[Vector],
+                 steps: int,
+                 name: str = '',
+                 color: tuple = (1, 1, 1),
+                 line_width: float = 1) -> None:
+
+        coords, line_indexes = self.generate_surface_coords(points, steps)
+
+        super().__init__(coords, line_indexes, name, color, line_width, ObjectType.SURFACE)
+
+    def generate_surface_coords(self, points: list[Vector], steps: int) -> tuple[list[Vector], list[tuple[Vector]]]:
+        '''
+        Gera uma superfície.
+        '''
+
+        b_spline_matrix = (1 / 6) * np.matrix([[-1, 3, -3, 1],
+                                               [3, -6, 3, 0],
+                                               [-3, 0, 3, 0],
+                                               [1, 4, 1, 0]])
+
+        b_spline_matrix_t = b_spline_matrix.getT()
+
+        surface_coords = []
+        line_indexes = []
+
+        for i, _ in enumerate(points):
+
+            geometry_matrix_x = None
+            geometry_matrix_y = None
+            geometry_matrix_z = None
+
+            if i + 15 < len(points):
+
+                # Estas matrizes poderiam ser preenchidas com loops, mas não tenho tempo pra corrigir
+                geometry_matrix_x = np.matrix([[points[i].x, points[i + 1].x, points[i + 2].x, points[i + 3].x],
+                                               [points[i + 4].x, points[i + 5].x, points[i + 6].x, points[i + 7].x],
+                                               [points[i + 8].x, points[i + 9].x, points[i + 10].x, points[i + 11].x],
+                                               [points[i + 12].x, points[i + 13].x, points[i + 14].x, points[i + 15].x]])
+                geometry_matrix_y = np.matrix([[points[i].y, points[i + 1].y, points[i + 2].y, points[i + 3].y],
+                                               [points[i + 4].y, points[i + 5].y, points[i + 6].y, points[i + 7].y],
+                                               [points[i + 8].y, points[i + 9].y, points[i + 10].y, points[i + 11].y],
+                                               [points[i + 12].y, points[i + 13].y, points[i + 14].y, points[i + 15].y]])
+                geometry_matrix_z = np.matrix([[points[i].z, points[i + 1].z, points[i + 2].z, points[i + 3].z],
+                                               [points[i + 4].z, points[i + 5].z, points[i + 6].z, points[i + 7].z],
+                                               [points[i + 8].z, points[i + 9].z, points[i + 10].z, points[i + 11].z],
+                                               [points[i + 12].z, points[i + 13].z, points[i + 14].z, points[i + 15].z]])
+            else:
+                break
+
+            line_index = 0
+            fill_curve_a = True
+            curve_a = []
+            curve_b = []
+
+            for step_s in range(steps):
+                s = step_s / steps
+                step_matrix_s = np.matrix([s**3, s**2, s, 1])
+                for step_t in range(steps):
+                    t = step_t / steps
+                    step_matrix_t = np.matrix([[t**3], [t**2], [t], [1]])
+                    new_x = step_matrix_s * b_spline_matrix * geometry_matrix_x * b_spline_matrix_t * step_matrix_t
+                    new_y = step_matrix_s * b_spline_matrix * geometry_matrix_y * b_spline_matrix_t * step_matrix_t
+                    new_z = step_matrix_s * b_spline_matrix * geometry_matrix_z * b_spline_matrix_t * step_matrix_t
+                    surface_coords.append(Vector(new_x[0, 0], new_y[0, 0], new_z[0, 0]))
+
+                    if line_index + 1 < len(surface_coords):
+                        line_indexes.append((line_index, line_index + 1))
+
+                        if fill_curve_a:
+                            curve_a.append(line_index)
+                        else:
+                            curve_b.append(line_index)
+                        line_index += 1
+
+                if fill_curve_a:
+                    curve_a.append(line_index)
+                else:
+                    curve_b.append(line_index)
+
+                if len(curve_a) > 0 and len(curve_b) > 0:
+
+                    for index_a, index_b in zip(curve_a, curve_b):
+                        line_indexes.append((index_a, index_b))
+
+                    curve_a = curve_b.copy()
+                    curve_b.clear()
+
+                line_index += 1
+                fill_curve_a = False
+
+        return (surface_coords, line_indexes)
 
 
 class Window(Rectangle):

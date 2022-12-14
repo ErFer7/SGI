@@ -7,7 +7,7 @@ Módulo para o editor.
 import gi
 
 from source.transform import Vector
-from source.wireframe import ObjectType, Object, Point, Line, Triangle, Rectangle, Wireframe2D, BezierCurve, SplineCurve
+from source.wireframe import *  # Não é o ideal, mas não temos muito tempo
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
@@ -38,6 +38,7 @@ class EditorHandler():
     _curve_step_count_button: Gtk.SpinButton
     _spline_point_count_button: Gtk.SpinButton
     _spline_step_count_button: Gtk.SpinButton
+    _surface_step_count_button: Gtk.SpinButton
     _fill_button: Gtk.CheckButton
     _point_button: Gtk.ToggleButton
     _line_button: Gtk.ToggleButton
@@ -46,9 +47,15 @@ class EditorHandler():
     _polygon_button: Gtk.ToggleButton
     _bezier_curve_button: Gtk.ToggleButton
     _spline_curve_button: Gtk.ToggleButton
+    _surface_button: Gtk.ToggleButton
+    _parallelepiped_button: Gtk.ToggleButton
     _closed_spline_button: Gtk.CheckButton
     _width_button: Gtk.SpinButton
     _color_button: Gtk.ColorButton
+    _input_x_button: Gtk.SpinButton
+    _input_y_button: Gtk.SpinButton
+    _input_z_button: Gtk.SpinButton
+    _add_point_button: Gtk.Button
     _position_x_button: Gtk.SpinButton
     _position_y_button: Gtk.SpinButton
     _position_z_button: Gtk.SpinButton
@@ -71,6 +78,7 @@ class EditorHandler():
     _rotation_anchor_button_z: Gtk.SpinButton
     _clipping_method_button: Gtk.ToggleButton
     _user_call_lock: bool
+    _window_movement_magnitude: float
 
     def __init__(self, main_window) -> None:
 
@@ -86,16 +94,22 @@ class EditorHandler():
         self._curve_step_count = 15
         self._spline_point_count = 4
         self._spline_step_count = 10
+        self._surface_step_count = 10
         self._closed_spline = False
         self._rotation_anchor = None
         self._width_button = self._main_window.width_button
         self._color_button = self._main_window.color_button
+        self._input_x_button = self._main_window.input_x_button
+        self._input_y_button = self._main_window.input_y_button
+        self._input_z_button = self._main_window.input_z_button 
+        self._add_point_button = self._main_window.add_point_button
         self._edges_button = self._main_window.edges_button
         self._fill_button = self._main_window.fill_button
         self._curve_point_count_button = self._main_window.curve_point_count_button
         self._curve_step_count_button = self._main_window.curve_step_count_button
         self._spline_point_count_button = self._main_window.spline_point_count_button
         self._spline_step_count_button = self._main_window.spline_step_count_button
+        self._surface_step_count_button = self._main_window.surface_step_count_button
         self._closed_spline_button = self._main_window.closed_spline_button
         self._point_button = self._main_window.point_button
         self._line_button = self._main_window.line_button
@@ -104,6 +118,8 @@ class EditorHandler():
         self._polygon_button = self._main_window.polygon_button
         self._bezier_curve_button = self._main_window.bezier_curve_button
         self._spline_curve_button = self._main_window.spline_curve_button
+        self._surface_button = self._main_window.surface_button
+        self._parallelepiped_button = self._main_window.parallelepiped_button
         self._position_x_button = self._main_window.position_x_button
         self._position_y_button = self._main_window.position_y_button
         self._position_z_button = self._main_window.position_z_button
@@ -134,6 +150,7 @@ class EditorHandler():
         self._curve_step_count_button.connect("value-changed", self.set_curve_step_count)
         self._spline_point_count_button.connect("value-changed", self.set_spline_point_count)
         self._spline_step_count_button.connect("value-changed", self.set_spline_step_count)
+        self._surface_step_count_button.connect("value-changed", self.set_surface_step_count)
         self._closed_spline_button.connect("toggled", self.set_closed_spline)
         self._main_window.file_button.connect("select", self.show_explorer)
         self._point_button.connect("toggled", self.set_mode, ObjectType.POINT)
@@ -143,6 +160,8 @@ class EditorHandler():
         self._polygon_button.connect("toggled", self.set_mode, ObjectType.POLYGON)
         self._bezier_curve_button.connect("toggled", self.set_mode, ObjectType.BEZIER_CURVE)
         self._spline_curve_button.connect("toggled", self.set_mode, ObjectType.SPLINE_CURVE)
+        self._surface_button.connect("toggled", self.set_mode, ObjectType.SURFACE)
+        self._parallelepiped_button.connect("toggled", self.set_mode, ObjectType.PARALLELEPIPED)
         self._main_window.remove_button.connect("clicked", self.remove)
         self._main_window.apply_translation_button.connect("clicked", self.translate)
         self._main_window.apply_scaling_button.connect("clicked", self.rescale)
@@ -163,6 +182,7 @@ class EditorHandler():
         self._clipping_method_button.connect("toggled", self.toggle_clipping_method)
 
         self._user_call_lock = True
+        self._window_movement_magnitude = 10.0
 
     def update_spin_buttons(self) -> None:
         '''
@@ -205,11 +225,15 @@ class EditorHandler():
                 self._bezier_curve_button.set_active(False)
             case ObjectType.SPLINE_CURVE:
                 self._spline_curve_button.set_active(False)
+            case ObjectType.SURFACE:
+                self._surface_button.set_active(False)
+            case ObjectType.PARALLELEPIPED:
+                self._parallelepiped_button.set_active(False)
         self._user_call_lock = True
 
-    def handle_click(self, position: Vector) -> None:
+    def add_point(self, position: Vector) -> None:
         '''
-        Processa um clique no viewport.
+        Processa a adição de um ponto.
         '''
 
         if self._mode != ObjectType.NULL:
@@ -282,6 +306,22 @@ class EditorHandler():
                                 self._color,
                                 self._width))
                 object_completed = True
+            elif self._mode == ObjectType.SURFACE and len(self._temp_coords) >= 16:
+                self._main_window.display_file_handler.add_object(
+                    Surface(self._temp_coords,
+                            self._surface_step_count,
+                            "Surface",
+                            self._color,
+                            self._width))
+                object_completed = True
+            elif self._mode == ObjectType.PARALLELEPIPED and len(self._temp_coords) >= 2:
+                self._main_window.display_file_handler.add_object(
+                    Parallelepiped(self._temp_coords[0],
+                                   self._temp_coords[1],
+                                   "Parallelepiped",
+                                   self._color,
+                                   self._width))
+                object_completed = True
 
             if object_completed:
                 self._focus_object = self._main_window.display_file_handler.objects[-1]
@@ -294,31 +334,38 @@ class EditorHandler():
         Processa um evento de pressionamento de tecla.
         '''
 
+        movement_magnitude = self._window_movement_magnitude
+
+        if key.isupper():
+            movement_magnitude *= 5
+
+        key = key.lower()
+
         match key:
             case 'q':
-                self._main_window.viewport_handler.rotate_window(Vector(0.0, 0.0, -10))
+                self._main_window.viewport_handler.rotate_window(Vector(0.0, 0.0, -movement_magnitude))
             case 'e':
-                self._main_window.viewport_handler.rotate_window(Vector(0.0, 0.0, 10))
+                self._main_window.viewport_handler.rotate_window(Vector(0.0, 0.0, movement_magnitude))
             case 'w':
-                self._main_window.viewport_handler.move_window(Vector(0.0, 10.0, 0.0))
+                self._main_window.viewport_handler.move_window(Vector(0.0, movement_magnitude, 0.0))
             case 'a':
-                self._main_window.viewport_handler.move_window(Vector(-10.0, 0.0, 0.0))
+                self._main_window.viewport_handler.move_window(Vector(-movement_magnitude, 0.0, 0.0))
             case 's':
-                self._main_window.viewport_handler.move_window(Vector(0.0, -10.0, 0.0))
+                self._main_window.viewport_handler.move_window(Vector(0.0, -movement_magnitude, 0.0))
             case 'd':
-                self._main_window.viewport_handler.move_window(Vector(10.0, 0.0, 0.0))
+                self._main_window.viewport_handler.move_window(Vector(movement_magnitude, 0.0, 0.0))
             case 'f':
-                self._main_window.viewport_handler.move_window(Vector(0.0, 0.0, 10.0))
+                self._main_window.viewport_handler.move_window(Vector(0.0, 0.0, movement_magnitude))
             case 'g':
-                self._main_window.viewport_handler.move_window(Vector(0.0, 0.0, -10.0))
+                self._main_window.viewport_handler.move_window(Vector(0.0, 0.0, -movement_magnitude))
             case 'h':
-                self._main_window.viewport_handler.rotate_window(Vector(-10.0, 0.0, 0.0))
+                self._main_window.viewport_handler.rotate_window(Vector(-movement_magnitude, 0.0, 0.0))
             case 'j':
-                self._main_window.viewport_handler.rotate_window(Vector(10.0, 0.0, 0.0))
+                self._main_window.viewport_handler.rotate_window(Vector(movement_magnitude, 0.0, 0.0))
             case 'k':
-                self._main_window.viewport_handler.rotate_window(Vector(0.0, -10.0, 0.0))
+                self._main_window.viewport_handler.rotate_window(Vector(0.0, -movement_magnitude, 0.0))
             case 'l':
-                self._main_window.viewport_handler.rotate_window(Vector(0.0, 10.0, 0.0))
+                self._main_window.viewport_handler.rotate_window(Vector(0.0, movement_magnitude, 0.0))
             case 'r':
                 self._main_window.viewport_handler.reset_window_position()
             case 't':
@@ -354,6 +401,7 @@ class EditorHandler():
         self._curve_step_count_button.set_editable(False)
         self._spline_point_count_button.set_editable(False)
         self._spline_step_count_button.set_editable(False)
+        self._surface_step_count_button.set_editable(False)
 
         match self._mode:
             case ObjectType.POLYGON:
@@ -364,6 +412,8 @@ class EditorHandler():
             case ObjectType.SPLINE_CURVE:
                 self._spline_point_count_button.set_editable(True)
                 self._spline_step_count_button.set_editable(True)
+            case ObjectType.SURFACE:
+                self._surface_step_count_button.set_editable(True)
 
         self._temp_coords.clear()
 
@@ -423,6 +473,13 @@ class EditorHandler():
         '''
 
         self._spline_step_count = self._spline_step_count_button.get_value_as_int()
+
+    def set_surface_step_count(self, user_data) -> None:
+        '''
+        handler da mudança da contagem de passos no processamento de superfícies.
+        '''
+
+        self._surface_step_count = self._surface_step_count_button.get_value_as_int()
 
     def set_closed_spline(self, user_data) -> None:
         '''

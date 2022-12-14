@@ -6,10 +6,11 @@ Módulo para o handler do display file.
 
 from math import degrees
 from os.path import join
+from random import randrange
 
 import gi
 
-from source.wireframe import Object, Window
+from source.wireframe import Object, Window, Surface
 from source.file_system import FileSystem
 from source.transform import Vector
 
@@ -35,7 +36,15 @@ class DisplayFileHandler():
         self._all_objects_normalized = False
         self._display_file_list = display_file_list
 
-        self.objects = file_system.load_scene(join("objects", "test.obj"))
+        # self.objects = file_system.load_scene(join("objects", "test.obj"))
+
+        points = []
+
+        for i in range(4):
+            for j in range(4):
+                points.append(Vector(i * 1000, randrange(-5000.0, 5000.0), j * 1000))
+
+        self.add_object(Surface(points, 10))
 
     # Métodos
     def add_object(self, obj: Object) -> None:

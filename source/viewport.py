@@ -441,7 +441,7 @@ class ViewportHandler():
         position = Vector(event.x, event.y)
 
         if event.button == 1:
-            self._main_window.editor_handler.handle_click(self.screen_to_world(position))
+            self._main_window.editor_handler.add_point(self.screen_to_world(position))
         elif event.button == 2:
             self._drag_coord = position
 

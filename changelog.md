@@ -63,4 +63,10 @@
 
 ## v0.9
 
+* Superfícies bicúbicas e melhorias na interface
+
+---
+
+## v0.10
+
 _Em desenvolvimento_
