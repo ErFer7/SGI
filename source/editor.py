@@ -152,6 +152,7 @@ class EditorHandler():
         self._spline_step_count_button.connect("value-changed", self.set_spline_step_count)
         self._surface_step_count_button.connect("value-changed", self.set_surface_step_count)
         self._closed_spline_button.connect("toggled", self.set_closed_spline)
+        self._add_point_button.connect("clicked", self.add_point, True)
         self._main_window.file_button.connect("select", self.show_explorer)
         self._point_button.connect("toggled", self.set_mode, ObjectType.POINT)
         self._line_button.connect("toggled", self.set_mode, ObjectType.LINE)
@@ -231,10 +232,17 @@ class EditorHandler():
                 self._parallelepiped_button.set_active(False)
         self._user_call_lock = True
 
-    def add_point(self, position: Vector) -> None:
+    def add_point(self, position: Vector, user_data = False) -> None:
         '''
         Processa a adição de um ponto.
         '''
+
+        if user_data is True:
+            new_x = self._input_x_button.get_value()
+            new_y = self._input_y_button.get_value()
+            new_z = self._input_z_button.get_value()
+
+            position = Vector(new_x, new_y, new_z)
 
         if self._mode != ObjectType.NULL:
 
