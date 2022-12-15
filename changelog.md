@@ -69,4 +69,4 @@
 
 ## v0.10
 
-_Em desenvolvimento_
+* Carregamento de arquivos

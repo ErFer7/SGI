@@ -6,6 +6,8 @@ Módulo para o editor.
 
 import gi
 
+from os.path import join
+
 from source.transform import Vector
 from source.wireframe import *  # Não é o ideal, mas não temos muito tempo
 
@@ -77,6 +79,9 @@ class EditorHandler():
     _rotation_anchor_button_y: Gtk.SpinButton
     _rotation_anchor_button_z: Gtk.SpinButton
     _clipping_method_button: Gtk.ToggleButton
+    _file_name_entry: Gtk.Entry
+    _load_button: Gtk.Entry
+    _save_button: Gtk.Entry
     _user_call_lock: bool
     _window_movement_magnitude: float
 
@@ -141,6 +146,9 @@ class EditorHandler():
         self._rotation_anchor_button_y = self._main_window.rotation_anchor_button_y
         self._rotation_anchor_button_z = self._main_window.rotation_anchor_button_z
         self._clipping_method_button = self._main_window.clipping_method_button
+        self._file_name_entry = self._main_window.file_name_entry
+        self._load_button = self._main_window.load_button
+        self._save_button = self._main_window.save_button
 
         self._width_button.connect("value-changed", self.set_width)
         self._color_button.connect("color-set", self.set_color)
@@ -181,6 +189,8 @@ class EditorHandler():
         self._rotation_anchor_button_y.connect("value-changed", self.update_rotation_anchor)
         self._rotation_anchor_button_z.connect("value-changed", self.update_rotation_anchor)
         self._clipping_method_button.connect("toggled", self.toggle_clipping_method)
+        self._load_button.connect("clicked", self.load_file)
+        self._save_button.connect("clicked", self.save_file)
 
         self._user_call_lock = True
         self._window_movement_magnitude = 10.0
@@ -529,6 +539,25 @@ class EditorHandler():
 
         # TODO: Estudar uma maneira de fazer isso funcionar
         raise NotImplementedError
+
+    def load_file(self, user_data) -> None:
+        '''
+        Carrega um arquivo.
+        '''
+
+        file_name = self._file_name_entry.get_text()
+        self._main_window.display_file_handler.load_file(join("objects", file_name))
+        self._focus_object = self._main_window.display_file_handler.objects[-1]
+        self._rotation_anchor = self._focus_object.position
+        self.update_spin_buttons()
+
+    def save_file(self, user_data) -> None:
+        '''
+        Salva um arquivo.
+        '''
+
+        file_name = self._file_name_entry.get_text()
+        self._main_window.display_file_handler.save_file(join("objects", file_name))
 
     def translate(self, user_data) -> None:
         '''

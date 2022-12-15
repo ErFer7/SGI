@@ -9,7 +9,6 @@ import gi
 from source.displayfile import DisplayFileHandler
 from source.editor import EditorHandler
 from source.viewport import ViewportHandler
-from source.file_system import FileSystem
 from source.transform import Vector
 
 gi.require_version("Gtk", "3.0")
@@ -84,6 +83,9 @@ class MainWindow(Gtk.Window):
     rotation_anchor_button_y: Gtk.SpinButton = Gtk.Template.Child()
     rotation_anchor_button_z: Gtk.SpinButton = Gtk.Template.Child()
     clipping_method_button: Gtk.ToggleButton = Gtk.Template.Child()
+    file_name_entry: Gtk.Entry = Gtk.Template.Child()
+    load_button: Gtk.Entry = Gtk.Template.Child()
+    save_button: Gtk.Entry = Gtk.Template.Child()
 
     def __init__(self) -> None:
 
@@ -91,8 +93,7 @@ class MainWindow(Gtk.Window):
 
         self.maximize()
 
-        self.file_system = FileSystem()
-        self.display_file_handler = DisplayFileHandler(self.display_file_list, self.file_system)
+        self.display_file_handler = DisplayFileHandler(self.display_file_list)
         self.editor_handler = EditorHandler(self)
         self.viewport_handler = ViewportHandler(self, self.viewport_drawing_area, Vector(25.0, 25.0, 0.0))
 

@@ -44,7 +44,7 @@ class Object(ABC):
     coords: list[Vector]
     normalized_coords: list[Vector]
     projected_coords: list[Vector]
-    lines: list[tuple[int]]
+    lines: list[list[Vector]]
     object_type: ObjectType
     fill: bool
     closed: bool

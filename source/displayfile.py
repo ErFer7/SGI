@@ -5,7 +5,6 @@ Módulo para o handler do display file.
 '''
 
 from math import degrees
-from os.path import join
 from random import randrange
 
 import gi
@@ -29,12 +28,14 @@ class DisplayFileHandler():
 
     # Atributos privados
     _display_file_list: Gtk.ListStore
+    _file_system: FileSystem
 
-    def __init__(self, display_file_list: Gtk.ListStore, file_system: FileSystem) -> None:
+    def __init__(self, display_file_list: Gtk.ListStore) -> None:
 
         self.objects = []
         self._all_objects_normalized = False
         self._display_file_list = display_file_list
+        self._file_system = FileSystem()
 
         # Curva de teste
         # points = []
@@ -104,3 +105,20 @@ class DisplayFileHandler():
 
         for obj in self.objects + [window]:
             obj.normalize(window.position, window.scale, rotation)
+
+    def load_file(self, file_name: str) -> None:
+        '''
+        Carrega um arquivo.
+        '''
+
+        loaded = self._file_system.load_scene(file_name)
+
+        for obj in loaded:
+            self.add_object(obj)
+
+    def save_file(self, file_name: str) -> None:
+        '''
+        Carrega um arquivo.
+        '''
+
+        self._file_system.save_scene(file_name, self.objects)
