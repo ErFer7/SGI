@@ -27,6 +27,7 @@ class DisplayFileHandler():
     objects: list[Object]
 
     # Atributos privados
+    _all_objects_normalized: bool
     _display_file_list: Gtk.ListStore
     _file_system: FileSystem
 
@@ -36,15 +37,6 @@ class DisplayFileHandler():
         self._all_objects_normalized = False
         self._display_file_list = display_file_list
         self._file_system = FileSystem()
-
-        # Curva de teste
-        # points = []
-
-        # for i in range(4):
-        #     for j in range(4):
-        #         points.append(Vector(i * 1000, randrange(-5000.0, 5000.0), j * 1000))
-
-        # self.add_object(Surface(points, 10))
 
     # Métodos
     def add_object(self, obj: Object) -> None:

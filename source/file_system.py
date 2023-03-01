@@ -180,19 +180,7 @@ class FileSystem():
         Escreve um arquivo.
         '''
 
-        # vertex_index = 1
-        # obj_file = ["# SGI - INE5420 - 222 - Eric e Luis"]
-
-        # for obj in objects:
-
-        #     obj_file.append("o " + obj.name)
-
-        #     for line in obj.lines:
-        #         obj_file.append("v " + str(line[0]).strip(','))
-        #         obj_file.append("v " + str(line[1]).strip(','))
-        #         obj_file.append("l -2 -1")
-
-        #     vertex_index += len(obj.coords)
+        raise NotImplementedError
 
 
 class ObjectData():
