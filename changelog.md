@@ -70,3 +70,15 @@
 ## v0.10
 
 * Carregamento de arquivos
+
+---
+
+## v1.0
+
+* Correções simples
+
+---
+
+## v 1.0.1
+
+* Mais correções simples
