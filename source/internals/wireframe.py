@@ -9,7 +9,7 @@ from enum import Enum
 
 import numpy as np
 
-from source.transform import Transform, Vector
+from source.internals.transform import Transform, Vector
 
 
 class ObjectType(Enum):

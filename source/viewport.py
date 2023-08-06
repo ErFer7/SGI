@@ -7,9 +7,9 @@ Neste módulo estão definidos os funcionamentos do viewport.
 from enum import Enum
 from math import inf
 
-from source.transform import Vector
-from source.wireframe import Window, Object, ObjectType
-from source.displayfile import DisplayFileHandler
+from source.internals.transform import Vector
+from source.internals.wireframe import Window, Object, ObjectType
+from source.managers.object_manager import ObjectManager
 
 import gi
 
@@ -54,13 +54,12 @@ class ViewportHandler():
     _clipping_method: ClippingMethod
 
     def __init__(self,
-                 main_window: DisplayFileHandler,
-                 drawing_area: Gtk.DrawingArea,
+                 main_window,
                  viewport_padding: Vector = Vector(0.0, 0.0, 0.0),
                  bg_color: tuple = (0, 0, 0)) -> None:
 
         self._main_window = main_window
-        self._drawing_area = drawing_area
+        self._drawing_area = self._main_window.viewport_drawing_area
         self._drawing_area.connect("draw", self.on_draw)
         self._drawing_area.set_events(Gdk.EventMask.ALL_EVENTS_MASK)
         self._drawing_area.connect("button-press-event", self.on_button_press)

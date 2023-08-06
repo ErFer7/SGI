@@ -4,8 +4,8 @@
 Módulo para o gerenciamento de arquivos.
 '''
 
-from source.wireframe import Object, Wireframe3D
-from source.transform import Vector
+from source.internals.wireframe import Object, Wireframe3D
+from source.internals.transform import Vector
 
 
 class FileSystem():

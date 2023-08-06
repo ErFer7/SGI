@@ -6,34 +6,41 @@ Módulo para a interface de usuário.
 
 import os
 import gi
-from source.displayfile import DisplayFileHandler
-from source.editor import EditorHandler
+from source.managers.object_manager import ObjectManager
 from source.viewport import ViewportHandler
-from source.transform import Vector
+from source.internals.transform import Vector
+from source.handlers.object_list_handler import ObjectListHandler
+from source.handlers.creator_handler import CreatorHandler
 
-gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, Gdk
+gi.require_version('Gtk', '3.0')
+from gi.repository import Gtk, Gdk # type: ignore
 
 
-@Gtk.Template(filename=os.path.join(os.getcwd(), "interface", "interface_style.ui"))
-class MainWindow(Gtk.Window):
+@Gtk.Template(filename=os.path.join(os.getcwd(), 'templates', 'template.ui'))
+class MainWindowHandler(Gtk.Window):
 
     '''
     Janela principal.
     '''
 
-    __gtype_name__ = "MainWindow"  # Nome da janela principal
+    __gtype_name__ = 'MainWindow'  # Nome da janela principal
 
     # Atributos privados
-    viewport_handler: ViewportHandler
-    display_file_handler: DisplayFileHandler
-    editor_handler: EditorHandler
-    file_system: EditorHandler
+    _object_list_handler: ObjectListHandler
+    _creator_handler: CreatorHandler
 
-    # Os trilhões de widgets vão aqui :p
+    viewport_handler: ViewportHandler
+    display_file_handler: ObjectManager
+    editor_handler: CreatorHandler
+    file_system: CreatorHandler
+
     # Widgets
+    object_list_box: Gtk.Box = Gtk.Template.Child()
+    display_file_list: Gtk.ListStore = Gtk.Template.Child()
+    creator_box: Gtk.Box = Gtk.Template.Child()
+    object_transform_box: Gtk.Box = Gtk.Template.Child()
+
     viewport_drawing_area: Gtk.DrawingArea = Gtk.Template.Child()
-    file_button: Gtk.MenuItem = Gtk.Template.Child()
     point_button: Gtk.ToggleButton = Gtk.Template.Child()
     line_button: Gtk.ToggleButton = Gtk.Template.Child()
     triangle_button: Gtk.ToggleButton = Gtk.Template.Child()
@@ -53,7 +60,6 @@ class MainWindow(Gtk.Window):
     spline_step_count_button: Gtk.SpinButton = Gtk.Template.Child()
     surface_step_count_button: Gtk.SpinButton = Gtk.Template.Child()
     closed_spline_button: Gtk.CheckButton = Gtk.Template.Child()
-    display_file_list: Gtk.ListStore = Gtk.Template.Child()
     remove_button: Gtk.Button = Gtk.Template.Child()
     input_x_button: Gtk.SpinButton = Gtk.Template.Child()
     input_y_button: Gtk.SpinButton = Gtk.Template.Child()
@@ -83,26 +89,26 @@ class MainWindow(Gtk.Window):
     rotation_anchor_button_y: Gtk.SpinButton = Gtk.Template.Child()
     rotation_anchor_button_z: Gtk.SpinButton = Gtk.Template.Child()
     clipping_method_button: Gtk.ToggleButton = Gtk.Template.Child()
-    file_name_entry: Gtk.Entry = Gtk.Template.Child()
-    load_button: Gtk.Entry = Gtk.Template.Child()
-    save_button: Gtk.Entry = Gtk.Template.Child()
 
-    def __init__(self) -> None:
+    def __init__(self, object_list_manager: ObjectManager) -> None:
 
         super().__init__()
 
         self.maximize()
 
-        self.display_file_handler = DisplayFileHandler(self.display_file_list)
-        self.editor_handler = EditorHandler(self)
-        self.viewport_handler = ViewportHandler(self, self.viewport_drawing_area, Vector(25.0, 25.0, 0.0))
+        self._object_list_handler = ObjectListHandler(self.object_list_box,
+                                                      self.display_file_list,
+                                                      object_list_manager)
+        self._creator_handler = CreatorHandler(self.creator_box, object_list_manager)
 
-        self.connect("key-press-event", self.on_key_press)
-        self.connect("destroy", Gtk.main_quit)
+        self.viewport_handler = ViewportHandler(self, Vector(25.0, 25.0, 0.0))
+
+        self.connect('key-press-event', self.on_key_press)
+        self.connect('destroy', Gtk.main_quit)
 
     def on_key_press(self, widget, event) -> None:
         '''
         Evento de pressionamento de tecla
         '''
 
-        self.editor_handler.handle_key_press(event.string)
+        self._creator_handler.handle_key_press(event.string)
