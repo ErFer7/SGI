@@ -1,114 +1,62 @@
 # -*- coding: utf-8 -*-
 
 '''
-Módulo para a interface de usuário.
+Módulo do handler da janela principal.
 '''
 
-import os
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
 import gi
-from source.managers.object_manager import ObjectManager
-from source.viewport import ViewportHandler
-from source.internals.transform import Vector
-from source.handlers.object_list_handler import ObjectListHandler
-from source.handlers.creator_handler import CreatorHandler
 
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk, Gdk # type: ignore
+
+# pylint: disable=wrong-import-position
+from gi.repository import Gtk # type: ignore
+
+if TYPE_CHECKING:
+    from source.handlers.handler_mediator import HandlerMediator
+    from source.handlers.main_window import MainWindow
+
+from source.handlers.handler import Handler
 
 
-@Gtk.Template(filename=os.path.join(os.getcwd(), 'templates', 'template.ui'))
-class MainWindowHandler(Gtk.Window):
+class MainWindowHandler(Handler):
 
     '''
-    Janela principal.
+    Handler da janela principal.
     '''
 
-    __gtype_name__ = 'MainWindow'  # Nome da janela principal
+    _user_call: bool
 
-    # Atributos privados
-    _object_list_handler: ObjectListHandler
-    _creator_handler: CreatorHandler
+    def __init__(self, handler_mediator: HandlerMediator, main_window: MainWindow) -> None:
+        super().__init__(handler_mediator)
 
-    viewport_handler: ViewportHandler
-    display_file_handler: ObjectManager
-    editor_handler: CreatorHandler
-    file_system: CreatorHandler
+        self._user_call = True
 
-    # Widgets
-    object_list_box: Gtk.Box = Gtk.Template.Child()
-    display_file_list: Gtk.ListStore = Gtk.Template.Child()
-    creator_box: Gtk.Box = Gtk.Template.Child()
-    object_transform_box: Gtk.Box = Gtk.Template.Child()
+        main_window.connect('key-press-event', self.on_key_press)
+        main_window.connect('destroy', Gtk.main_quit)
 
-    viewport_drawing_area: Gtk.DrawingArea = Gtk.Template.Child()
-    point_button: Gtk.ToggleButton = Gtk.Template.Child()
-    line_button: Gtk.ToggleButton = Gtk.Template.Child()
-    triangle_button: Gtk.ToggleButton = Gtk.Template.Child()
-    rectangle_button: Gtk.ToggleButton = Gtk.Template.Child()
-    polygon_button: Gtk.ToggleButton = Gtk.Template.Child()
-    bezier_curve_button: Gtk.ToggleButton = Gtk.Template.Child()
-    spline_curve_button: Gtk.ToggleButton = Gtk.Template.Child()
-    surface_button: Gtk.ToggleButton = Gtk.Template.Child()
-    parallelepiped_button: Gtk.ToggleButton = Gtk.Template.Child()
-    width_button: Gtk.SpinButton = Gtk.Template.Child()
-    color_button: Gtk.ColorButton = Gtk.Template.Child()
-    edges_button: Gtk.SpinButton = Gtk.Template.Child()
-    fill_button: Gtk.CheckButton = Gtk.Template.Child()
-    curve_point_count_button: Gtk.SpinButton = Gtk.Template.Child()
-    curve_step_count_button: Gtk.SpinButton = Gtk.Template.Child()
-    spline_point_count_button: Gtk.SpinButton = Gtk.Template.Child()
-    spline_step_count_button: Gtk.SpinButton = Gtk.Template.Child()
-    surface_step_count_button: Gtk.SpinButton = Gtk.Template.Child()
-    closed_spline_button: Gtk.CheckButton = Gtk.Template.Child()
-    remove_button: Gtk.Button = Gtk.Template.Child()
-    input_x_button: Gtk.SpinButton = Gtk.Template.Child()
-    input_y_button: Gtk.SpinButton = Gtk.Template.Child()
-    input_z_button: Gtk.SpinButton = Gtk.Template.Child()
-    add_point_button: Gtk.Button = Gtk.Template.Child()
-    position_x_button: Gtk.SpinButton = Gtk.Template.Child()
-    position_y_button: Gtk.SpinButton = Gtk.Template.Child()
-    position_z_button: Gtk.SpinButton = Gtk.Template.Child()
-    scale_x_button: Gtk.SpinButton = Gtk.Template.Child()
-    scale_y_button: Gtk.SpinButton = Gtk.Template.Child()
-    scale_z_button: Gtk.SpinButton = Gtk.Template.Child()
-    rotation_x_button: Gtk.SpinButton = Gtk.Template.Child()
-    rotation_y_button: Gtk.SpinButton = Gtk.Template.Child()
-    rotation_z_button: Gtk.SpinButton = Gtk.Template.Child()
-    translate_x_button: Gtk.SpinButton = Gtk.Template.Child()
-    translate_y_button: Gtk.SpinButton = Gtk.Template.Child()
-    translate_z_button: Gtk.SpinButton = Gtk.Template.Child()
-    apply_translation_button: Gtk.Button = Gtk.Template.Child()
-    rescale_x_button: Gtk.SpinButton = Gtk.Template.Child()
-    rescale_y_button: Gtk.SpinButton = Gtk.Template.Child()
-    rescale_z_button: Gtk.SpinButton = Gtk.Template.Child()
-    apply_scaling_button: Gtk.Button = Gtk.Template.Child()
-    rotation_button: Gtk.SpinButton = Gtk.Template.Child()
-    apply_rotation_button: Gtk.Button = Gtk.Template.Child()
-    rotation_anchor_button: Gtk.Button = Gtk.Template.Child()
-    rotation_anchor_button_x: Gtk.SpinButton = Gtk.Template.Child()
-    rotation_anchor_button_y: Gtk.SpinButton = Gtk.Template.Child()
-    rotation_anchor_button_z: Gtk.SpinButton = Gtk.Template.Child()
-    clipping_method_button: Gtk.ToggleButton = Gtk.Template.Child()
+    @property
+    def user_call(self) -> bool:
+        '''
+        Retorna se a chamada foi do usuário.
+        '''
 
-    def __init__(self, object_list_manager: ObjectManager) -> None:
+        return self._user_call
 
-        super().__init__()
+    @user_call.setter
+    def user_call(self, value: bool) -> None:
+        '''
+        Define se a chamada foi do usuário.
+        '''
 
-        self.maximize()
+        self._user_call = value
 
-        self._object_list_handler = ObjectListHandler(self.object_list_box,
-                                                      self.display_file_list,
-                                                      object_list_manager)
-        self._creator_handler = CreatorHandler(self.creator_box, object_list_manager)
-
-        self.viewport_handler = ViewportHandler(self, Vector(25.0, 25.0, 0.0))
-
-        self.connect('key-press-event', self.on_key_press)
-        self.connect('destroy', Gtk.main_quit)
-
+    # pylint: disable=unused-argument
     def on_key_press(self, widget, event) -> None:
         '''
         Evento de pressionamento de tecla
         '''
 
-        self._creator_handler.handle_key_press(event.string)
+        self.handler_mediator.viewport_handler.handle_key_press(event.string)  # type: ignore

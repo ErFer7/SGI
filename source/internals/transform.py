@@ -18,8 +18,6 @@ class Vector():
     y: float
     z: float
 
-    _list: list
-
     def __init__(self, x: float, y: float, z: float = 0.0) -> None:
 
         self.x = x
@@ -39,8 +37,8 @@ class Vector():
         return Vector(self.x - other.x, self.y - other.y, self.z - other.z)
 
     def __mul__(self, other):
-
         result = None
+
         if isinstance(other, (float, int)):
             result = Vector(self.x * other, self.y * other, self.z * other)
         elif isinstance(other, Vector):
@@ -56,7 +54,6 @@ class Vector():
         return result
 
     def __truediv__(self, other):
-
         if isinstance(other, (float, int)):
             return Vector(self.x / other, self.y / other, self.z / other)
         raise NotImplementedError

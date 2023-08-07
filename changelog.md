@@ -87,4 +87,4 @@
 
 ## v2.0
 
-* Reestruturação geral.
+* Reestruturação geral

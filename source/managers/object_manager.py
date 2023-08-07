@@ -12,12 +12,13 @@ from math import degrees
 from source.internals.wireframe import Object, Window
 from source.internals.file_system import FileSystem
 from source.internals.transform import Vector
+from source.managers.manager import Manager
 
 if TYPE_CHECKING:
-    from source.handlers.object_list_handler import ObjectListHandler
+    from source.managers.manager_mediator import ManagerMediator
 
 
-class ObjectManager():
+class ObjectManager(Manager):
 
     '''
     Nesta classe os objetos seriam armazenados e transferidos para o viewport quando necessário.
@@ -26,14 +27,14 @@ class ObjectManager():
     _objects: list[Object]
     _all_objects_normalized: bool
     _file_system: FileSystem
-    _object_list_handler: ObjectListHandler | None
     _object_in_focus: Object | None
 
-    def __init__(self) -> None:
+    def __init__(self, manager_mediator: ManagerMediator) -> None:
+        super().__init__(manager_mediator)
+
         self._objects = []
         self._all_objects_normalized = False
         self._file_system = FileSystem()
-        self._object_list_handler = None
         self._object_in_focus = None
 
     @property
@@ -60,13 +61,6 @@ class ObjectManager():
 
         self._object_in_focus = obj
 
-    def set_object_list_handler(self, object_list_handler: ObjectListHandler) -> None:
-        '''
-        Define o handler da lista de objetos.
-        '''
-
-        self._object_list_handler = object_list_handler
-
     def get_last(self) -> Object:
         '''
         Retorna o último objeto da lista.
@@ -88,14 +82,17 @@ class ObjectManager():
 
         self._objects.append(obj)
         self._all_objects_normalized = False
-        self._object_list_handler.add_object_register(obj)  # type: ignore
+
+        object_list_handler = self._manager_mediator.handler_mediator.object_list_handler  # type: ignore
+        object_list_handler.add_object_register(obj)  # type: ignore
 
     def update_object_info(self, index: int) -> None:
         '''
         Atualiza as informações de um objeto.
         '''
 
-        self._object_list_handler.update_object_info(index, str(self._objects[index].position))  # type: ignore
+        object_list_handler = self._manager_mediator.handler_mediator.object_list_handler  # type: ignore
+        object_list_handler.update_object_info(index, str(self._objects[index].position))  # type: ignore
 
     def remove_last(self) -> None:
         '''

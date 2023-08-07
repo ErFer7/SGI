@@ -200,7 +200,7 @@ class ObjectData():
         self._name = name
         self._lines = []
         self._lines = []
-        self._material = (1.0, 1.0, 1.0)
+        self._material = (1.0, 1.0, 1.0)  # type: ignore
 
     def add_vertex(self, vertex: Vector) -> None:
         '''

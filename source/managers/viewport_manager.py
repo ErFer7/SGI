@@ -4,17 +4,18 @@
 Neste módulo estão definidos os funcionamentos do viewport.
 '''
 
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
 from enum import Enum
 from math import inf
 
 from source.internals.transform import Vector
 from source.internals.wireframe import Window, Object, ObjectType
-from source.managers.object_manager import ObjectManager
+from source.managers.manager import Manager
 
-import gi
-
-gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, Gdk
+if TYPE_CHECKING:
+    from source.managers.manager_mediator import ManagerMediator
 
 
 class ClippingMethod(Enum):
@@ -38,46 +39,33 @@ class Intersection(Enum):
     BOTTOM = 5
 
 
-class ViewportHandler():
+class ViewportManager(Manager):
 
     '''
     Definição do viewport, este viewport é um handler para um widget DrawingArea.
     '''
 
     # Atributos privados
-    _main_window: None
-    _drawing_area: Gtk.DrawingArea
     _bg_color: tuple
     _window: Window
-    _drag_coord: Vector
     _viewport_padding: Vector
     _clipping_method: ClippingMethod
 
     def __init__(self,
-                 main_window,
+                 manager_mediator: ManagerMediator,
                  viewport_padding: Vector = Vector(0.0, 0.0, 0.0),
                  bg_color: tuple = (0, 0, 0)) -> None:
+        super().__init__(manager_mediator)
 
-        self._main_window = main_window
-        self._drawing_area = self._main_window.viewport_drawing_area
-        self._drawing_area.connect("draw", self.on_draw)
-        self._drawing_area.set_events(Gdk.EventMask.ALL_EVENTS_MASK)
-        self._drawing_area.connect("button-press-event", self.on_button_press)
-        self._drawing_area.connect("motion-notify-event", self.on_mouse_motion)
-        self._drawing_area.connect("button-release-event", self.on_button_release)
-        self._drawing_area.connect("scroll-event", self.on_scroll)
-        self._drawing_area.connect("size-allocate", self.on_size_allocate)
         self._bg_color = bg_color
         self._window = Window(Vector(-500.0, -500.0),
                               Vector(500.0, 500.0),
                               Vector(0.0, 0.0, -500.0),
                               (0.5, 0.0, 0.5),
                               2.0)
-        self._drag_coord = None
         self._viewport_padding = viewport_padding
         self._clipping_method = ClippingMethod.LIANG_BARSKY
 
-    # Métodos utilitários
     def world_to_screen(self, coord: Vector) -> Vector:
         '''
         Converte a coordenada de mundo para uma coordenada de tela.
@@ -96,7 +84,7 @@ class ViewportHandler():
         Converte uma linha no mundo para uma linha na tela.
         '''
 
-        return (self.world_to_screen(line[0]), self.world_to_screen(line[1]))
+        return (self.world_to_screen(line[0]), self.world_to_screen(line[1]))  # type: ignore
 
     def screen_to_world(self, coord: Vector) -> Vector:
         '''
@@ -132,12 +120,12 @@ class ViewportHandler():
 
             if self._clipping_method == ClippingMethod.COHEN_SUTHERLAND:
 
-                clipped_line = self.cohen_sutherland(obj.lines)
+                clipped_line = self.cohen_sutherland(obj.lines)  # type: ignore
                 if len(clipped_line) > 0:
                     clipped_lines.append(clipped_line)
             else:
 
-                clipped_line = self.liang_barsky(obj.lines)
+                clipped_line = self.liang_barsky(obj.lines)  # type: ignore
                 if len(clipped_line) > 0:
                     clipped_lines.append(clipped_line)
         else:
@@ -178,10 +166,10 @@ class ViewportHandler():
                     if comp_inside:
                         clipped_lines_temp.append(line)
                     elif comp_a:
-                        intersection = self.intersection(line, None, inter, False)
+                        intersection = self.intersection(line, None, inter, False)  # type: ignore
                         clipped_lines_temp.append(intersection)
                     elif comp_b:
-                        intersection = self.intersection(line, inter, None, False)
+                        intersection = self.intersection(line, inter, None, False)  # type: ignore
                         clipped_lines_temp.append(intersection)
 
                 # Patch de linhas
@@ -351,11 +339,11 @@ class ViewportHandler():
             ratio_2 = q2 / p2
 
             if p1 < 0:
-                positives.append(ratio_2)
-                negatives.append(ratio_1)
+                positives.append(ratio_2)  # type: ignore
+                negatives.append(ratio_1)  # type: ignore
             else:
-                positives.append(ratio_1)
-                negatives.append(ratio_2)
+                positives.append(ratio_1)  # type: ignore
+                negatives.append(ratio_2)  # type: ignore
 
         if p3 != 0:
 
@@ -363,11 +351,11 @@ class ViewportHandler():
             ratio_4 = q4 / p4
 
             if p3 < 0:
-                positives.append(ratio_4)
-                negatives.append(ratio_3)
+                positives.append(ratio_4)  # type: ignore
+                negatives.append(ratio_3)  # type: ignore
             else:
-                positives.append(ratio_3)
-                negatives.append(ratio_4)
+                positives.append(ratio_3)  # type: ignore
+                negatives.append(ratio_4)  # type: ignore
 
         max_negative = max(negatives)
         min_positive = min(positives)
@@ -380,14 +368,13 @@ class ViewportHandler():
 
         return [new_vector_a, new_vector_b]
 
-    # Handlers
-    def on_draw(self, area, context) -> None:
+    def draw_frame(self, area, context) -> None:
         '''
         Método para a renderização.
         '''
 
         self.project()
-        self._main_window.display_file_handler.normalize_objects(self._window)
+        self._manager_mediator.object_manager.normalize_objects(self._window)  # type: ignore
 
         # Preenche o fundo
         context.set_source_rgb(self._bg_color[0], self._bg_color[1], self._bg_color[2])
@@ -395,7 +382,7 @@ class ViewportHandler():
         context.fill()
 
         # Renderiza todos os objetos do display file
-        for obj in self._main_window.display_file_handler.objects + [self._window]:
+        for obj in self._manager_mediator.object_manager.objects + [self._window]:  # type: ignore
 
             clipped_coords = []
 
@@ -419,77 +406,16 @@ class ViewportHandler():
             for line in screen_lines:
 
                 if obj.fill:
-                    context.line_to(line[1].x, line[1].y)
+                    context.line_to(line[1].x, line[1].y)  # type: ignore
                 else:
                     context.move_to(line[0].x, line[0].y)
-                    context.line_to(line[1].x, line[1].y)
+                    context.line_to(line[1].x, line[1].y)  # type: ignore
                     context.stroke()
 
             context.close_path()
 
             if obj.fill:
                 context.fill()
-
-        self._drawing_area.queue_draw()
-
-    def on_button_press(self, widget, event) -> None:
-        '''
-        Evento de clique.
-        '''
-
-        position = Vector(event.x, event.y)
-
-        if event.button == 1:
-            self._main_window.editor_handler.add_point(self.screen_to_world(position))
-        elif event.button == 2:
-            self._drag_coord = position
-
-    def on_mouse_motion(self, widget, event):
-        '''
-        Evento de movimento.
-        '''
-
-        if self._drag_coord is not None:
-
-            position = Vector(event.x, event.y)
-            diff = self._drag_coord - position
-            diff.y = -diff.y
-            diff *= self._window.scale.x
-            self.move_window(diff)
-            self._drag_coord = position
-
-    def on_button_release(self, widget, event) -> None:
-        '''
-        Evento de liberação do mouse.
-        '''
-
-        if event.button == 2:
-            self._drag_coord = None
-
-    def on_scroll(self, widget, event) -> None:
-        '''
-        Evento de rolagem:
-        '''
-
-        direction = event.get_scroll_deltas()[2]
-
-        if direction > 0:
-            self._window.rescale(Vector(1.03, 1.03, 1.0))
-        else:
-            self._window.rescale(Vector(0.97, 0.97, 1.0))
-
-    def on_size_allocate(self, allocation, user_data):
-        '''
-        Evento de alocação.
-        '''
-
-        self.reset_window_scale()
-
-        # TODO: Achar maneira melhor de atualizar o tamanho da tela.
-
-        # self._window.rescale(Vector(user_data.width / (self._window.extension.x - self._window.origin.x),
-        #                             user_data.height / (self._window.extension.y - self._window.origin.y),
-        #                             1.0))
 
     def move_window(self, direction: Vector) -> None:
         '''
@@ -503,7 +429,7 @@ class ViewportHandler():
         Redefine a posição da window.
         '''
 
-        self._window.translate(self._window.position * -1)
+        self._window.translate(self._window.position * -1)  # type: ignore
 
     def rotate_window(self, rotation: Vector) -> None:
         '''
@@ -517,7 +443,7 @@ class ViewportHandler():
         Redefine a rotação da window.
         '''
 
-        self._window.rotate(self._window.rotation * -1)
+        self._window.rotate(self._window.rotation * -1)  # type: ignore
 
     def reescale_window(self, scale: Vector) -> None:
         '''
@@ -555,5 +481,5 @@ class ViewportHandler():
         normal = self._window.calculate_z_vector()
         cop_distance = self._window.calculate_cop_distance()
 
-        for obj in self._main_window.display_file_handler.objects + [self._window]:
+        for obj in self._manager_mediator.object_manager.objects + [self._window]:  # type: ignore
             obj.project(self._window.cop, normal, cop_distance)

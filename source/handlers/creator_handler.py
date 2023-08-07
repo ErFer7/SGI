@@ -4,22 +4,27 @@
 Módulo para o criador.
 '''
 
-import gi
+from __future__ import annotations
+from typing import TYPE_CHECKING
 
+import gi
 
 gi.require_version('Gtk', '3.0')
 
 # pylint: disable=wrong-import-position
 from gi.repository import Gtk # type: ignore
 
+if TYPE_CHECKING:
+    from source.handlers.handler_mediator import HandlerMediator
+    from source.handlers.main_window import MainWindow
+
 import source.internals.wireframe as wireframe
 
 from source.internals.transform import Vector
-from source.managers.object_manager import ObjectManager
-from source.handlers.handler_utils import HandlerUtils
+from source.handlers.handler import Handler
 
 
-class CreatorHandler():
+class CreatorHandler(Handler):
 
     '''
     Handler dos botões de criação.
@@ -49,8 +54,6 @@ class CreatorHandler():
     _input_y_button: Gtk.SpinButton
     _input_z_button: Gtk.SpinButton
     _add_point_button: Gtk.Button
-    _user_call_lock: bool
-    _object_manager: ObjectManager
     _mode: wireframe.ObjectType
     _temp_coords: list[Vector]
     _width: float
@@ -64,8 +67,9 @@ class CreatorHandler():
     _surface_step_count: int
     _closed_spline: bool
 
-    def __init__(self, editor_box: Gtk.Box, object_manager: ObjectManager) -> None:
-        self._user_call_lock = True
+    def __init__(self, handler_mediator: HandlerMediator, main_window: MainWindow) -> None:
+        super().__init__(handler_mediator)
+
         self._mode = wireframe.ObjectType.NULL
         self._temp_coords = []
         self._width = 1.0
@@ -78,31 +82,33 @@ class CreatorHandler():
         self._spline_step_count = 10
         self._surface_step_count = 10
         self._closed_spline = False
-        self._object_manager = object_manager
-        self._point_button = HandlerUtils.search_child_by_name(editor_box, 'Point button')
-        self._line_button = HandlerUtils.search_child_by_name(editor_box, 'Line button')
-        self._triangle_button = HandlerUtils.search_child_by_name(editor_box, 'Triangle button')
-        self._rectangle_button = HandlerUtils.search_child_by_name(editor_box, 'Rectangle button')
-        self._polygon_button = HandlerUtils.search_child_by_name(editor_box, 'Polygon button')
-        self._bezier_curve_button = HandlerUtils.search_child_by_name(editor_box, 'Bezier curve button')
-        self._spline_curve_button = HandlerUtils.search_child_by_name(editor_box, 'Spline curve button')
-        self._surface_button = HandlerUtils.search_child_by_name(editor_box, 'Surface button')
-        self._parallelepiped_button = HandlerUtils.search_child_by_name(editor_box, 'Parallelepiped button')
-        self._remove_button = HandlerUtils.search_child_by_name(editor_box, 'Remove button')
-        self._width_button = HandlerUtils.search_child_by_name(editor_box, 'Width button')
-        self._color_button = HandlerUtils.search_child_by_name(editor_box, 'Color button')
-        self._edges_button = HandlerUtils.search_child_by_name(editor_box, 'Edges button')
-        self._fill_button = HandlerUtils.search_child_by_name(editor_box, 'Fill button')
-        self._curve_point_count_button = HandlerUtils.search_child_by_name(editor_box, 'Curve point count button')
-        self._curve_step_count_button = HandlerUtils.search_child_by_name(editor_box, 'Curve step count button')
-        self._spline_point_count_button = HandlerUtils.search_child_by_name(editor_box, 'Spline point count button')
-        self._spline_step_count_button = HandlerUtils.search_child_by_name(editor_box, 'Spline step count button')
-        self._closed_spline_button = HandlerUtils.search_child_by_name(editor_box, 'Closed spline button')
-        self._surface_step_count_button = HandlerUtils.search_child_by_name(editor_box, 'Surface step count button')
-        self._input_x_button = HandlerUtils.search_child_by_name(editor_box, 'Input x button')
-        self._input_y_button = HandlerUtils.search_child_by_name(editor_box, 'Input y button')
-        self._input_z_button = HandlerUtils.search_child_by_name(editor_box, 'Input z button')
-        self._add_point_button = HandlerUtils.search_child_by_name(editor_box, 'Add point button')
+
+        creator_box = main_window.creator_box
+
+        self._point_button = self.search_child_by_name(creator_box, 'Point button')
+        self._line_button = self.search_child_by_name(creator_box, 'Line button')
+        self._triangle_button = self.search_child_by_name(creator_box, 'Triangle button')
+        self._rectangle_button = self.search_child_by_name(creator_box, 'Rectangle button')
+        self._polygon_button = self.search_child_by_name(creator_box, 'Polygon button')
+        self._bezier_curve_button = self.search_child_by_name(creator_box, 'Bezier curve button')
+        self._spline_curve_button = self.search_child_by_name(creator_box, 'Spline curve button')
+        self._surface_button = self.search_child_by_name(creator_box, 'Surface button')
+        self._parallelepiped_button = self.search_child_by_name(creator_box, 'Parallelepiped button')
+        self._remove_button = self.search_child_by_name(creator_box, 'Remove button')
+        self._width_button = self.search_child_by_name(creator_box, 'Width button')
+        self._color_button = self.search_child_by_name(creator_box, 'Color button')
+        self._edges_button = self.search_child_by_name(creator_box, 'Edges button')
+        self._fill_button = self.search_child_by_name(creator_box, 'Fill button')
+        self._curve_point_count_button = self.search_child_by_name(creator_box, 'Curve point count button')
+        self._curve_step_count_button = self.search_child_by_name(creator_box, 'Curve step count button')
+        self._spline_point_count_button = self.search_child_by_name(creator_box, 'Spline point count button')
+        self._spline_step_count_button = self.search_child_by_name(creator_box, 'Spline step count button')
+        self._closed_spline_button = self.search_child_by_name(creator_box, 'Closed spline button')
+        self._surface_step_count_button = self.search_child_by_name(creator_box, 'Surface step count button')
+        self._input_x_button = self.search_child_by_name(creator_box, 'Input x button')
+        self._input_y_button = self.search_child_by_name(creator_box, 'Input y button')
+        self._input_z_button = self.search_child_by_name(creator_box, 'Input z button')
+        self._add_point_button = self.search_child_by_name(creator_box, 'Add point button')
 
         self._point_button.connect("toggled", self.set_mode, wireframe.ObjectType.POINT)
         self._line_button.connect("toggled", self.set_mode, wireframe.ObjectType.LINE)
@@ -132,13 +138,13 @@ class CreatorHandler():
         Define o modo.
         '''
 
-        if not self._user_call_lock:
+        if not self._handler_mediator.main_window_handler.user_call: # type: ignore
             return
 
-        self._object_manager.object_in_focus = None
+        object_manager = self.handler_mediator.manager_mediator.object_manager  # type: ignore
+        object_manager.object_in_focus = None # type: ignore
 
         if self._mode != mode:
-
             self.update_toggle_buttons(self._mode)
             self._mode = mode
         else:
@@ -170,7 +176,7 @@ class CreatorHandler():
         Atualiza todos os botões de marcação.
         '''
 
-        self._user_call_lock = False
+        self._handler_mediator.main_window_handler.user_call = False  # type: ignore
         match mode:
             case wireframe.ObjectType.POINT:
                 self._point_button.set_active(False)
@@ -190,7 +196,7 @@ class CreatorHandler():
                 self._surface_button.set_active(False)
             case wireframe.ObjectType.PARALLELEPIPED:
                 self._parallelepiped_button.set_active(False)
-        self._user_call_lock = True
+        self._handler_mediator.main_window_handler.user_call = True  # type: ignore
 
     # pylint: disable=unused-argument
     def remove(self, user_data) -> None:
@@ -198,7 +204,8 @@ class CreatorHandler():
         Remove o último objeto.
         '''
 
-        self._object_manager.remove_last()
+        object_manager = self.handler_mediator.manager_mediator.object_manager  # type: ignore
+        object_manager.remove_last()  # type: ignore
 
     # pylint: disable=unused-argument
     def set_width(self, user_data) -> None:
@@ -293,16 +300,17 @@ class CreatorHandler():
 
             position = Vector(new_x, new_y, new_z)
 
-        if self._mode != wireframe.ObjectType.NULL:
+        object_manager = self.handler_mediator.manager_mediator.object_manager  # type: ignore
 
+        if self._mode != wireframe.ObjectType.NULL:
             self._temp_coords.append(position)
             object_completed = False
 
             if self._mode == wireframe.ObjectType.POINT and len(self._temp_coords) >= 1:
-                self._object_manager.add_object(wireframe.Point(self._temp_coords[0], "Point", self._color))
+                object_manager.add_object(wireframe.Point(self._temp_coords[0], "Point", self._color))  # type: ignore
                 object_completed = True
             elif self._mode == wireframe.ObjectType.LINE and len(self._temp_coords) >= 2:
-                self._object_manager.add_object(
+                object_manager.add_object(  # type: ignore
                     wireframe.Line(
                         self._temp_coords[0],
                         self._temp_coords[1],
@@ -311,7 +319,7 @@ class CreatorHandler():
                         self._width))
                 object_completed = True
             elif self._mode == wireframe.ObjectType.TRIANGLE and len(self._temp_coords) >= 3:
-                self._object_manager.add_object(
+                object_manager.add_object(  # type: ignore
                     wireframe.Triangle(
                         self._temp_coords[0],
                         self._temp_coords[1],
@@ -322,7 +330,7 @@ class CreatorHandler():
                         self._fill))
                 object_completed = True
             elif self._mode == wireframe.ObjectType.RECTANGLE and len(self._temp_coords) >= 2:
-                self._object_manager.add_object(
+                object_manager.add_object(  # type: ignore
                     wireframe.Rectangle(
                         self._temp_coords[0],
                         self._temp_coords[1],
@@ -332,7 +340,7 @@ class CreatorHandler():
                         self._fill))
                 object_completed = True
             elif self._mode == wireframe.ObjectType.POLYGON and len(self._temp_coords) >= self._edges:
-                self._object_manager.add_object(
+                object_manager.add_object(  # type: ignore
                     wireframe.Wireframe2D(
                         self._temp_coords.copy(),
                         "Wireframe",
@@ -342,11 +350,10 @@ class CreatorHandler():
                         self._fill))
                 object_completed = True
             elif self._mode == wireframe.ObjectType.BEZIER_CURVE:
-
                 self.check_curve_requirements()
 
                 if len(self._temp_coords) >= self._curve_point_count:
-                    self._object_manager.add_object(
+                    object_manager.add_object(  # type: ignore
                         wireframe.BezierCurve(self._temp_coords,
                                     self._curve_step_count,
                                     "Bezier Curve",
@@ -354,7 +361,7 @@ class CreatorHandler():
                                     self._width))
                     object_completed = True
             elif self._mode == wireframe.ObjectType.SPLINE_CURVE and len(self._temp_coords) >= self._spline_point_count:
-                self._object_manager.add_object(
+                object_manager.add_object(  # type: ignore
                     wireframe.SplineCurve(self._temp_coords,
                                 self._fill,
                                 self._closed_spline,
@@ -364,7 +371,7 @@ class CreatorHandler():
                                 self._width))
                 object_completed = True
             elif self._mode == wireframe.ObjectType.SURFACE and len(self._temp_coords) >= 16:
-                self._object_manager.add_object(
+                object_manager.add_object(  # type: ignore
                     wireframe.Surface(self._temp_coords,
                             self._surface_step_count,
                             "Surface",
@@ -372,7 +379,7 @@ class CreatorHandler():
                             self._width))
                 object_completed = True
             elif self._mode == wireframe.ObjectType.PARALLELEPIPED and len(self._temp_coords) >= 2:
-                self._object_manager.add_object(
+                object_manager.add_object(  # type: ignore
                     wireframe.Parallelepiped(self._temp_coords[0],
                                     self._temp_coords[1],
                                     "Parallelepiped",
@@ -381,9 +388,12 @@ class CreatorHandler():
                 object_completed = True
 
             if object_completed:
-                self._object_manager.set_last_as_focus()
-                self._rotation_anchor = self._focus_object.position
-                self.update_spin_buttons()
+                anchor = self._handler_mediator.manager_mediator.object_manager.object_in_focus.position  # type: ignore
+
+                object_manager.set_last_as_focus()  # type: ignore
+                self._handler_mediator.transformations_handler.update_object_rotation_anchor(anchor)  # type: ignore
+                self._handler_mediator.object_transform_handler.update_spin_buttons()  # type: ignore
+                self._handler_mediator.transformations_handler.update_rotation_anchor_spin_buttons()  # type: ignore
                 self._temp_coords.clear()
 
     def check_curve_requirements(self) -> None:
