@@ -111,22 +111,15 @@ class HandlerMediator():
 
         self._manager_mediator = manager_mediator
 
-    def set_handlers(self,
-                     main_window_handler: MainWindowHandler,
-                     object_list_handler: ObjectListHandler,
-                     creator_handler: CreatorHandler,
-                     object_transform_handler: ObjectTransformHandler,
-                     trasformations_handler: TransformationsHandler,
-                     settings_handler: SettingsHandler,
-                     viewport_handler: ViewportHandler) -> None:
+    def set_handlers(self, **handlers) -> None:
         '''
         Define os handlers.
         '''
 
-        self._main_window_handler = main_window_handler
-        self._object_list_handler = object_list_handler
-        self._creator_handler = creator_handler
-        self._object_transform_handler = object_transform_handler
-        self._transformations_handler = trasformations_handler
-        self._settings_handler = settings_handler
-        self._viewport_handler = viewport_handler
+        self._main_window_handler = handlers['main_window_handler']
+        self._object_list_handler = handlers['object_list_handler']
+        self._creator_handler = handlers['creator_handler']
+        self._object_transform_handler = handlers['object_transform_handler']
+        self._transformations_handler = handlers['transformations_handler']
+        self._settings_handler = handlers['settings_handler']
+        self._viewport_handler = handlers['viewport_handler']

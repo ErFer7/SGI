@@ -66,7 +66,15 @@ class ViewportManager(Manager):
         self._viewport_padding = viewport_padding
         self._clipping_method = ClippingMethod.LIANG_BARSKY
 
-    def world_to_screen(self, coord: Vector) -> Vector:
+    @property
+    def window(self) -> Window:
+        '''
+        Retorna a janela do viewport.
+        '''
+
+        return self._window
+
+    def world_to_screen(self, coord: Vector, screen_width: int, screen_height: int) -> Vector:
         '''
         Converte a coordenada de mundo para uma coordenada de tela.
         '''
@@ -74,19 +82,20 @@ class ViewportManager(Manager):
         origin = self._window.normalized_origin - self._viewport_padding
         extension = self._window.normalized_extension + self._viewport_padding
 
-        x_s = ((coord.x - origin.x) / (extension.x - origin.x)) * (self._drawing_area.get_allocated_width())
-        y_s = (1 - (coord.y - origin.y) / (extension.y - origin.y)) * self._drawing_area.get_allocated_height()
+        x_s = ((coord.x - origin.x) / (extension.x - origin.x)) * screen_width
+        y_s = (1 - (coord.y - origin.y) / (extension.y - origin.y)) * screen_height
 
         return Vector(x_s, y_s)
 
-    def world_line_to_screen(self, line: list[Vector]) -> tuple[Vector]:
+    def world_line_to_screen(self, line: list[Vector], screen_width: int, screen_height: int) -> tuple[Vector]:
         '''
         Converte uma linha no mundo para uma linha na tela.
         '''
 
-        return (self.world_to_screen(line[0]), self.world_to_screen(line[1]))  # type: ignore
+        return (self.world_to_screen(line[0], screen_width, screen_height),
+                self.world_to_screen(line[1], screen_width, screen_height))
 
-    def screen_to_world(self, coord: Vector) -> Vector:
+    def screen_to_world(self, coord: Vector, screen_width: int, screen_height: int) -> Vector:
         '''
         Converte a coordenada de tela para uma coordenada de mundo.
         '''
@@ -94,8 +103,8 @@ class ViewportManager(Manager):
         origin = self._window.origin - self._viewport_padding
         extension = self._window.extension + self._viewport_padding
 
-        x_w = (coord.x / self._drawing_area.get_allocated_width()) * (extension.x - origin.x) + origin.x
-        y_w = (1.0 - (coord.y / self._drawing_area.get_allocated_height())) * (extension.y - origin.y) + origin.y
+        x_w = (coord.x / screen_width) * (extension.x - origin.x) + origin.x
+        y_w = (1.0 - (coord.y / screen_height)) * (extension.y - origin.y) + origin.y
 
         return Vector(x_w, y_w)
 
@@ -110,26 +119,11 @@ class ViewportManager(Manager):
 
         clipped_lines = []
 
-        if obj.object_type == ObjectType.POINT:
-
-            if len(coords) > 0:
-                if (self._window.normalized_origin.x <= coords[0].x <= self._window.normalized_extension.x) and \
-                   (self._window.normalized_origin.y <= coords[0].y <= self._window.normalized_extension.y):
-                    clipped_lines.append(obj.lines)
-        elif obj.object_type == ObjectType.LINE:
-
-            if self._clipping_method == ClippingMethod.COHEN_SUTHERLAND:
-
-                clipped_line = self.cohen_sutherland(obj.lines)  # type: ignore
-                if len(clipped_line) > 0:
-                    clipped_lines.append(clipped_line)
-            else:
-
-                clipped_line = self.liang_barsky(obj.lines)  # type: ignore
-                if len(clipped_line) > 0:
-                    clipped_lines.append(clipped_line)
+        if obj.object_type == ObjectType.POINT and len(coords) > 0:
+            if (self._window.normalized_origin.x <= coords[0].x <= self._window.normalized_extension.x) and \
+               (self._window.normalized_origin.y <= coords[0].y <= self._window.normalized_extension.y):
+                clipped_lines.append(obj.lines[0])
         else:
-
             clipped_lines = obj.lines
             clipped_lines_temp = []
 
@@ -144,32 +138,32 @@ class ViewportManager(Manager):
                     match inter:
                         case Intersection.LEFT:
                             comp_inside = line[0].x > self._window.normalized_origin.x and \
-                                          line[1].x > self._window.normalized_origin.x
+                                line[1].x > self._window.normalized_origin.x
                             comp_a = line[0].x > self._window.normalized_origin.x
                             comp_b = line[1].x > self._window.normalized_origin.x
                         case Intersection.RIGHT:
                             comp_inside = line[0].x < self._window.normalized_extension.x and \
-                                          line[1].x < self._window.normalized_extension.x
+                                line[1].x < self._window.normalized_extension.x
                             comp_a = line[0].x < self._window.normalized_extension.x
                             comp_b = line[1].x < self._window.normalized_extension.x
                         case Intersection.BOTTOM:
                             comp_inside = line[0].y > self._window.normalized_origin.y and \
-                                          line[1].y > self._window.normalized_origin.y
+                                line[1].y > self._window.normalized_origin.y
                             comp_a = line[0].y > self._window.normalized_origin.y
                             comp_b = line[1].y > self._window.normalized_origin.y
                         case Intersection.TOP:
                             comp_inside = line[0].y < self._window.normalized_extension.y and \
-                                          line[1].y < self._window.normalized_extension.y
+                                line[1].y < self._window.normalized_extension.y
                             comp_a = line[0].y < self._window.normalized_extension.y
                             comp_b = line[1].y < self._window.normalized_extension.y
 
                     if comp_inside:
                         clipped_lines_temp.append(line)
                     elif comp_a:
-                        intersection = self.intersection(line, None, inter, False)  # type: ignore
+                        intersection = self.intersection(line, None, inter, False)
                         clipped_lines_temp.append(intersection)
                     elif comp_b:
-                        intersection = self.intersection(line, inter, None, False)  # type: ignore
+                        intersection = self.intersection(line, inter, None, False)
                         clipped_lines_temp.append(intersection)
 
                 # Patch de linhas
@@ -178,7 +172,7 @@ class ViewportManager(Manager):
                         if i < len(clipped_lines_temp) - 1:
                             if clipped_lines_temp[i][1] != clipped_lines_temp[i + 1][0]:
                                 clipped_lines_temp.insert(i + 1,
-                                                         [clipped_lines_temp[i][1], clipped_lines_temp[i + 1][0]])
+                                                          [clipped_lines_temp[i][1], clipped_lines_temp[i + 1][0]])
                         else:
                             if clipped_lines_temp[i][1] != clipped_lines_temp[0][0]:
                                 clipped_lines_temp.append([clipped_lines_temp[i][1], clipped_lines_temp[0][0]])
@@ -339,11 +333,11 @@ class ViewportManager(Manager):
             ratio_2 = q2 / p2
 
             if p1 < 0:
-                positives.append(ratio_2)  # type: ignore
-                negatives.append(ratio_1)  # type: ignore
+                positives.append(ratio_2)
+                negatives.append(ratio_1)
             else:
-                positives.append(ratio_1)  # type: ignore
-                negatives.append(ratio_2)  # type: ignore
+                positives.append(ratio_1)
+                negatives.append(ratio_2)
 
         if p3 != 0:
 
@@ -351,11 +345,11 @@ class ViewportManager(Manager):
             ratio_4 = q4 / p4
 
             if p3 < 0:
-                positives.append(ratio_4)  # type: ignore
-                negatives.append(ratio_3)  # type: ignore
+                positives.append(ratio_4)
+                negatives.append(ratio_3)
             else:
-                positives.append(ratio_3)  # type: ignore
-                negatives.append(ratio_4)  # type: ignore
+                positives.append(ratio_3)
+                negatives.append(ratio_4)
 
         max_negative = max(negatives)
         min_positive = min(positives)
@@ -368,13 +362,13 @@ class ViewportManager(Manager):
 
         return [new_vector_a, new_vector_b]
 
-    def draw_frame(self, area, context) -> None:
+    def draw_frame(self, area, context, screen_width: int, screen_height: int) -> None:
         '''
         Método para a renderização.
         '''
 
         self.project()
-        self._manager_mediator.object_manager.normalize_objects(self._window)  # type: ignore
+        self._manager_mediator.object_manager.normalize_objects(self._window)
 
         # Preenche o fundo
         context.set_source_rgb(self._bg_color[0], self._bg_color[1], self._bg_color[2])
@@ -382,7 +376,7 @@ class ViewportManager(Manager):
         context.fill()
 
         # Renderiza todos os objetos do display file
-        for obj in self._manager_mediator.object_manager.objects + [self._window]:  # type: ignore
+        for obj in self._manager_mediator.object_manager.objects + [self._window]:
 
             clipped_coords = []
 
@@ -391,7 +385,8 @@ class ViewportManager(Manager):
             else:
                 clipped_coords = obj.lines
 
-            screen_lines = list(map(self.world_line_to_screen, clipped_coords))
+            screen_lines = list(map(lambda x: self.world_line_to_screen(x, screen_width, screen_height),
+                                    clipped_coords))
             color = obj.color
             line_width = obj.line_width
 
@@ -406,10 +401,10 @@ class ViewportManager(Manager):
             for line in screen_lines:
 
                 if obj.fill:
-                    context.line_to(line[1].x, line[1].y)  # type: ignore
+                    context.line_to(line[1].x, line[1].y)
                 else:
                     context.move_to(line[0].x, line[0].y)
-                    context.line_to(line[1].x, line[1].y)  # type: ignore
+                    context.line_to(line[1].x, line[1].y)
                     context.stroke()
 
             context.close_path()
@@ -429,7 +424,7 @@ class ViewportManager(Manager):
         Redefine a posição da window.
         '''
 
-        self._window.translate(self._window.position * -1)  # type: ignore
+        self._window.translate(self._window.position * -1)
 
     def rotate_window(self, rotation: Vector) -> None:
         '''
@@ -443,7 +438,7 @@ class ViewportManager(Manager):
         Redefine a rotação da window.
         '''
 
-        self._window.rotate(self._window.rotation * -1)  # type: ignore
+        self._window.rotate(self._window.rotation * -1)
 
     def reescale_window(self, scale: Vector) -> None:
         '''
@@ -481,5 +476,5 @@ class ViewportManager(Manager):
         normal = self._window.calculate_z_vector()
         cop_distance = self._window.calculate_cop_distance()
 
-        for obj in self._manager_mediator.object_manager.objects + [self._window]:  # type: ignore
+        for obj in self._manager_mediator.object_manager.objects + [self._window]:
             obj.project(self._window.cop, normal, cop_distance)

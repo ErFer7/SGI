@@ -83,16 +83,16 @@ class ObjectManager(Manager):
         self._objects.append(obj)
         self._all_objects_normalized = False
 
-        object_list_handler = self._manager_mediator.handler_mediator.object_list_handler  # type: ignore
-        object_list_handler.add_object_register(obj)  # type: ignore
+        object_list_handler = self._manager_mediator.handler_mediator.object_list_handler
+        object_list_handler.add_object_register(obj)
 
     def update_object_info(self, index: int) -> None:
         '''
         Atualiza as informações de um objeto.
         '''
 
-        object_list_handler = self._manager_mediator.handler_mediator.object_list_handler  # type: ignore
-        object_list_handler.update_object_info(index, str(self._objects[index].position))  # type: ignore
+        object_list_handler = self._manager_mediator.handler_mediator.object_list_handler
+        object_list_handler.update_object_info(index, str(self._objects[index].position))
 
     def remove_last(self) -> None:
         '''
@@ -100,8 +100,10 @@ class ObjectManager(Manager):
         '''
 
         if len(self._objects) > 0:
+            object_list_handler = self._manager_mediator.handler_mediator.object_list_handler
+
             self._objects.pop()
-            self._object_list_handler.remove_object_register(-1)  # type: ignore
+            object_list_handler.remove_object_register(-1)
             self._all_objects_normalized = False
 
     def normalize_objects(self, window: Window) -> None:
@@ -110,7 +112,7 @@ class ObjectManager(Manager):
         '''
 
         window_up = window.calculate_y_projected_vector()
-        rotation = degrees(window_up * Vector(0.0, 1.0, 0.0))  # type: ignore
+        rotation = degrees(window_up * Vector(0.0, 1.0, 0.0))
 
         if window_up.x > 0.0:
             rotation = 360 - rotation

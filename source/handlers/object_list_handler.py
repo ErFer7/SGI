@@ -4,25 +4,22 @@
 Módulo do handler da lista de objetos.
 '''
 
-
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from os.path import join
 
 import gi
+from gi.repository import Gtk
 
-gi.require_version('Gtk', '3.0')
-
-# pylint: disable=wrong-import-position
-from gi.repository import Gtk # type: ignore
+from source.handlers.handler import Handler
+from source.internals.wireframe import Object
 
 if TYPE_CHECKING:
     from source.handlers.handler_mediator import HandlerMediator
     from source.handlers.main_window import MainWindow
 
-from source.internals.wireframe import Object
-from source.handlers.handler import Handler
+gi.require_version('Gtk', '3.0')
 
 
 class ObjectListHandler(Handler):
@@ -57,13 +54,13 @@ class ObjectListHandler(Handler):
         '''
 
         file_name = self._file_name_entry.get_text()
-        anchor = self._handler_mediator.manager_mediator.object_manager.object_in_focus.position  # type: ignore
-        object_manager = self._handler_mediator.manager_mediator.object_manager  # type: ignore
+        anchor = self._handler_mediator.manager_mediator.object_manager.object_in_focus.position
+        object_manager = self._handler_mediator.manager_mediator.object_manager
 
-        object_manager.load_file(join('assets', 'objects', file_name))  # type: ignore
-        self._handler_mediator.transformations_handler.update_object_rotation_anchor(anchor)  # type: ignore
-        self._handler_mediator.object_transform_handler.update_spin_buttons()  # type: ignore
-        self._handler_mediator.transformations_handler.update_rotation_anchor_spin_buttons()  # type: ignore
+        object_manager.load_file(join('assets', 'objects', file_name))
+        self._handler_mediator.transformations_handler.update_object_rotation_anchor(anchor)
+        self._handler_mediator.object_transform_handler.update_spin_buttons()
+        self._handler_mediator.transformations_handler.update_rotation_anchor_spin_buttons()
 
     # pylint: disable=unused-argument
     def save_file(self, user_data) -> None:
@@ -73,8 +70,8 @@ class ObjectListHandler(Handler):
 
         file_name = self._file_name_entry.get_text()
 
-        object_manager = self._handler_mediator.manager_mediator.object_manager  # type: ignore
-        object_manager.save_file(join('assets', 'objects', file_name))  # type: ignore
+        object_manager = self._handler_mediator.manager_mediator.object_manager
+        object_manager.save_file(join('assets', 'objects', file_name))
 
     def add_object_register(self, obj: Object) -> None:
         '''

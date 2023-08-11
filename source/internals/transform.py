@@ -25,10 +25,10 @@ class Vector():
         self.z = z
 
     def __repr__(self) -> str:
-        return f"{self.x:.2f}, {self.y:.2f}, {self.z:.2f}"
+        return f'{self.x:.2f}, {self.y:.2f}, {self.z:.2f}'
 
     def __str__(self) -> str:
-        return f"{self.x:.2f}, {self.y:.2f}, {self.z:.2f}"
+        return f'{self.x:.2f}, {self.y:.2f}, {self.z:.2f}'
 
     def __add__(self, other):
         return Vector(self.x + other.x, self.y + other.y, self.z + other.z)
@@ -80,6 +80,7 @@ class Vector():
         '''
 
         return sqrt(self.x**2 + self.y**2 + self.z**2)
+
 
 class Transform():
 
@@ -142,7 +143,6 @@ class Transform():
                                              [0.0, 0.0, 1.0, 0.0],
                                              [0.0, 0.0, 0.0, 1.0]])
 
-
         self._normalization_matrix = np.matrix([[cosz * self._scale.x, -sinz * self._scale.y, 0.0, self._position.x],
                                                 [sinz * self._scale.x, cosz * self._scale.y, 0.0, self._position.y],
                                                 [0.0, 0.0, self._scale.z, self._position.z],
@@ -154,10 +154,10 @@ class Transform():
                                              [0.0, 0.0, 0.0, 1.0]])
 
     def __repr__(self) -> str:
-        return str(f"P: {self.position}, S: {self.scale}, R: {self._rotation}")
+        return str(f'P: {self.position}, S: {self.scale}, R: {self._rotation}')
 
     def __str__(self) -> str:
-        return str(f"P: {self.position}, S: {self.scale}, R: {self._rotation}")
+        return str(f'P: {self.position}, S: {self.scale}, R: {self._rotation}')
 
     @property
     def position(self) -> Vector:
@@ -294,7 +294,7 @@ class Transform():
     def rescale(self,
                 scale: Vector,
                 coords: list[Vector],
-                anchor: Vector = None,
+                anchor: Vector | None = None,
                 update_internal_vectors: bool = True) -> list[Vector]:
         '''
         Transformação de escala.
@@ -326,7 +326,7 @@ class Transform():
     def rotate(self,
                rotation: Vector,
                coords: list[Vector],
-               anchor: Vector = None,
+               anchor: Vector | None = None,
                update_internal_vectors: bool = True) -> list[Vector]:
         '''
         Rotaciona o objeto em relação à um ponto.

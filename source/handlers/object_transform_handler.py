@@ -8,18 +8,16 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import gi
+from gi.repository import Gtk
 
-gi.require_version('Gtk', '3.0')
-
-# pylint: disable=wrong-import-position
-from gi.repository import Gtk # type: ignore
+from source.internals.transform import Vector
+from source.handlers.handler import Handler
 
 if TYPE_CHECKING:
     from source.handlers.handler_mediator import HandlerMediator
     from source.handlers.main_window import MainWindow
 
-from source.handlers.handler import Handler
-from source.internals.transform import Vector
+gi.require_version('Gtk', '3.0')
 
 
 class ObjectTransformHandler(Handler):
@@ -43,25 +41,25 @@ class ObjectTransformHandler(Handler):
 
         object_transform_box = main_window.object_transform_box
 
-        self._position_x_button =  self.search_child_by_name(object_transform_box, 'Position x button')
-        self._position_y_button =  self.search_child_by_name(object_transform_box, 'Position y button')
-        self._position_z_button =  self.search_child_by_name(object_transform_box, 'Position z button')
-        self._scale_x_button =  self.search_child_by_name(object_transform_box, 'Scale x button')
-        self._scale_y_button =  self.search_child_by_name(object_transform_box, 'Scale y button')
-        self._scale_z_button =  self.search_child_by_name(object_transform_box, 'Scale z button')
-        self._rotation_x_button =  self.search_child_by_name(object_transform_box, 'Rotation x button')
-        self._rotation_y_button =  self.search_child_by_name(object_transform_box, 'Rotation y button')
-        self._rotation_z_button =  self.search_child_by_name(object_transform_box, 'Rotation z button')
+        self._position_x_button = self.search_child_by_name(object_transform_box, 'Position x button')
+        self._position_y_button = self.search_child_by_name(object_transform_box, 'Position y button')
+        self._position_z_button = self.search_child_by_name(object_transform_box, 'Position z button')
+        self._scale_x_button = self.search_child_by_name(object_transform_box, 'Scale x button')
+        self._scale_y_button = self.search_child_by_name(object_transform_box, 'Scale y button')
+        self._scale_z_button = self.search_child_by_name(object_transform_box, 'Scale z button')
+        self._rotation_x_button = self.search_child_by_name(object_transform_box, 'Rotation x button')
+        self._rotation_y_button = self.search_child_by_name(object_transform_box, 'Rotation y button')
+        self._rotation_z_button = self.search_child_by_name(object_transform_box, 'Rotation z button')
 
-        self._position_x_button.connect("value-changed", self.update_position)
-        self._position_y_button.connect("value-changed", self.update_position)
-        self._position_z_button.connect("value-changed", self.update_position)
-        self._scale_x_button.connect("value-changed", self.update_scale)
-        self._scale_y_button.connect("value-changed", self.update_scale)
-        self._scale_z_button.connect("value-changed", self.update_scale)
-        self._rotation_x_button.connect("value-changed", self.update_rotation)
-        self._rotation_y_button.connect("value-changed", self.update_rotation)
-        self._rotation_z_button.connect("value-changed", self.update_rotation)
+        self._position_x_button.connect('value-changed', self.update_position)
+        self._position_y_button.connect('value-changed', self.update_position)
+        self._position_z_button.connect('value-changed', self.update_position)
+        self._scale_x_button.connect('value-changed', self.update_scale)
+        self._scale_y_button.connect('value-changed', self.update_scale)
+        self._scale_z_button.connect('value-changed', self.update_scale)
+        self._rotation_x_button.connect('value-changed', self.update_rotation)
+        self._rotation_y_button.connect('value-changed', self.update_rotation)
+        self._rotation_z_button.connect('value-changed', self.update_rotation)
 
     # pylint: disable=unused-argument
     def update_position(self, user_data) -> None:
@@ -69,9 +67,9 @@ class ObjectTransformHandler(Handler):
         Atualiza a posição
         '''
 
-        user_call = self._handler_mediator.main_window_handler.user_call  # type: ignore
-        object_manager = self._handler_mediator.manager_mediator.object_manager  # type: ignore
-        object_in_focus = object_manager.object_in_focus  # type: ignore
+        user_call = self._handler_mediator.main_window_handler.user_call
+        object_manager = self._handler_mediator.manager_mediator.object_manager
+        object_in_focus = object_manager.object_in_focus
 
         if user_call and object_in_focus is not None:
 
@@ -81,8 +79,8 @@ class ObjectTransformHandler(Handler):
 
             object_in_focus.translate(Vector(diff_x, diff_y, diff_z))
 
-            object_index = object_manager.objects.index(object_in_focus)  # type: ignore
-            object_manager.update_object_info(object_index)  # type: ignore
+            object_index = object_manager.objects.index(object_in_focus)
+            object_manager.update_object_info(object_index)
 
     # pylint: disable=unused-argument
     def update_scale(self, user_data) -> None:
@@ -90,8 +88,8 @@ class ObjectTransformHandler(Handler):
         Atualiza a escala
         '''
 
-        user_call = self._handler_mediator.main_window_handler.user_call  # type: ignore
-        object_in_focus = self._handler_mediator.manager_mediator.object_manager.object_in_focus  # type: ignore
+        user_call = self._handler_mediator.main_window_handler.user_call
+        object_in_focus = self._handler_mediator.manager_mediator.object_manager.object_in_focus
 
         if user_call and object_in_focus is not None:
 
@@ -107,8 +105,8 @@ class ObjectTransformHandler(Handler):
         Atualiza a rotação
         '''
 
-        user_call = self._handler_mediator.main_window_handler.user_call  # type: ignore
-        object_in_focus = self._handler_mediator.manager_mediator.object_manager.object_in_focus  # type: ignore
+        user_call = self._handler_mediator.main_window_handler.user_call
+        object_in_focus = self._handler_mediator.manager_mediator.object_manager.object_in_focus
 
         if user_call and object_in_focus is not None:
 
@@ -123,16 +121,16 @@ class ObjectTransformHandler(Handler):
         Atualiza todos os botões numéricos.
         '''
 
-        object_in_focus = self._handler_mediator.manager_mediator.object_manager.object_in_focus  # type: ignore
+        object_in_focus = self._handler_mediator.manager_mediator.object_manager.object_in_focus
 
-        self._handler_mediator.main_window_handler.user_call = False  # type: ignore
-        self._position_x_button.set_value(object_in_focus.position.x)  # type: ignore
-        self._position_y_button.set_value(object_in_focus.position.y)  # type: ignore
-        self._position_z_button.set_value(object_in_focus.position.z)  # type: ignore
-        self._scale_x_button.set_value(object_in_focus.scale.x)  # type: ignore
-        self._scale_y_button.set_value(object_in_focus.scale.y)  # type: ignore
-        self._scale_z_button.set_value(object_in_focus.scale.z)  # type: ignore
-        self._rotation_x_button.set_value(object_in_focus.rotation.x)  # type: ignore
-        self._rotation_y_button.set_value(object_in_focus.rotation.y)  # type: ignore
-        self._rotation_z_button.set_value(object_in_focus.rotation.z)  # type: ignore
-        self._handler_mediator.main_window_handler.user_call = True  # type: ignore
+        self._handler_mediator.main_window_handler.user_call = False
+        self._position_x_button.set_value(object_in_focus.position.x)
+        self._position_y_button.set_value(object_in_focus.position.y)
+        self._position_z_button.set_value(object_in_focus.position.z)
+        self._scale_x_button.set_value(object_in_focus.scale.x)
+        self._scale_y_button.set_value(object_in_focus.scale.y)
+        self._scale_z_button.set_value(object_in_focus.scale.z)
+        self._rotation_x_button.set_value(object_in_focus.rotation.x)
+        self._rotation_y_button.set_value(object_in_focus.rotation.y)
+        self._rotation_z_button.set_value(object_in_focus.rotation.z)
+        self._handler_mediator.main_window_handler.user_call = True

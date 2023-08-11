@@ -9,5 +9,5 @@
         "119",
         "--experimental"
     ],
-    "python.analysis.typeCheckingMode": "basic"
+    "python.analysis.typeCheckingMode": "off"
 }

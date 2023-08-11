@@ -8,14 +8,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import gi
-
-gi.require_version('Gtk', '3.0')
-
-# pylint: disable=wrong-import-position
-from gi.repository import Gtk # type: ignore
+from gi.repository import Gtk
 
 if TYPE_CHECKING:
     from source.handlers.handler_mediator import HandlerMediator
+
+gi.require_version('Gtk', '3.0')
 
 
 class Handler():

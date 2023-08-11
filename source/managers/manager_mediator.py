@@ -61,10 +61,10 @@ class ManagerMediator():
 
         self._handler_mediator = handler_mediator
 
-    def set_managers(self, object_manager: ObjectManager, viewport_manager: ViewportManager) -> None:
+    def set_managers(self, **managers) -> None:
         '''
         Define os gerenciadores.
         '''
 
-        self._object_manager = object_manager
-        self._viewport_manager = viewport_manager
+        self._object_manager = managers['object_manager']
+        self._viewport_manager = managers['viewport_manager']

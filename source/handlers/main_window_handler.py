@@ -7,18 +7,17 @@ Módulo do handler da janela principal.
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
+from source.handlers.handler import Handler
+
 import gi
+from gi.repository import Gtk
 
-gi.require_version('Gtk', '3.0')
-
-# pylint: disable=wrong-import-position
-from gi.repository import Gtk # type: ignore
 
 if TYPE_CHECKING:
     from source.handlers.handler_mediator import HandlerMediator
     from source.handlers.main_window import MainWindow
 
-from source.handlers.handler import Handler
+gi.require_version('Gtk', '3.0')
 
 
 class MainWindowHandler(Handler):
@@ -59,4 +58,4 @@ class MainWindowHandler(Handler):
         Evento de pressionamento de tecla
         '''
 
-        self.handler_mediator.viewport_handler.handle_key_press(event.string)  # type: ignore
+        self.handler_mediator.viewport_handler.handle_key_press(event.string)
