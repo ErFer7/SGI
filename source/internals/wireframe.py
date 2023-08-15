@@ -9,7 +9,7 @@ from enum import Enum
 
 import numpy as np
 
-from source.transform import Transform, Vector
+from source.internals.transform import Transform, Vector
 
 
 class ObjectType(Enum):
@@ -136,7 +136,7 @@ class Object(ABC):
 
         self.coords = self._transform.rescale(scale, self.coords)
 
-    def rotate(self, rotation: Vector, anchor: Vector = None) -> None:
+    def rotate(self, rotation: Vector, anchor: Vector | None = None) -> None:
         '''
         Transformação de rotação.
         '''
@@ -185,10 +185,9 @@ class Point(Object):
         return self.coords[0]
 
     def generate_lines(self) -> None:
-
         if len(self.normalized_coords) > 0:
-            self.lines = [self.normalized_coords[0],
-                          Vector(self.normalized_coords[0].x + 1, self.normalized_coords[0].y)]
+            self.lines = [[self.normalized_coords[0],
+                           Vector(self.normalized_coords[0].x + 1, self.normalized_coords[0].y)]]
 
 
 class Line(Object):
@@ -223,10 +222,10 @@ class Line(Object):
 
         return self.coords[1]
 
-    def generate_lines(self) -> list[tuple[int]]:
+    def generate_lines(self) -> None:
 
         if len(self.normalized_coords) == 2:
-            self.lines = [self.normalized_coords[0], self.normalized_coords[1]]
+            self.lines = [[self.normalized_coords[0], self.normalized_coords[1]]]
 
 
 class Wireframe2D(Object):
@@ -614,11 +613,11 @@ class Wireframe3D(Object):
     Wireframe 3D.
     '''
 
-    _lines_indexes: list[tuple[int]]
+    _lines_indexes: list[tuple[int, int]]
 
     def __init__(self,
                  coords: list[Vector],
-                 line_indexes: list[tuple[int]],
+                 line_indexes: list[tuple[int, int]],
                  name: str = '',
                  color: tuple = (1.0, 1.0, 1.0),
                  line_width: float = 1.0,
@@ -702,7 +701,7 @@ class Surface(Wireframe3D):
 
         super().__init__(coords, line_indexes, name, color, line_width, ObjectType.SURFACE)
 
-    def generate_surface_coords(self, points: list[Vector], steps: int) -> tuple[list[Vector], list[tuple[Vector]]]:
+    def generate_surface_coords(self, points: list[Vector], steps: int) -> tuple[list[Vector], list[tuple[int, int]]]:
         '''
         Gera uma superfície.
         '''
@@ -726,18 +725,21 @@ class Surface(Wireframe3D):
             if i + 15 < len(points):
 
                 # Estas matrizes poderiam ser preenchidas com loops, mas não tenho tempo pra corrigir
-                geometry_matrix_x = np.matrix([[points[i].x, points[i + 1].x, points[i + 2].x, points[i + 3].x],
-                                               [points[i + 4].x, points[i + 5].x, points[i + 6].x, points[i + 7].x],
-                                               [points[i + 8].x, points[i + 9].x, points[i + 10].x, points[i + 11].x],
-                                               [points[i + 12].x, points[i + 13].x, points[i + 14].x, points[i + 15].x]])
-                geometry_matrix_y = np.matrix([[points[i].y, points[i + 1].y, points[i + 2].y, points[i + 3].y],
-                                               [points[i + 4].y, points[i + 5].y, points[i + 6].y, points[i + 7].y],
-                                               [points[i + 8].y, points[i + 9].y, points[i + 10].y, points[i + 11].y],
-                                               [points[i + 12].y, points[i + 13].y, points[i + 14].y, points[i + 15].y]])
-                geometry_matrix_z = np.matrix([[points[i].z, points[i + 1].z, points[i + 2].z, points[i + 3].z],
-                                               [points[i + 4].z, points[i + 5].z, points[i + 6].z, points[i + 7].z],
-                                               [points[i + 8].z, points[i + 9].z, points[i + 10].z, points[i + 11].z],
-                                               [points[i + 12].z, points[i + 13].z, points[i + 14].z, points[i + 15].z]])
+                geometry_matrix_x = np.matrix(
+                    [[points[i].x, points[i + 1].x, points[i + 2].x, points[i + 3].x],
+                     [points[i + 4].x, points[i + 5].x, points[i + 6].x, points[i + 7].x],
+                     [points[i + 8].x, points[i + 9].x, points[i + 10].x, points[i + 11].x],
+                     [points[i + 12].x, points[i + 13].x, points[i + 14].x, points[i + 15].x]])
+                geometry_matrix_y = np.matrix(
+                    [[points[i].y, points[i + 1].y, points[i + 2].y, points[i + 3].y],
+                     [points[i + 4].y, points[i + 5].y, points[i + 6].y, points[i + 7].y],
+                     [points[i + 8].y, points[i + 9].y, points[i + 10].y, points[i + 11].y],
+                     [points[i + 12].y, points[i + 13].y, points[i + 14].y, points[i + 15].y]])
+                geometry_matrix_z = np.matrix(
+                    [[points[i].z, points[i + 1].z, points[i + 2].z, points[i + 3].z],
+                     [points[i + 4].z, points[i + 5].z, points[i + 6].z, points[i + 7].z],
+                     [points[i + 8].z, points[i + 9].z, points[i + 10].z, points[i + 11].z],
+                     [points[i + 12].z, points[i + 13].z, points[i + 14].z, points[i + 15].z]])
             else:
                 break
 
@@ -801,7 +803,7 @@ class Window(Rectangle):
                  cop: Vector,
                  color: tuple = (0.5, 0.0, 0.5),
                  line_width: float = 2.0) -> None:
-        super().__init__(origin, extension, "Window", color, line_width, False)
+        super().__init__(origin, extension, 'Window', color, line_width, False)
 
         self.cop = cop
         self.projected_cop = self.cop
@@ -886,7 +888,7 @@ class Window(Rectangle):
         self.coords = coords[:-1]
         self.cop = coords[-1]
 
-    def rotate(self, rotation: Vector, anchor: Vector = None) -> None:
+    def rotate(self, rotation: Vector, anchor: Vector | None = None) -> None:
         coords = self._transform.rotate(rotation, self.coords + [self.cop], anchor)
         self.coords = coords[:-1]
         self.cop = coords[-1]

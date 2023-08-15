@@ -4,8 +4,8 @@
 Módulo para o gerenciamento de arquivos.
 '''
 
-from source.wireframe import Object, Wireframe3D
-from source.transform import Vector
+from source.internals.wireframe import Object, Wireframe3D
+from source.internals.transform import Vector
 
 
 class FileSystem():
@@ -18,20 +18,13 @@ class FileSystem():
         Carrega um arquivo.
         '''
 
-        obj_file = ""
-        mtl_file = ""
+        obj_file = ''
 
         try:
-            with open(file_name, 'r', encoding="utf-8") as file:
+            with open(file_name, 'r', encoding='utf-8') as file:
                 obj_file = file.readlines()
         except FileNotFoundError:
-            print("File not found")
-
-        try:
-            with open(file_name[:-4] + ".mtl", 'r', encoding="utf-8") as file:
-                mtl_file = file.readlines()
-        except FileNotFoundError:
-            pass
+            print('File not found')
 
         data_objects = []
         objects = []
@@ -49,20 +42,6 @@ class FileSystem():
                 match data[0]:
                     case 'v':
                         vertices.append(Vector(float(data[1]), float(data[2]), float(data[3])))
-                    case "vt":
-                        pass
-                    case "vn":
-                        pass
-                    case "vp":
-                        pass
-                    case "cstype":
-                        pass
-                    case "deg":
-                        pass
-                    case "bmat":
-                        pass
-                    case "step":
-                        pass
                     case 'p':
                         index = int(data[1])
                         if index > 0:
@@ -113,60 +92,8 @@ class FileSystem():
                         lines.append((offset + len(v_list) - 1, offset + 0))
 
                         data_objects[-1].add_lines(lines)
-                    case "curv":
-                        pass
-                    case "curv2":
-                        pass
-                    case "surf":
-                        pass
-                    case "parm":
-                        pass
-                    case "trim":
-                        pass
-                    case "hole":
-                        pass
-                    case "scrv":
-                        pass
-                    case "sp":
-                        pass
-                    case "end":
-                        pass
-                    case "con":
-                        pass
-                    case 'g':
-                        pass
-                    case 's':
-                        pass
-                    case "mg":
-                        pass
                     case 'o':
                         data_objects.append(ObjectData(data[1]))
-                    case "bevel":
-                        pass
-                    case "c_interp":
-                        pass
-                    case "d_interp":
-                        pass
-                    case "lod":
-                        pass
-                    case "usemtl":
-                        pass
-                    case "mtllib":
-                        pass
-                    case "shadow_obj":
-                        pass
-                    case "trace_obj":
-                        pass
-                    case "ctech":
-                        pass
-                    case "stech":
-                        pass
-                    case 'w':
-                        pass
-                    case "newmtl":
-                        pass
-                    case "Kd":
-                        pass
                     case _:
                         pass
 

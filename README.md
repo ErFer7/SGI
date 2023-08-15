@@ -2,6 +2,8 @@
 
 ## Sistema gráfico interativo em Python
 
+![](assets/images/SGI%201%20-%202.png "Superfície")
+
 Comando para executar: `python3 main.py`
 
 ---

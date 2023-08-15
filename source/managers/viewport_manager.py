@@ -4,17 +4,18 @@
 Neste módulo estão definidos os funcionamentos do viewport.
 '''
 
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
 from enum import Enum
 from math import inf
 
-from source.transform import Vector
-from source.wireframe import Window, Object, ObjectType
-from source.displayfile import DisplayFileHandler
+from source.internals.transform import Vector
+from source.internals.wireframe import Window, Object, ObjectType
+from source.managers.manager import Manager
 
-import gi
-
-gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, Gdk
+if TYPE_CHECKING:
+    from source.managers.manager_mediator import ManagerMediator
 
 
 class ClippingMethod(Enum):
@@ -38,48 +39,42 @@ class Intersection(Enum):
     BOTTOM = 5
 
 
-class ViewportHandler():
+class ViewportManager(Manager):
 
     '''
     Definição do viewport, este viewport é um handler para um widget DrawingArea.
     '''
 
     # Atributos privados
-    _main_window: None
-    _drawing_area: Gtk.DrawingArea
     _bg_color: tuple
     _window: Window
-    _drag_coord: Vector
     _viewport_padding: Vector
     _clipping_method: ClippingMethod
 
     def __init__(self,
-                 main_window: DisplayFileHandler,
-                 drawing_area: Gtk.DrawingArea,
+                 manager_mediator: ManagerMediator,
                  viewport_padding: Vector = Vector(0.0, 0.0, 0.0),
                  bg_color: tuple = (0, 0, 0)) -> None:
+        super().__init__(manager_mediator)
 
-        self._main_window = main_window
-        self._drawing_area = drawing_area
-        self._drawing_area.connect("draw", self.on_draw)
-        self._drawing_area.set_events(Gdk.EventMask.ALL_EVENTS_MASK)
-        self._drawing_area.connect("button-press-event", self.on_button_press)
-        self._drawing_area.connect("motion-notify-event", self.on_mouse_motion)
-        self._drawing_area.connect("button-release-event", self.on_button_release)
-        self._drawing_area.connect("scroll-event", self.on_scroll)
-        self._drawing_area.connect("size-allocate", self.on_size_allocate)
         self._bg_color = bg_color
         self._window = Window(Vector(-500.0, -500.0),
                               Vector(500.0, 500.0),
                               Vector(0.0, 0.0, -500.0),
                               (0.5, 0.0, 0.5),
                               2.0)
-        self._drag_coord = None
         self._viewport_padding = viewport_padding
         self._clipping_method = ClippingMethod.LIANG_BARSKY
 
-    # Métodos utilitários
-    def world_to_screen(self, coord: Vector) -> Vector:
+    @property
+    def window(self) -> Window:
+        '''
+        Retorna a janela do viewport.
+        '''
+
+        return self._window
+
+    def world_to_screen(self, coord: Vector, screen_width: int, screen_height: int) -> Vector:
         '''
         Converte a coordenada de mundo para uma coordenada de tela.
         '''
@@ -87,19 +82,20 @@ class ViewportHandler():
         origin = self._window.normalized_origin - self._viewport_padding
         extension = self._window.normalized_extension + self._viewport_padding
 
-        x_s = ((coord.x - origin.x) / (extension.x - origin.x)) * (self._drawing_area.get_allocated_width())
-        y_s = (1 - (coord.y - origin.y) / (extension.y - origin.y)) * self._drawing_area.get_allocated_height()
+        x_s = ((coord.x - origin.x) / (extension.x - origin.x)) * screen_width
+        y_s = (1 - (coord.y - origin.y) / (extension.y - origin.y)) * screen_height
 
         return Vector(x_s, y_s)
 
-    def world_line_to_screen(self, line: list[Vector]) -> tuple[Vector]:
+    def world_line_to_screen(self, line: list[Vector], screen_width: int, screen_height: int) -> tuple[Vector]:
         '''
         Converte uma linha no mundo para uma linha na tela.
         '''
 
-        return (self.world_to_screen(line[0]), self.world_to_screen(line[1]))
+        return (self.world_to_screen(line[0], screen_width, screen_height),
+                self.world_to_screen(line[1], screen_width, screen_height))
 
-    def screen_to_world(self, coord: Vector) -> Vector:
+    def screen_to_world(self, coord: Vector, screen_width: int, screen_height: int) -> Vector:
         '''
         Converte a coordenada de tela para uma coordenada de mundo.
         '''
@@ -107,8 +103,8 @@ class ViewportHandler():
         origin = self._window.origin - self._viewport_padding
         extension = self._window.extension + self._viewport_padding
 
-        x_w = (coord.x / self._drawing_area.get_allocated_width()) * (extension.x - origin.x) + origin.x
-        y_w = (1.0 - (coord.y / self._drawing_area.get_allocated_height())) * (extension.y - origin.y) + origin.y
+        x_w = (coord.x / screen_width) * (extension.x - origin.x) + origin.x
+        y_w = (1.0 - (coord.y / screen_height)) * (extension.y - origin.y) + origin.y
 
         return Vector(x_w, y_w)
 
@@ -123,26 +119,11 @@ class ViewportHandler():
 
         clipped_lines = []
 
-        if obj.object_type == ObjectType.POINT:
-
-            if len(coords) > 0:
-                if (self._window.normalized_origin.x <= coords[0].x <= self._window.normalized_extension.x) and \
-                   (self._window.normalized_origin.y <= coords[0].y <= self._window.normalized_extension.y):
-                    clipped_lines.append(obj.lines)
-        elif obj.object_type == ObjectType.LINE:
-
-            if self._clipping_method == ClippingMethod.COHEN_SUTHERLAND:
-
-                clipped_line = self.cohen_sutherland(obj.lines)
-                if len(clipped_line) > 0:
-                    clipped_lines.append(clipped_line)
-            else:
-
-                clipped_line = self.liang_barsky(obj.lines)
-                if len(clipped_line) > 0:
-                    clipped_lines.append(clipped_line)
+        if obj.object_type == ObjectType.POINT and len(coords) > 0:
+            if (self._window.normalized_origin.x <= coords[0].x <= self._window.normalized_extension.x) and \
+               (self._window.normalized_origin.y <= coords[0].y <= self._window.normalized_extension.y):
+                clipped_lines.append(obj.lines[0])
         else:
-
             clipped_lines = obj.lines
             clipped_lines_temp = []
 
@@ -157,22 +138,22 @@ class ViewportHandler():
                     match inter:
                         case Intersection.LEFT:
                             comp_inside = line[0].x > self._window.normalized_origin.x and \
-                                          line[1].x > self._window.normalized_origin.x
+                                line[1].x > self._window.normalized_origin.x
                             comp_a = line[0].x > self._window.normalized_origin.x
                             comp_b = line[1].x > self._window.normalized_origin.x
                         case Intersection.RIGHT:
                             comp_inside = line[0].x < self._window.normalized_extension.x and \
-                                          line[1].x < self._window.normalized_extension.x
+                                line[1].x < self._window.normalized_extension.x
                             comp_a = line[0].x < self._window.normalized_extension.x
                             comp_b = line[1].x < self._window.normalized_extension.x
                         case Intersection.BOTTOM:
                             comp_inside = line[0].y > self._window.normalized_origin.y and \
-                                          line[1].y > self._window.normalized_origin.y
+                                line[1].y > self._window.normalized_origin.y
                             comp_a = line[0].y > self._window.normalized_origin.y
                             comp_b = line[1].y > self._window.normalized_origin.y
                         case Intersection.TOP:
                             comp_inside = line[0].y < self._window.normalized_extension.y and \
-                                          line[1].y < self._window.normalized_extension.y
+                                line[1].y < self._window.normalized_extension.y
                             comp_a = line[0].y < self._window.normalized_extension.y
                             comp_b = line[1].y < self._window.normalized_extension.y
 
@@ -191,7 +172,7 @@ class ViewportHandler():
                         if i < len(clipped_lines_temp) - 1:
                             if clipped_lines_temp[i][1] != clipped_lines_temp[i + 1][0]:
                                 clipped_lines_temp.insert(i + 1,
-                                                         [clipped_lines_temp[i][1], clipped_lines_temp[i + 1][0]])
+                                                          [clipped_lines_temp[i][1], clipped_lines_temp[i + 1][0]])
                         else:
                             if clipped_lines_temp[i][1] != clipped_lines_temp[0][0]:
                                 clipped_lines_temp.append([clipped_lines_temp[i][1], clipped_lines_temp[0][0]])
@@ -381,14 +362,13 @@ class ViewportHandler():
 
         return [new_vector_a, new_vector_b]
 
-    # Handlers
-    def on_draw(self, area, context) -> None:
+    def draw_frame(self, area, context, screen_width: int, screen_height: int) -> None:
         '''
         Método para a renderização.
         '''
 
         self.project()
-        self._main_window.display_file_handler.normalize_objects(self._window)
+        self._manager_mediator.object_manager.normalize_objects(self._window)
 
         # Preenche o fundo
         context.set_source_rgb(self._bg_color[0], self._bg_color[1], self._bg_color[2])
@@ -396,7 +376,7 @@ class ViewportHandler():
         context.fill()
 
         # Renderiza todos os objetos do display file
-        for obj in self._main_window.display_file_handler.objects + [self._window]:
+        for obj in self._manager_mediator.object_manager.objects + [self._window]:
 
             clipped_coords = []
 
@@ -405,7 +385,8 @@ class ViewportHandler():
             else:
                 clipped_coords = obj.lines
 
-            screen_lines = list(map(self.world_line_to_screen, clipped_coords))
+            screen_lines = list(map(lambda x: self.world_line_to_screen(x, screen_width, screen_height),
+                                    clipped_coords))
             color = obj.color
             line_width = obj.line_width
 
@@ -430,67 +411,6 @@ class ViewportHandler():
 
             if obj.fill:
                 context.fill()
-
-        self._drawing_area.queue_draw()
-
-    def on_button_press(self, widget, event) -> None:
-        '''
-        Evento de clique.
-        '''
-
-        position = Vector(event.x, event.y)
-
-        if event.button == 1:
-            self._main_window.editor_handler.add_point(self.screen_to_world(position))
-        elif event.button == 2:
-            self._drag_coord = position
-
-    def on_mouse_motion(self, widget, event):
-        '''
-        Evento de movimento.
-        '''
-
-        if self._drag_coord is not None:
-
-            position = Vector(event.x, event.y)
-            diff = self._drag_coord - position
-            diff.y = -diff.y
-            diff *= self._window.scale.x
-            self.move_window(diff)
-            self._drag_coord = position
-
-    def on_button_release(self, widget, event) -> None:
-        '''
-        Evento de liberação do mouse.
-        '''
-
-        if event.button == 2:
-            self._drag_coord = None
-
-    def on_scroll(self, widget, event) -> None:
-        '''
-        Evento de rolagem:
-        '''
-
-        direction = event.get_scroll_deltas()[2]
-
-        if direction > 0:
-            self._window.rescale(Vector(1.03, 1.03, 1.0))
-        else:
-            self._window.rescale(Vector(0.97, 0.97, 1.0))
-
-    def on_size_allocate(self, allocation, user_data):
-        '''
-        Evento de alocação.
-        '''
-
-        self.reset_window_scale()
-
-        # TODO: Achar maneira melhor de atualizar o tamanho da tela.
-
-        # self._window.rescale(Vector(user_data.width / (self._window.extension.x - self._window.origin.x),
-        #                             user_data.height / (self._window.extension.y - self._window.origin.y),
-        #                             1.0))
 
     def move_window(self, direction: Vector) -> None:
         '''
@@ -556,5 +476,5 @@ class ViewportHandler():
         normal = self._window.calculate_z_vector()
         cop_distance = self._window.calculate_cop_distance()
 
-        for obj in self._main_window.display_file_handler.objects + [self._window]:
+        for obj in self._manager_mediator.object_manager.objects + [self._window]:
             obj.project(self._window.cop, normal, cop_distance)

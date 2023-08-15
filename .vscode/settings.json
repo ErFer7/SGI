@@ -8,5 +8,6 @@
         "--max-line-length",
         "119",
         "--experimental"
-    ]
+    ],
+    "python.analysis.typeCheckingMode": "off"
 }

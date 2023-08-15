@@ -3,19 +3,19 @@
 '''
 Sistema Gráfico Interativo (SGI)
 
-Autores:
+Autores da v1.0:
 Eric Fernandes Evaristo (ErFer7)
 Luis Henrique Goulart Stemmer (lust2k)
+
+Autor da versão atual (v2.0):
+Eric Fernandes Evaristo (ErFer7)
 '''
 
 import gi
+gi.require_version('Gtk', '3.0')
 
-gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk
+#pylint: disable=wrong-import-position
+from source.sgi import SGI
 
-from source.interface import MainWindow
-
-main_window = MainWindow()
-main_window.show()
-
-Gtk.main()
+sgi = SGI()
+sgi.run()
