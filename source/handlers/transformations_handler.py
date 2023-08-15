@@ -7,7 +7,6 @@ Módulo para o handler de transformações.
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
-import gi
 from gi.repository import Gtk
 
 from source.internals.transform import Vector
@@ -16,8 +15,6 @@ from source.handlers.handler import Handler
 if TYPE_CHECKING:
     from source.handlers.handler_mediator import HandlerMediator
     from source.handlers.main_window import MainWindow
-
-gi.require_version('Gtk', '3.0')
 
 
 class TransformationsHandler(Handler):
@@ -72,7 +69,7 @@ class TransformationsHandler(Handler):
         self._rotation_anchor_button_y.connect('value-changed', self.update_rotation_anchor)
         self._rotation_anchor_button_z.connect('value-changed', self.update_rotation_anchor)
 
-    def translate(self, user_data) -> None:
+    def translate(self, _) -> None:
         '''
         Aplica a translação no objeto em foco.
         '''
@@ -92,7 +89,7 @@ class TransformationsHandler(Handler):
             object_index = object_manager.objects.index(object_in_focus)
             object_manager.update_object_info(object_index)
 
-    def rescale(self, user_data) -> None:
+    def rescale(self, _) -> None:
         '''
         Aplica a escala no objeto em foco.
         '''
@@ -108,7 +105,7 @@ class TransformationsHandler(Handler):
             self._handler_mediator.object_transform_handler.update_spin_buttons()
             self.update_rotation_anchor_spin_buttons()
 
-    def rotate(self, user_data) -> None:
+    def rotate(self, _) -> None:
         '''
         Aplica a rotação no objeto em foco.
         '''
@@ -122,7 +119,7 @@ class TransformationsHandler(Handler):
             self._handler_mediator.object_transform_handler.update_spin_buttons()
             self.update_rotation_anchor_spin_buttons()
 
-    def change_rotation_anchor(self, user_data) -> None:
+    def change_rotation_anchor(self, _) -> None:
         '''
         Muda a ancoragem da rotação.
         '''
@@ -156,7 +153,7 @@ class TransformationsHandler(Handler):
                 self.update_rotation_anchor_spin_buttons()
                 self._rotation_anchor_button.set_label('Object')
 
-    def update_rotation_anchor(self, user_data) -> None:
+    def update_rotation_anchor(self, _) -> None:
         '''
         Atualiza o ponto de ancoragem da rotação.
         '''

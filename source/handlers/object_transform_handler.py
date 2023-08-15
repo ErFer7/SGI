@@ -7,7 +7,6 @@ Módulo para o editor de transformado de objetos.
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
-import gi
 from gi.repository import Gtk
 
 from source.internals.transform import Vector
@@ -16,8 +15,6 @@ from source.handlers.handler import Handler
 if TYPE_CHECKING:
     from source.handlers.handler_mediator import HandlerMediator
     from source.handlers.main_window import MainWindow
-
-gi.require_version('Gtk', '3.0')
 
 
 class ObjectTransformHandler(Handler):
@@ -61,8 +58,7 @@ class ObjectTransformHandler(Handler):
         self._rotation_y_button.connect('value-changed', self.update_rotation)
         self._rotation_z_button.connect('value-changed', self.update_rotation)
 
-    # pylint: disable=unused-argument
-    def update_position(self, user_data) -> None:
+    def update_position(self, _) -> None:
         '''
         Atualiza a posição
         '''
@@ -82,8 +78,7 @@ class ObjectTransformHandler(Handler):
             object_index = object_manager.objects.index(object_in_focus)
             object_manager.update_object_info(object_index)
 
-    # pylint: disable=unused-argument
-    def update_scale(self, user_data) -> None:
+    def update_scale(self, _) -> None:
         '''
         Atualiza a escala
         '''
@@ -99,8 +94,7 @@ class ObjectTransformHandler(Handler):
 
             object_in_focus.rescale(Vector(diff_x, diff_y, diff_z))
 
-    # pylint: disable=unused-argument
-    def update_rotation(self, user_data) -> None:
+    def update_rotation(self, _) -> None:
         '''
         Atualiza a rotação
         '''

@@ -4,9 +4,6 @@
 Classe principal do SGI.
 '''
 
-import gi
-
-gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
 
 from source.internals.transform import Vector
@@ -22,7 +19,6 @@ from source.managers.manager_mediator import ManagerMediator
 from source.managers.object_manager import ObjectManager
 from source.handlers.handler_mediator import HandlerMediator
 from source.handlers.main_window import MainWindow
-
 
 
 class SGI():

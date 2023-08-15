@@ -6,13 +6,10 @@ Módulo para a interface de usuário.
 
 import os
 
-import gi
 from gi.repository import Gtk
 
 from source.managers.viewport_manager import ViewportManager
 from source.internals.transform import Vector
-
-gi.require_version('Gtk', '3.0')
 
 
 @Gtk.Template(filename=os.path.join(os.getcwd(), 'templates', 'template.ui'))

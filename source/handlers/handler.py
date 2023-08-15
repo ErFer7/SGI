@@ -7,13 +7,10 @@ Módulo para o handler.
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
-import gi
 from gi.repository import Gtk
 
 if TYPE_CHECKING:
     from source.handlers.handler_mediator import HandlerMediator
-
-gi.require_version('Gtk', '3.0')
 
 
 class Handler():

@@ -471,11 +471,9 @@ class Transform():
             new_vec = Vector(new_coord[0, 0], new_coord[0, 1], new_coord[0, 2])
 
             if not is_window:
-
                 new_coord = perspective_matrix * new_coord.transpose()
 
                 if new_coord[2, 0] >= 0.0 and new_coord[3, 0] > 0.0:
-
                     new_vec = Vector(new_coord[0, 0] / new_coord[3, 0],
                                      new_coord[1, 0] / new_coord[3, 0],
                                      new_coord[2, 0] / new_coord[3, 0])

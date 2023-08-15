@@ -7,17 +7,13 @@ Módulo do handler da janela principal.
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
-from source.handlers.handler import Handler
-
-import gi
 from gi.repository import Gtk
 
+from source.handlers.handler import Handler
 
 if TYPE_CHECKING:
     from source.handlers.handler_mediator import HandlerMediator
     from source.handlers.main_window import MainWindow
-
-gi.require_version('Gtk', '3.0')
 
 
 class MainWindowHandler(Handler):
@@ -52,8 +48,7 @@ class MainWindowHandler(Handler):
 
         self._user_call = value
 
-    # pylint: disable=unused-argument
-    def on_key_press(self, widget, event) -> None:
+    def on_key_press(self, _, event) -> None:
         '''
         Evento de pressionamento de tecla
         '''

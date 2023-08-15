@@ -9,7 +9,6 @@ from typing import TYPE_CHECKING
 
 from os.path import join
 
-import gi
 from gi.repository import Gtk
 
 from source.handlers.handler import Handler
@@ -18,8 +17,6 @@ from source.internals.wireframe import Object
 if TYPE_CHECKING:
     from source.handlers.handler_mediator import HandlerMediator
     from source.handlers.main_window import MainWindow
-
-gi.require_version('Gtk', '3.0')
 
 
 class ObjectListHandler(Handler):
@@ -47,8 +44,7 @@ class ObjectListHandler(Handler):
         self._load_button.connect('clicked', self.load_file)
         self._save_button.connect('clicked', self.save_file)
 
-    # pylint: disable=unused-argument
-    def load_file(self, user_data) -> None:
+    def load_file(self, _) -> None:
         '''
         Carrega um arquivo.
         '''
@@ -62,8 +58,7 @@ class ObjectListHandler(Handler):
         self._handler_mediator.object_transform_handler.update_spin_buttons()
         self._handler_mediator.transformations_handler.update_rotation_anchor_spin_buttons()
 
-    # pylint: disable=unused-argument
-    def save_file(self, user_data) -> None:
+    def save_file(self, _) -> None:
         '''
         Salva um arquivo.
         '''

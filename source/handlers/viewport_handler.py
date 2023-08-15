@@ -7,7 +7,6 @@ Módulo para o handler do viewport.
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
-import gi
 from gi.repository import Gtk, Gdk
 
 from source.internals.transform import Vector
@@ -16,8 +15,6 @@ from source.handlers.handler import Handler
 if TYPE_CHECKING:
     from source.handlers.handler_mediator import HandlerMediator
     from source.handlers.main_window import MainWindow
-
-gi.require_version('Gtk', '3.0')
 
 
 class ViewportHandler(Handler):
@@ -125,7 +122,7 @@ class ViewportHandler(Handler):
         elif event.button == 2:
             self._drag_coord = position
 
-    def on_mouse_motion(self, widget, event):
+    def on_mouse_motion(self, _, event):
         '''
         Evento de movimento.
         '''
@@ -140,7 +137,7 @@ class ViewportHandler(Handler):
             viewport_manager.move_window(diff)
             self._drag_coord = position
 
-    def on_button_release(self, widget, event) -> None:
+    def on_button_release(self, _, event) -> None:
         '''
         Evento de liberação do mouse.
         '''
@@ -148,7 +145,7 @@ class ViewportHandler(Handler):
         if event.button == 2:
             self._drag_coord = None
 
-    def on_scroll(self, widget, event) -> None:
+    def on_scroll(self, _, event) -> None:
         '''
         Evento de rolagem:
         '''
@@ -161,7 +158,7 @@ class ViewportHandler(Handler):
         else:
             viewport_manager.reescale_window(Vector(0.97, 0.97, 1.0))
 
-    def on_size_allocate(self, allocation, user_data):
+    def on_size_allocate(self, _, user_data):
         '''
         Evento de alocação.
         '''

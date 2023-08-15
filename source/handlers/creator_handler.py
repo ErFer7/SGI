@@ -7,7 +7,6 @@ Módulo para o criador.
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
-import gi
 from gi.repository import Gtk
 
 from source.handlers.handler import Handler
@@ -17,8 +16,6 @@ from source.internals import wireframe
 if TYPE_CHECKING:
     from source.handlers.handler_mediator import HandlerMediator
     from source.handlers.main_window import MainWindow
-
-gi.require_version('Gtk', '3.0')
 
 
 class CreatorHandler(Handler):
@@ -129,8 +126,7 @@ class CreatorHandler(Handler):
         self._surface_step_count_button.connect('value-changed', self.set_surface_step_count)
         self._add_point_button.connect('clicked', self.add_point, True)
 
-    # pylint: disable=unused-argument
-    def set_mode(self, user_data, mode: wireframe.ObjectType) -> None:
+    def set_mode(self, _, mode: wireframe.ObjectType) -> None:
         '''
         Define o modo.
         '''
@@ -195,8 +191,7 @@ class CreatorHandler(Handler):
                 self._parallelepiped_button.set_active(False)
         self._handler_mediator.main_window_handler.user_call = True
 
-    # pylint: disable=unused-argument
-    def remove(self, user_data) -> None:
+    def remove(self, _) -> None:
         '''
         Remove o último objeto.
         '''
@@ -204,16 +199,14 @@ class CreatorHandler(Handler):
         object_manager = self.handler_mediator.manager_mediator.object_manager
         object_manager.remove_last()
 
-    # pylint: disable=unused-argument
-    def set_width(self, user_data) -> None:
+    def set_width(self, _) -> None:
         '''
         Handler da mudança de tamanho.
         '''
 
         self._width = self._width_button.get_value()
 
-    # pylint: disable=unused-argument
-    def set_color(self, user_data) -> None:
+    def set_color(self, _) -> None:
         '''
         Handler da mudança de cor.
         '''
@@ -221,64 +214,56 @@ class CreatorHandler(Handler):
         rgba = self._color_button.get_rgba()
         self._color = (rgba.red, rgba.green, rgba.blue)
 
-    # pylint: disable=unused-argument
-    def set_fill(self, user_data) -> None:
+    def set_fill(self, _) -> None:
         '''
         Handler da definição de preenchimento.
         '''
 
         self._fill = not self._fill
 
-    # pylint: disable=unused-argument
-    def set_edges(self, user_data) -> None:
+    def set_edges(self, _) -> None:
         '''
         Handler da mudança da contagem de arestas.
         '''
 
         self._edges = self._edges_button.get_value_as_int()
 
-    # pylint: disable=unused-argument
-    def set_curve_point_count(self, user_data) -> None:
+    def set_curve_point_count(self, _) -> None:
         '''
         Handler da mudança da contagem de pontos de controle da curva de Bezier.
         '''
 
         self._curve_point_count = self._curve_point_count_button.get_value_as_int()
 
-    # pylint: disable=unused-argument
-    def set_curve_step_count(self, user_data) -> None:
+    def set_curve_step_count(self, _) -> None:
         '''
         handler da mudança da contagem de passos no processamento de curvas.
         '''
 
         self._curve_step_count = self._curve_step_count_button.get_value_as_int()
 
-    # pylint: disable=unused-argument
-    def set_spline_point_count(self, user_data) -> None:
+    def set_spline_point_count(self, _) -> None:
         '''
         Handler da mudança da contagem de pontos do Spline.
         '''
 
         self._spline_point_count = self._spline_point_count_button.get_value_as_int()
 
-    # pylint: disable=unused-argument
-    def set_spline_step_count(self, user_data) -> None:
+    def set_spline_step_count(self, _) -> None:
         '''
         handler da mudança da contagem de passos no processamento de Splines.
         '''
 
         self._spline_step_count = self._spline_step_count_button.get_value_as_int()
 
-    # pylint: disable=unused-argument
-    def set_closed_spline(self, user_data) -> None:
+    def set_closed_spline(self, _) -> None:
         '''
         Handler para definir se o Spline é fechado ou não.
         '''
 
         self._closed_spline = not self._closed_spline
 
-    # pylint: disable=unused-argument
-    def set_surface_step_count(self, user_data) -> None:
+    def set_surface_step_count(self, _) -> None:
         '''
         handler da mudança da contagem de passos no processamento de superfícies.
         '''

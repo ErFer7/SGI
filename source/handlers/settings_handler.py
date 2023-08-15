@@ -7,7 +7,6 @@ Módulo para o handler de configurações.
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
-import gi
 from gi.repository import Gtk
 
 from source.handlers.handler import Handler
@@ -15,8 +14,6 @@ from source.handlers.handler import Handler
 if TYPE_CHECKING:
     from source.handlers.handler_mediator import HandlerMediator
     from source.handlers.main_window import MainWindow
-
-gi.require_version('Gtk', '3.0')
 
 
 class SettingsHandler(Handler):
@@ -36,7 +33,7 @@ class SettingsHandler(Handler):
 
         self._clipping_method_button.connect('toggled', self.toggle_clipping_method)
 
-    def toggle_clipping_method(self, user_data) -> None:
+    def toggle_clipping_method(self, _) -> None:
         '''
         Muda o método de clipping.
         '''
