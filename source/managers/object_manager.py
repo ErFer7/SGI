@@ -9,9 +9,9 @@ from typing import TYPE_CHECKING
 
 from math import degrees
 
-from source.internals.wireframe import Object, Window
+from source.internals.wireframes import Object, Window
 from source.internals.file_system import FileSystem
-from source.internals.transform import Vector
+from source.internals.vector import Vector
 from source.managers.manager import Manager
 
 if TYPE_CHECKING:

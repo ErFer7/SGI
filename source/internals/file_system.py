@@ -4,8 +4,8 @@
 Módulo para o gerenciamento de arquivos.
 '''
 
-from source.internals.wireframe import Object, Wireframe3D
-from source.internals.transform import Vector
+from source.internals.wireframes import Object, Wireframe3D
+from source.internals.vector import Vector
 
 
 class FileSystem():
@@ -52,7 +52,6 @@ class FileSystem():
                         data_objects[-1].add_vertex(int(data[2]))
                         data_objects[-1].add_lines((0, 1))
                     case 'f':
-
                         lines = []
 
                         v_list = []
@@ -79,7 +78,6 @@ class FileSystem():
                         offset = len(data_objects[-1].vertices)
 
                         for i, v in enumerate(v_list):
-
                             index = v
                             if index > 0:
                                 index -= 1

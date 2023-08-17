@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 
 from gi.repository import Gtk
 
-from source.internals.transform import Vector
+from source.internals.vector import Vector
 from source.handlers.handler import Handler
 
 if TYPE_CHECKING:
@@ -68,7 +68,6 @@ class ObjectTransformHandler(Handler):
         object_in_focus = object_manager.object_in_focus
 
         if user_call and object_in_focus is not None:
-
             diff_x = self._position_x_button.get_value() - object_in_focus.position.x
             diff_y = self._position_y_button.get_value() - object_in_focus.position.y
             diff_z = self._position_z_button.get_value() - object_in_focus.position.z
@@ -87,7 +86,6 @@ class ObjectTransformHandler(Handler):
         object_in_focus = self._handler_mediator.manager_mediator.object_manager.object_in_focus
 
         if user_call and object_in_focus is not None:
-
             diff_x = self._scale_x_button.get_value() / object_in_focus.scale.x
             diff_y = self._scale_y_button.get_value() / object_in_focus.scale.y
             diff_z = self._scale_z_button.get_value() / object_in_focus.scale.z
@@ -103,7 +101,6 @@ class ObjectTransformHandler(Handler):
         object_in_focus = self._handler_mediator.manager_mediator.object_manager.object_in_focus
 
         if user_call and object_in_focus is not None:
-
             diff_x = self._rotation_x_button.get_value() - object_in_focus.rotation.x
             diff_y = self._rotation_y_button.get_value() - object_in_focus.rotation.y
             diff_z = self._rotation_z_button.get_value() - object_in_focus.rotation.z

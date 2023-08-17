@@ -9,7 +9,8 @@ from enum import Enum
 
 import numpy as np
 
-from source.internals.transform import Transform, Vector
+from source.internals.transform import Transform
+from source.internals.vector import Vector
 
 
 class ObjectType(Enum):
@@ -37,7 +38,6 @@ class Object(ABC):
     Objeto renderizável.
     '''
 
-    # Atributos públicos
     name: str
     color: tuple
     line_width: float
@@ -49,7 +49,6 @@ class Object(ABC):
     fill: bool
     closed: bool
 
-    # Atributos privados
     _transform: Transform
 
     def __init__(self,
@@ -491,16 +490,13 @@ class SplineCurve(Object):
                                  [6 * delta**3, 0, 0, 0]])
 
         for i, _ in enumerate(points):
-
             geometry_matrix_x = None
             geometry_matrix_y = None
 
             if i + 3 < len(points):
-
                 geometry_matrix_x = np.matrix([[points[i].x], [points[i + 1].x], [points[i + 2].x], [points[i + 3].x]])
                 geometry_matrix_y = np.matrix([[points[i].y], [points[i + 1].y], [points[i + 2].y], [points[i + 3].y]])
             else:
-
                 if closed:
                     points_len = len(points)
                     index_a = i % points_len
@@ -723,23 +719,9 @@ class Surface(Wireframe3D):
             geometry_matrix_z = None
 
             if i + 15 < len(points):
-
-                # Estas matrizes poderiam ser preenchidas com loops, mas não tenho tempo pra corrigir
-                geometry_matrix_x = np.matrix(
-                    [[points[i].x, points[i + 1].x, points[i + 2].x, points[i + 3].x],
-                     [points[i + 4].x, points[i + 5].x, points[i + 6].x, points[i + 7].x],
-                     [points[i + 8].x, points[i + 9].x, points[i + 10].x, points[i + 11].x],
-                     [points[i + 12].x, points[i + 13].x, points[i + 14].x, points[i + 15].x]])
-                geometry_matrix_y = np.matrix(
-                    [[points[i].y, points[i + 1].y, points[i + 2].y, points[i + 3].y],
-                     [points[i + 4].y, points[i + 5].y, points[i + 6].y, points[i + 7].y],
-                     [points[i + 8].y, points[i + 9].y, points[i + 10].y, points[i + 11].y],
-                     [points[i + 12].y, points[i + 13].y, points[i + 14].y, points[i + 15].y]])
-                geometry_matrix_z = np.matrix(
-                    [[points[i].z, points[i + 1].z, points[i + 2].z, points[i + 3].z],
-                     [points[i + 4].z, points[i + 5].z, points[i + 6].z, points[i + 7].z],
-                     [points[i + 8].z, points[i + 9].z, points[i + 10].z, points[i + 11].z],
-                     [points[i + 12].z, points[i + 13].z, points[i + 14].z, points[i + 15].z]])
+                geometry_matrix_x = np.matrix([[points[i+j].x for j in range(4)] for i in range(0, len(points), 4)])
+                geometry_matrix_y = np.matrix([[points[i+j].y for j in range(4)] for i in range(0, len(points), 4)])
+                geometry_matrix_z = np.matrix([[points[i+j].z for j in range(4)] for i in range(0, len(points), 4)])
             else:
                 break
 

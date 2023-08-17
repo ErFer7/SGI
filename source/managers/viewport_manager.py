@@ -10,8 +10,8 @@ from typing import TYPE_CHECKING
 from enum import Enum
 from math import inf
 
-from source.internals.transform import Vector
-from source.internals.wireframe import Window, Object, ObjectType
+from source.internals.vector import Vector
+from source.internals.wireframes import Window, Object, ObjectType
 from source.managers.manager import Manager
 
 if TYPE_CHECKING:
@@ -45,7 +45,6 @@ class ViewportManager(Manager):
     Definição do viewport, este viewport é um handler para um widget DrawingArea.
     '''
 
-    # Atributos privados
     _bg_color: tuple
     _window: Window
     _viewport_padding: Vector

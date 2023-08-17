@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 
 from gi.repository import Gtk, Gdk
 
-from source.internals.transform import Vector
+from source.internals.vector import Vector
 from source.handlers.handler import Handler
 
 if TYPE_CHECKING:
@@ -135,6 +135,7 @@ class ViewportHandler(Handler):
             diff *= viewport_manager.window.scale.x
 
             viewport_manager.move_window(diff)
+
             self._drag_coord = position
 
     def on_button_release(self, _, event) -> None:

@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 class Handler():
 
     '''
-    Hanlder.
+    Handler.
     '''
 
     _handler_mediator: HandlerMediator

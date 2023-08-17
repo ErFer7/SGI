@@ -9,7 +9,7 @@ import os
 from gi.repository import Gtk
 
 from source.managers.viewport_manager import ViewportManager
-from source.internals.transform import Vector
+from source.internals.vector import Vector
 
 
 @Gtk.Template(filename=os.path.join(os.getcwd(), 'templates', 'template.ui'))
