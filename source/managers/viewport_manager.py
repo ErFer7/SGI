@@ -457,6 +457,17 @@ class ViewportManager(Manager):
 
         self._window.rescale(Vector(diff_x, diff_y, diff_z))
 
+    def resize_window(self, extension: Vector) -> None:
+        '''
+        Redefine a extensão da window.
+        '''
+
+        diff_x = extension.x / self._window.scale.x
+        diff_y = extension.y / self._window.scale.y
+        diff_z = extension.z / self._window.scale.z
+
+        self._window.rescale(Vector(diff_x, diff_y, diff_z))
+
     def change_clipping_method(self) -> None:
         '''
         Muda o método de clipping.

@@ -88,3 +88,9 @@
 ## v2.0
 
 * Reestruturação geral
+
+---
+
+## v2.1
+
+* Correção no redimensionamento do viewport
