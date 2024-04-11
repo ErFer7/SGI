@@ -164,6 +164,10 @@ class ViewportHandler(Handler):
         Evento de alocação.
         '''
 
-        self._handler_mediator.manager_mediator.viewport_manager.resize_window(Vector(user_data.width,
-                                                                                      user_data.height,
-                                                                                      1.0))
+        self._handler_mediator.manager_mediator.viewport_manager.reset_window_scale()
+
+        # TODO: Achar maneira melhor de atualizar o tamanho da tela.
+
+        # self._window.rescale(Vector(user_data.width / (self._window.extension.x - self._window.origin.x),
+        #                             user_data.height / (self._window.extension.y - self._window.origin.y),
+        #                             1.0))
