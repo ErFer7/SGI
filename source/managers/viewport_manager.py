@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 from enum import Enum
 from math import inf
 
-from source.internals.vector import Vector
+from source.backend.vector import Vector
 from source.internals.wireframes import Window, Object, ObjectType
 from source.managers.manager import Manager
 
@@ -327,7 +327,6 @@ class ViewportManager(Manager):
             return []
 
         if p1 != 0:
-
             ratio_1 = q1 / p1
             ratio_2 = q2 / p2
 
@@ -337,9 +336,7 @@ class ViewportManager(Manager):
             else:
                 positives.append(ratio_1)
                 negatives.append(ratio_2)
-
         if p3 != 0:
-
             ratio_3 = q3 / p3
             ratio_4 = q4 / p4
 
@@ -366,13 +363,13 @@ class ViewportManager(Manager):
         Método para a renderização.
         '''
 
-        self.project()
-        self._manager_mediator.object_manager.normalize_objects(self._window)
-
         # Preenche o fundo
         context.set_source_rgb(self._bg_color[0], self._bg_color[1], self._bg_color[2])
         context.rectangle(0, 0, area.get_allocated_width(), area.get_allocated_height())
         context.fill()
+
+        self.project()
+        self._manager_mediator.object_manager.normalize_objects(self._window)
 
         # Renderiza todos os objetos do display file
         for obj in self._manager_mediator.object_manager.objects + [self._window]:
@@ -398,7 +395,6 @@ class ViewportManager(Manager):
                 context.move_to(screen_lines[0][0].x, screen_lines[0][0].y)
 
             for line in screen_lines:
-
                 if obj.fill:
                     context.line_to(line[1].x, line[1].y)
                 else:
@@ -416,7 +412,7 @@ class ViewportManager(Manager):
         Move a window.
         '''
 
-        self._window.translate(direction, True)
+        self._window.translate(direction)
 
     def reset_window_position(self) -> None:
         '''

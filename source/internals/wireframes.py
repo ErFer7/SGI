@@ -4,13 +4,13 @@
 Módulo para wireframes.
 '''
 
-from abc import ABC, abstractmethod
 from enum import Enum
+from abc import ABCMeta, abstractmethod
 
 import numpy as np
 
-from source.internals.transform import Transform
-from source.internals.vector import Vector
+from source.backend.transform import Transform
+from source.backend.vector import Vector
 
 
 class ObjectType(Enum):
@@ -32,7 +32,7 @@ class ObjectType(Enum):
     SURFACE = 10
 
 
-class Object(ABC):
+class Object(metaclass=ABCMeta):
 
     '''
     Objeto renderizável.
@@ -41,13 +41,13 @@ class Object(ABC):
     name: str
     color: tuple
     line_width: float
+    fill: bool
+    closed: bool
+    object_type: ObjectType
     coords: list[Vector]
     normalized_coords: list[Vector]
     projected_coords: list[Vector]
-    lines: list[list[Vector]]
-    object_type: ObjectType
-    fill: bool
-    closed: bool
+    lines: list[tuple[int]]
 
     _transform: Transform
 
@@ -64,14 +64,15 @@ class Object(ABC):
         self.name = name
         self.color = color
         self.line_width = line_width
+        self.fill = fill
+        self.closed = closed
+        self.object_type = object_type
         self.coords = coords
         self.normalized_coords = coords
         self.projected_coords = coords
         self.lines = []
-        self.object_type = object_type
-        self.fill = fill
-        self.closed = closed
-        self._transform = Transform(self.calculate_center(), Vector(0.0, 0.0, 0.0), Vector(1.0, 1.0, 1.0))
+        self._transform = Transform(self.calculate_center())
+
         self.generate_lines()
 
     @property
@@ -117,14 +118,10 @@ class Object(ABC):
         return coord_sum / len(self.coords)
 
     # Métodos de transformação
-    def translate(self, direction: Vector, normalized: bool = False) -> None:
+    def translate(self, direction: Vector) -> None:
         '''
-        Método para transladar o objeto (Transform::translate).
+        Método para transladar o objeto.
         '''
-
-        if normalized:
-            direction = self._transform.rotate(self.rotation, [direction + self.position], None, False)[0]
-            direction -= self.position
 
         self.coords = self._transform.translate(direction, self.coords)
 
@@ -174,15 +171,6 @@ class Point(Object):
     def __init__(self, position: Vector, name: str = '', color: tuple = (1.0, 1.0, 1.0)) -> None:
         super().__init__([position], name, color, 1.0, ObjectType.POINT, False, False)
 
-    # Métodos utilitários
-    @property
-    def coord(self) -> Vector:
-        '''
-        Retorna a posição.
-        '''
-
-        return self.coords[0]
-
     def generate_lines(self) -> None:
         if len(self.normalized_coords) > 0:
             self.lines = [[self.normalized_coords[0],
@@ -203,23 +191,6 @@ class Line(Object):
                  line_width: float = 1.0) -> None:
 
         super().__init__([position_a, position_b], name, color, line_width, ObjectType.LINE, False, False)
-
-    # Métodos utilitários
-    @property
-    def start(self) -> Vector:
-        '''
-        Obtém o ponto inicial.
-        '''
-
-        return self.coords[0]
-
-    @property
-    def end(self) -> Vector:
-        '''
-        Obtém o ponto final.
-        '''
-
-        return self.coords[1]
 
     def generate_lines(self) -> None:
 
@@ -278,30 +249,6 @@ class Triangle(Wireframe2D):
                          ObjectType.TRIANGLE,
                          fill)
 
-    @property
-    def corner_a(self) -> Vector:
-        '''
-        Retorna a coordenada A.
-        '''
-
-        return self.coords[0]
-
-    @property
-    def corner_b(self) -> Vector:
-        '''
-        Retorna a coordenada B.
-        '''
-
-        return self.coords[1]
-
-    @property
-    def corner_c(self) -> Vector:
-        '''
-        Retorna a coordenada C.
-        '''
-
-        return self.coords[2]
-
 
 class Rectangle(Wireframe2D):
 
@@ -326,38 +273,6 @@ class Rectangle(Wireframe2D):
                          line_width,
                          ObjectType.RECTANGLE,
                          fill)
-
-    @property
-    def origin(self) -> Vector:
-        '''
-        Retorna a coordenada da origem.
-        '''
-
-        return self.coords[0]
-
-    @property
-    def corner_a(self) -> Vector:
-        '''
-        Retorna a coordenada do canto verticalmente alinhado à origem.
-        '''
-
-        return self.coords[1]
-
-    @property
-    def extension(self) -> Vector:
-        '''
-        Retorna a coordenada da extensão.
-        '''
-
-        return self.coords[2]
-
-    @property
-    def corner_b(self) -> Vector:
-        '''
-        Retorna a coordenada do canto verticalmente alinhado à extensão.
-        '''
-
-        return self.coords[3]
 
 
 class BezierCurve(Object):
@@ -792,6 +707,22 @@ class Window(Rectangle):
         self.projected_position = self.position
 
     @property
+    def origin(self) -> Vector:
+        '''
+        Retorna a coordenada da origem.
+        '''
+
+        return self.coords[0]
+
+    @property
+    def extension(self) -> Vector:
+        '''
+        Retorna a coordenada da extensão.
+        '''
+
+        return self.coords[2]
+
+    @property
     def normalized_origin(self) -> Vector:
         '''
         Retorna a coordenada normalizada da origem.
@@ -856,11 +787,7 @@ class Window(Rectangle):
 
         return (self.projected_position - self.projected_cop).magnitude()
 
-    def translate(self, direction: Vector, normalized: bool = False) -> None:
-        if normalized:
-            direction = self._transform.rotate(self.rotation, [direction + self.position], None, False)[0]
-            direction -= self.position
-
+    def translate(self, direction: Vector) -> None:
         coords = self._transform.translate(direction, self.coords + [self.cop])
         self.coords = coords[:-1]
         self.cop = coords[-1]
