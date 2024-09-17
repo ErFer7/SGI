@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 from gi.repository import Gtk
 
 from source.handlers.handler import Handler
-from source.internals.transform import Vector
+from source.backend.transform import Vector
 from source.internals import wireframes
 
 if TYPE_CHECKING:

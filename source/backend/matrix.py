@@ -5,7 +5,7 @@ Módulo para matrizes.
 from math import cos, radians, sin, degrees
 import numpy as np
 
-from source.internals.vector import Vector
+from source.backend.vector import Vector
 
 
 class MatrixBuilder():
@@ -76,7 +76,7 @@ class MatrixBuilder():
         rotation = MatrixBuilder.build_rotation_matrix(Vector(0.0, 0.0, window_rotation))
         scaling = MatrixBuilder.build_scaling_matrix(window_scale)
 
-        return translation * rotation * scaling
+        return translation @ rotation @ scaling
 
     @staticmethod
     def build_projection_matrix(cop: Vector, normal: Vector) -> np.matrix:

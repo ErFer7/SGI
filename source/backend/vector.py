@@ -144,7 +144,7 @@ class Vector():
 
         return np.sqrt(self.internal_vector_3d.dot(self.internal_vector_3d))
 
-    def normalize(self) -> None:
+    def normalize(self) -> 'Vector':
         '''
         Normaliza o vetor.
         '''
@@ -152,4 +152,5 @@ class Vector():
         norm = self.magnitude()
         if norm == 0:
             raise ValueError("Cannot normalize a zero vector")
-        self._internal_vector[:3] /= norm
+
+        return Vector(0, 0, 0, self.internal_vector_3d / norm)
