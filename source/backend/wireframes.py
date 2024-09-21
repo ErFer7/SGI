@@ -179,7 +179,7 @@ class Point(Object):
     def __init__(self, position: Vector, name: str = '', color: tuple = (1.0, 1.0, 1.0)) -> None:
         super().__init__((position,
                           position + Vector(1.0, 0.0)),
-                         ((0, 0),),
+                         ((0, 1),),
                          name,
                          color,
                          1.0,

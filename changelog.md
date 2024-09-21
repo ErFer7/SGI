@@ -102,3 +102,9 @@
 * Correções nos bugs da window
 * Transformadas totalmente refatoradas
 * Otimizações
+
+---
+
+## v2.2.1
+
+* Pequenas correções

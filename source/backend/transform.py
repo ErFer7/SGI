@@ -220,7 +220,7 @@ class Transform():
         new_coords = []
 
         for coord in coords:
-            new_coord = projection_matrix @ [coord.x, coord.y, coord.z, 1]
+            new_coord = projection_matrix @ coord.internal_vector_4d
             new_vec = Vector(new_coord[0, 0], new_coord[0, 1], new_coord[0, 2])
 
             if is_window:

@@ -18,25 +18,25 @@ class Vector():
     _internal_vector: np.ndarray
 
     def __init__(self, x: float, y: float, z: float = 0.0, np_vector: np.ndarray = None) -> None:
-        self._internal_vector = np_vector.copy() if np_vector is not None else np.array([x, y, z, 1])
+        self._internal_vector = np_vector.copy() if np_vector is not None else np.array([x, y, z])
 
     def __repr__(self) -> str:
         return str(self)
 
     def __str__(self) -> str:
-        return ', '.join([f'{component: .2f}' for component in self.internal_vector_3d])
+        return '(' + ', '.join([f'{component: .2f}' for component in self.internal_vector_3d]) + ')'
 
     def __add__(self, other: 'Vector') -> 'Vector':
-        return Vector(0.0, 0.0, 0.0, np.add(self._internal_vector, other._internal_vector))
+        return Vector(0.0, 0.0, 0.0, np.add(self.internal_vector_3d, other.internal_vector_3d))
 
     def __sub__(self, other) -> 'Vector':
-        return Vector(0.0, 0.0, 0.0, np.subtract(self._internal_vector, other._internal_vector))
+        return Vector(0.0, 0.0, 0.0, np.subtract(self.internal_vector_3d, other.internal_vector_3d))
 
     def __mul__(self, other) -> Union['Vector', float]:
         result = None
 
         if isinstance(other, (float, int)):  # Escalar
-            result = Vector(0.0, 0.0, 0.0, np.multiply(self._internal_vector, other))
+            result = Vector(0.0, 0.0, 0.0, np.multiply(self.internal_vector_3d, other))
         elif isinstance(other, Vector):  # Ângulo entre vetores
             magnitude = self.magnitude() * other.magnitude()
 
@@ -51,7 +51,7 @@ class Vector():
 
     def __truediv__(self, other) -> 'Vector':
         if isinstance(other, (float, int)):
-            return Vector(self.x / other, self.y / other, self.z / other)
+            return Vector(0.0, 0.0, 0.0, np.divide(self.internal_vector_3d, other))
         raise NotImplementedError
 
     def __neg__(self) -> 'Vector':
@@ -111,7 +111,7 @@ class Vector():
         Getter do vetor interno.
         '''
 
-        return self._internal_vector
+        return np.append(self._internal_vector, 1)
 
     @property
     def internal_vector_3d(self) -> np.ndarray:
@@ -119,7 +119,7 @@ class Vector():
         Getter do vetor interno.
         '''
 
-        return self._internal_vector[0:3]
+        return self._internal_vector
 
     def dot(self, other) -> float:
         '''
