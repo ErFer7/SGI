@@ -6,7 +6,7 @@ Classe principal do SGI.
 
 from gi.repository import Gtk
 
-from source.internals.transform import Vector
+from source.backend.transform import Vector
 from source.managers.viewport_manager import ViewportManager
 from source.handlers.viewport_handler import ViewportHandler
 from source.handlers.settings_handler import SettingsHandler

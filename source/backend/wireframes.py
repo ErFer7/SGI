@@ -4,13 +4,12 @@
 Módulo para wireframes.
 '''
 
-from abc import ABC, abstractmethod
 from enum import Enum
 
 import numpy as np
 
-from source.internals.transform import Transform
-from source.internals.vector import Vector
+from source.backend.transform import Transform
+from source.backend.vector import Vector
 
 
 class ObjectType(Enum):
@@ -32,7 +31,7 @@ class ObjectType(Enum):
     SURFACE = 10
 
 
-class Object(ABC):
+class Object():
 
     '''
     Objeto renderizável.
@@ -41,18 +40,20 @@ class Object(ABC):
     name: str
     color: tuple
     line_width: float
+    fill: bool
+    closed: bool
+    object_type: ObjectType
     coords: list[Vector]
     normalized_coords: list[Vector]
     projected_coords: list[Vector]
-    lines: list[list[Vector]]
-    object_type: ObjectType
-    fill: bool
-    closed: bool
+    lines: list[tuple[int, int]]
+    vector_lines: list[tuple[Vector, Vector]]
 
     _transform: Transform
 
     def __init__(self,
-                 coords: list,
+                 coords: tuple[Vector],
+                 lines: tuple[tuple[int, int]],
                  name: str,
                  color: tuple,
                  line_width: float,
@@ -64,15 +65,17 @@ class Object(ABC):
         self.name = name
         self.color = color
         self.line_width = line_width
-        self.coords = coords
-        self.normalized_coords = coords
-        self.projected_coords = coords
-        self.lines = []
-        self.object_type = object_type
         self.fill = fill
         self.closed = closed
-        self._transform = Transform(self.calculate_center(), Vector(0.0, 0.0, 0.0), Vector(1.0, 1.0, 1.0))
-        self.generate_lines()
+        self.object_type = object_type
+        self.coords = list(coords)
+        self.normalized_coords = coords
+        self.projected_coords = coords
+        self._transform = Transform(self.calculate_center())
+        self.lines = list(lines)
+        self.vector_lines = []
+
+        self.generate_vector_lines()
 
     @property
     def position(self) -> Vector:
@@ -83,14 +86,6 @@ class Object(ABC):
         return self._transform.position
 
     @property
-    def scale(self) -> Vector:
-        '''
-        Retorna a escala.
-        '''
-
-        return self._transform.scale
-
-    @property
     def rotation(self) -> Vector:
         '''
         Retorna a escala.
@@ -98,11 +93,13 @@ class Object(ABC):
 
         return self._transform.rotation
 
-    @abstractmethod
-    def generate_lines(self) -> None:
+    @property
+    def scale(self) -> Vector:
         '''
-        Retorna a representação em linhas.
+        Retorna a escala.
         '''
+
+        return self._transform.scale
 
     def calculate_center(self) -> Vector:
         '''
@@ -117,16 +114,19 @@ class Object(ABC):
         return coord_sum / len(self.coords)
 
     # Métodos de transformação
-    def translate(self, direction: Vector, normalized: bool = False) -> None:
+    def translate(self, direction: Vector) -> None:
         '''
-        Método para transladar o objeto (Transform::translate).
+        Método para transladar o objeto.
         '''
-
-        if normalized:
-            direction = self._transform.rotate(self.rotation, [direction + self.position], None, False)[0]
-            direction -= self.position
 
         self.coords = self._transform.translate(direction, self.coords)
+
+    def rotate(self, rotation: Vector, origin: Vector | None = None) -> None:
+        '''
+        Transformação de rotação.
+        '''
+
+        self.coords = self._transform.rotate(rotation, self.coords, origin)
 
     def rescale(self, scale: Vector) -> None:
         '''
@@ -134,13 +134,6 @@ class Object(ABC):
         '''
 
         self.coords = self._transform.rescale(scale, self.coords)
-
-    def rotate(self, rotation: Vector, anchor: Vector | None = None) -> None:
-        '''
-        Transformação de rotação.
-        '''
-
-        self.coords = self._transform.rotate(rotation, self.coords, anchor)
 
     def normalize(self, window_center: Vector, window_scale: Vector, window_rotation: float) -> None:
         '''
@@ -155,7 +148,6 @@ class Object(ABC):
                                                            window_rotation,
                                                            Vector(diff_x, diff_y, diff_z),
                                                            self.projected_coords)
-        self.generate_lines()
 
     def project(self, cop: Vector, normal: Vector, cop_distance: float) -> None:
         '''
@@ -163,6 +155,19 @@ class Object(ABC):
         '''
 
         self.projected_coords = self._transform.project(cop, normal, cop_distance, self.coords)
+
+    def generate_vector_lines(self) -> None:
+        '''
+        Gera as linhas com vetores.
+        '''
+
+        self.vector_lines.clear()
+
+        for line in self.lines:
+            try:
+                self.vector_lines.append((self.normalized_coords[line[0]], self.normalized_coords[line[1]]))
+            except IndexError:
+                continue
 
 
 class Point(Object):
@@ -172,21 +177,15 @@ class Point(Object):
     '''
 
     def __init__(self, position: Vector, name: str = '', color: tuple = (1.0, 1.0, 1.0)) -> None:
-        super().__init__([position], name, color, 1.0, ObjectType.POINT, False, False)
-
-    # Métodos utilitários
-    @property
-    def coord(self) -> Vector:
-        '''
-        Retorna a posição.
-        '''
-
-        return self.coords[0]
-
-    def generate_lines(self) -> None:
-        if len(self.normalized_coords) > 0:
-            self.lines = [[self.normalized_coords[0],
-                           Vector(self.normalized_coords[0].x + 1, self.normalized_coords[0].y)]]
+        super().__init__((position,
+                          position + Vector(1.0, 0.0)),
+                         ((0, 0),),
+                         name,
+                         color,
+                         1.0,
+                         ObjectType.POINT,
+                         False,
+                         False)
 
 
 class Line(Object):
@@ -201,30 +200,7 @@ class Line(Object):
                  name: str = '',
                  color: tuple = (1.0, 1.0, 1.0),
                  line_width: float = 1.0) -> None:
-
-        super().__init__([position_a, position_b], name, color, line_width, ObjectType.LINE, False, False)
-
-    # Métodos utilitários
-    @property
-    def start(self) -> Vector:
-        '''
-        Obtém o ponto inicial.
-        '''
-
-        return self.coords[0]
-
-    @property
-    def end(self) -> Vector:
-        '''
-        Obtém o ponto final.
-        '''
-
-        return self.coords[1]
-
-    def generate_lines(self) -> None:
-
-        if len(self.normalized_coords) == 2:
-            self.lines = [[self.normalized_coords[0], self.normalized_coords[1]]]
+        super().__init__((position_a, position_b), ((0, 1),), name, color, line_width, ObjectType.LINE, False, False)
 
 
 class Wireframe2D(Object):
@@ -234,26 +210,21 @@ class Wireframe2D(Object):
     '''
 
     def __init__(self,
-                 coords: list[Vector],
+                 coords: tuple[Vector],
                  name: str = '',
                  color: tuple = (1.0, 1.0, 1.0),
                  line_width: float = 1.0,
                  object_type: ObjectType = ObjectType.POLYGON,
                  fill: bool = False) -> None:
-
-        super().__init__(coords, name, color, line_width, object_type, fill, True)
-
-    def generate_lines(self) -> None:
-
         lines = []
 
-        for i, _ in enumerate(self.normalized_coords):
-            if i < len(self.normalized_coords) - 1:
-                lines.append([self.normalized_coords[i], self.normalized_coords[i + 1]])
+        for i, _ in enumerate(coords):
+            if i < len(coords) - 1:
+                lines.append((i, i + 1))
             else:
-                lines.append([self.normalized_coords[-1], self.normalized_coords[0]])
+                lines.append((i, 0))
 
-        self.lines = lines
+        super().__init__(coords, tuple(lines), name, color, line_width, object_type, fill, True)
 
 
 class Triangle(Wireframe2D):
@@ -270,37 +241,12 @@ class Triangle(Wireframe2D):
                  color: tuple = (1.0, 1.0, 1.0),
                  line_width: float = 1.0,
                  fill: bool = False) -> None:
-
-        super().__init__([position_a, position_b, position_c],
+        super().__init__((position_a, position_b, position_c),
                          name,
                          color,
                          line_width,
                          ObjectType.TRIANGLE,
                          fill)
-
-    @property
-    def corner_a(self) -> Vector:
-        '''
-        Retorna a coordenada A.
-        '''
-
-        return self.coords[0]
-
-    @property
-    def corner_b(self) -> Vector:
-        '''
-        Retorna a coordenada B.
-        '''
-
-        return self.coords[1]
-
-    @property
-    def corner_c(self) -> Vector:
-        '''
-        Retorna a coordenada C.
-        '''
-
-        return self.coords[2]
 
 
 class Rectangle(Wireframe2D):
@@ -316,48 +262,15 @@ class Rectangle(Wireframe2D):
                  color: tuple = (1.0, 1.0, 1.0),
                  line_width: float = 1.0,
                  fill: bool = False) -> None:
-
-        super().__init__([origin,
+        super().__init__((origin,
                          Vector(origin.x, extension.y, origin.z),
                          extension,
-                         Vector(extension.x, origin.y, origin.z)],
+                         Vector(extension.x, origin.y, origin.z)),
                          name,
                          color,
                          line_width,
                          ObjectType.RECTANGLE,
                          fill)
-
-    @property
-    def origin(self) -> Vector:
-        '''
-        Retorna a coordenada da origem.
-        '''
-
-        return self.coords[0]
-
-    @property
-    def corner_a(self) -> Vector:
-        '''
-        Retorna a coordenada do canto verticalmente alinhado à origem.
-        '''
-
-        return self.coords[1]
-
-    @property
-    def extension(self) -> Vector:
-        '''
-        Retorna a coordenada da extensão.
-        '''
-
-        return self.coords[2]
-
-    @property
-    def corner_b(self) -> Vector:
-        '''
-        Retorna a coordenada do canto verticalmente alinhado à extensão.
-        '''
-
-        return self.coords[3]
 
 
 class BezierCurve(Object):
@@ -366,45 +279,37 @@ class BezierCurve(Object):
     Curva de Bezier.
     '''
 
-    _curve_points: list[tuple[Vector]]
-
     def __init__(self,
-                 curve_points: list[Vector],
+                 curve_points: tuple[Vector],
                  steps: int,
                  name: str = '',
                  color: tuple = (1.0, 1.0, 1.0),
                  line_width: float = 1.0) -> None:
-
-        self._curve_points = []
+        corrected_points = []
         curve_coords = []
 
         for i in range(0, len(curve_points), 3):
-
             if i == len(curve_points) - 1:
                 break
 
-            self._curve_points.append((curve_points[i], curve_points[i + 1], curve_points[i + 2], curve_points[i + 3]))
+            corrected_points.append((curve_points[i], curve_points[i + 1], curve_points[i + 2], curve_points[i + 3]))
             curve_coords += self.generate_curve_coords(curve_points[i],
                                                        curve_points[i + 1: i + 3],
                                                        curve_points[i + 3],
                                                        steps)
 
-        super().__init__(curve_coords, name, color, line_width, ObjectType.BEZIER_CURVE, False, False)
-
-    def generate_lines(self) -> None:
-
         lines = []
 
-        for i in range(len(self.normalized_coords) - 1):
-            lines.append([self.normalized_coords[i], self.normalized_coords[i + 1]])
+        for i in range(len(curve_coords) - 1):
+            lines.append((i, i + 1))
 
-        self.lines = lines
+        super().__init__(curve_coords, tuple(lines), name, color, line_width, ObjectType.BEZIER_CURVE, False, False)
 
     def generate_curve_coords(self,
                               start: Vector,
-                              control_points: list[Vector],
+                              control_points: tuple[Vector],
                               end: Vector,
-                              steps: int) -> list[Vector]:
+                              steps: int) -> tuple[Vector]:
         '''
         Gera a curva de Bezier.
         '''
@@ -430,7 +335,7 @@ class BezierCurve(Object):
 
             curve.append(Vector(new_x[0, 0], new_y[0, 0], 0.0))
 
-        return curve
+        return tuple(curve)
 
 
 class SplineCurve(Object):
@@ -440,7 +345,7 @@ class SplineCurve(Object):
     '''
 
     def __init__(self,
-                 spline_points: list,
+                 spline_points: tuple[Vector],
                  fill: bool,
                  closed: bool,
                  steps: int,
@@ -456,21 +361,17 @@ class SplineCurve(Object):
         else:
             spline_coords = self.generate_spline_coords(spline_points, steps, closed)
 
-        super().__init__(spline_coords, name, color, line_width, ObjectType.SPLINE_CURVE, fill, closed)
-
-    def generate_lines(self) -> None:
-
         lines = []
 
-        for i, _ in enumerate(self.normalized_coords):
-            if i < len(self.normalized_coords) - 1:
-                lines.append([self.normalized_coords[i], self.normalized_coords[i + 1]])
-            elif self.closed:
-                lines.append([self.normalized_coords[-1], self.normalized_coords[0]])
+        for i, _ in enumerate(spline_coords):
+            if i < len(spline_coords) - 1:
+                lines.append((i, i + 1))
+            elif closed:
+                lines.append((len(spline_coords) - 1, 0))
 
-        self.lines = lines
+        super().__init__(spline_coords, tuple(lines), name, color, line_width, ObjectType.SPLINE_CURVE, fill, closed)
 
-    def generate_spline_coords_fwd(self, points: list[Vector], steps: int, closed: bool) -> list[Vector]:
+    def generate_spline_coords_fwd(self, points: tuple[Vector], steps: int, closed: bool) -> tuple[Vector]:
         '''
         Gera a curva spline com forward differeces.
         '''
@@ -548,9 +449,9 @@ class SplineCurve(Object):
 
                 spline_coords.append(Vector(new_x, new_y, 0.0))
 
-        return spline_coords
+        return tuple(spline_coords)
 
-    def generate_spline_coords(self, points: list[Vector], steps: int, closed: bool) -> list[Vector]:
+    def generate_spline_coords(self, points: tuple[Vector], steps: int, closed: bool) -> tuple[Vector]:
         '''
         Gera a curva spline.
         '''
@@ -600,7 +501,7 @@ class SplineCurve(Object):
                 new_y = step_matrix * b_spline_matrix * geometry_matrix_y
                 spline_coords.append(Vector(new_x[0, 0], new_y[0, 0], 0.0))
 
-        return spline_coords
+        return tuple(spline_coords)
 
 
 class Wireframe3D(Object):
@@ -609,31 +510,14 @@ class Wireframe3D(Object):
     Wireframe 3D.
     '''
 
-    _lines_indexes: list[tuple[int, int]]
-
     def __init__(self,
-                 coords: list[Vector],
-                 line_indexes: list[tuple[int, int]],
+                 coords: tuple[Vector],
+                 lines: tuple[tuple[int, int]],
                  name: str = '',
                  color: tuple = (1.0, 1.0, 1.0),
                  line_width: float = 1.0,
                  object_type: ObjectType = ObjectType.POLYGON3D) -> None:
-
-        self._lines_indexes = line_indexes
-
-        super().__init__(coords, name, color, line_width, object_type, False, True)
-
-    def generate_lines(self) -> None:
-
-        lines = []
-
-        len_normalized = len(self.normalized_coords)
-
-        for i, j in self._lines_indexes:
-            if i < len_normalized and j < len_normalized:
-                lines.append([self.normalized_coords[i], self.normalized_coords[j]])
-
-        self.lines = lines
+        super().__init__(coords, lines, name, color, line_width, object_type, False, True)
 
 
 class Parallelepiped(Wireframe3D):
@@ -649,35 +533,29 @@ class Parallelepiped(Wireframe3D):
                  color: tuple = (1.0, 1.0, 1.0),
                  line_width: float = 1.0) -> None:
 
-        coords = []
-        line_indexes = []
+        coords = (origin,
+                  Vector(origin.x, extension.y),
+                  extension,
+                  Vector(extension.x, origin.y),
+                  origin + Vector(0.0, 0.0, extension.x - origin.x),
+                  Vector(origin.x, extension.y, extension.x - origin.x),
+                  extension + Vector(0.0, 0.0, extension.x - origin.x),
+                  Vector(extension.x, origin.y, extension.x - origin.x))
 
-        coords.append(origin)
-        coords.append(Vector(origin.x, extension.y))
-        coords.append(extension)
-        coords.append(Vector(extension.x, origin.y))
+        lines = ((0, 1),
+                 (1, 2),
+                 (2, 3),
+                 (3, 0),
+                 (0, 4),
+                 (1, 5),
+                 (2, 6),
+                 (3, 7),
+                 (4, 5),
+                 (5, 6),
+                 (6, 7),
+                 (7, 4))
 
-        coords.append(origin + Vector(0.0, 0.0, extension.x - origin.x))
-        coords.append(Vector(origin.x, extension.y, extension.x - origin.x))
-        coords.append(extension + Vector(0.0, 0.0, extension.x - origin.x))
-        coords.append(Vector(extension.x, origin.y, extension.x - origin.x))
-
-        line_indexes.append((0, 1))
-        line_indexes.append((1, 2))
-        line_indexes.append((2, 3))
-        line_indexes.append((3, 0))
-
-        line_indexes.append((0, 4))
-        line_indexes.append((1, 5))
-        line_indexes.append((2, 6))
-        line_indexes.append((3, 7))
-
-        line_indexes.append((4, 5))
-        line_indexes.append((5, 6))
-        line_indexes.append((6, 7))
-        line_indexes.append((7, 4))
-
-        super().__init__(coords, line_indexes, name, color, line_width, ObjectType.PARALLELEPIPED)
+        super().__init__(coords, lines, name, color, line_width, ObjectType.PARALLELEPIPED)
 
 
 class Surface(Wireframe3D):
@@ -687,17 +565,19 @@ class Surface(Wireframe3D):
     '''
 
     def __init__(self,
-                 points: list[Vector],
+                 points: tuple[Vector],
                  steps: int,
                  name: str = '',
                  color: tuple = (1, 1, 1),
                  line_width: float = 1) -> None:
 
-        coords, line_indexes = self.generate_surface_coords(points, steps)
+        coords, lines = self.generate_surface_coords(points, steps)
 
-        super().__init__(coords, line_indexes, name, color, line_width, ObjectType.SURFACE)
+        super().__init__(coords, lines, name, color, line_width, ObjectType.SURFACE)
 
-    def generate_surface_coords(self, points: list[Vector], steps: int) -> tuple[list[Vector], list[tuple[int, int]]]:
+    def generate_surface_coords(self,
+                                points: tuple[Vector],
+                                steps: int) -> tuple[tuple[Vector], tuple[tuple[int, int]]]:
         '''
         Gera uma superfície.
         '''
@@ -710,7 +590,7 @@ class Surface(Wireframe3D):
         b_spline_matrix_t = b_spline_matrix.getT()
 
         surface_coords = []
-        line_indexes = []
+        lines = []
 
         for i, _ in enumerate(points):
 
@@ -742,7 +622,7 @@ class Surface(Wireframe3D):
                     surface_coords.append(Vector(new_x[0, 0], new_y[0, 0], new_z[0, 0]))
 
                     if line_index + 1 < len(surface_coords):
-                        line_indexes.append((line_index, line_index + 1))
+                        lines.append((line_index, line_index + 1))
 
                         if fill_curve_a:
                             curve_a.append(line_index)
@@ -758,7 +638,7 @@ class Surface(Wireframe3D):
                 if len(curve_a) > 0 and len(curve_b) > 0:
 
                     for index_a, index_b in zip(curve_a, curve_b):
-                        line_indexes.append((index_a, index_b))
+                        lines.append((index_a, index_b))
 
                     curve_a = curve_b.copy()
                     curve_b.clear()
@@ -766,7 +646,7 @@ class Surface(Wireframe3D):
                 line_index += 1
                 fill_curve_a = False
 
-        return (surface_coords, line_indexes)
+        return (tuple(surface_coords), tuple(lines))
 
 
 class Window(Rectangle):
@@ -790,6 +670,22 @@ class Window(Rectangle):
         self.cop = cop
         self.projected_cop = self.cop
         self.projected_position = self.position
+
+    @property
+    def origin(self) -> Vector:
+        '''
+        Retorna a coordenada da origem.
+        '''
+
+        return self.coords[0]
+
+    @property
+    def extension(self) -> Vector:
+        '''
+        Retorna a coordenada da extensão.
+        '''
+
+        return self.coords[2]
 
     @property
     def normalized_origin(self) -> Vector:
@@ -856,11 +752,7 @@ class Window(Rectangle):
 
         return (self.projected_position - self.projected_cop).magnitude()
 
-    def translate(self, direction: Vector, normalized: bool = False) -> None:
-        if normalized:
-            direction = self._transform.rotate(self.rotation, [direction + self.position], None, False)[0]
-            direction -= self.position
-
+    def translate(self, direction: Vector) -> None:
         coords = self._transform.translate(direction, self.coords + [self.cop])
         self.coords = coords[:-1]
         self.cop = coords[-1]
@@ -870,8 +762,8 @@ class Window(Rectangle):
         self.coords = coords[:-1]
         self.cop = coords[-1]
 
-    def rotate(self, rotation: Vector, anchor: Vector | None = None) -> None:
-        coords = self._transform.rotate(rotation, self.coords + [self.cop], anchor)
+    def rotate(self, rotation: Vector, origin: Vector | None = None) -> None:
+        coords = self._transform.rotate(rotation, self.coords + [self.cop], origin)
         self.coords = coords[:-1]
         self.cop = coords[-1]
 
