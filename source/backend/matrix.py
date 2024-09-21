@@ -103,7 +103,7 @@ class MatrixBuilder():
         rotation_x = MatrixBuilder.build_rotation_matrix(Vector(rotation_x, 0.0, 0.0))
         rotation_y = MatrixBuilder.build_rotation_matrix(Vector(0.0, rotation_y, 0.0))
 
-        return rotation_x * rotation_y * translation
+        return rotation_x @ rotation_y @ translation
 
     @staticmethod
     def build_perspective_matrix(cop_distance: float) -> np.matrix:

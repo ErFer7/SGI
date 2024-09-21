@@ -4,7 +4,7 @@
 Módulo para as operações matemáticas.
 '''
 
-from math import degrees, acos, atan2
+from math import degrees, atan2, sqrt
 import numpy as np
 
 from source.backend.vector import Vector
@@ -17,17 +17,10 @@ class Transform():
     Transformada.
     '''
 
-    _position: Vector
-    _x_axis: Vector
-    _y_axis: Vector
-    _z_axis: Vector
+    _matrix: np.matrix
 
     def __init__(self, position: Vector) -> None:
-        self._position = position
-
-        self._x_axis = self._position + Vector(1.0, 0.0, 0.0)
-        self._y_axis = self._position + Vector(0.0, 1.0, 0.0)
-        self._z_axis = self._position + Vector(0.0, 0.0, 1.0)
+        self._matrix = MatrixBuilder.build_translation_matrix(position)
 
     def __repr__(self) -> str:
         return str(self)
@@ -41,7 +34,9 @@ class Transform():
         Getter da posição.
         '''
 
-        return self._position
+        position = self._matrix[0:3, 3]
+
+        return Vector(position[0, 0], position[1, 0], position[2, 0])
 
     @property
     def rotation(self) -> Vector:
@@ -49,35 +44,29 @@ class Transform():
         Getter da rotação.
         '''
 
-        # TODO: Fix
+        rotation_matrix = self._matrix[0:3, 0:3]
 
-        local_x_axis = self._x_axis - self._position
-        local_y_axis = self._y_axis - self._position
-        local_z_axis = self._z_axis - self._position
+        scale_x = np.linalg.norm(rotation_matrix[:, 0])
+        scale_y = np.linalg.norm(rotation_matrix[:, 1])
+        scale_z = np.linalg.norm(rotation_matrix[:, 2])
 
-        local_x_axis.normalize()
-        local_y_axis.normalize()
-        local_z_axis.normalize()
-
-        # Construct the rotation matrix
-        rotation_matrix = np.array([
-            [local_x_axis.x, local_y_axis.x, local_z_axis.x],
-            [local_x_axis.y, local_y_axis.y, local_z_axis.y],
-            [local_x_axis.z, local_y_axis.z, local_z_axis.z]
+        normalized_rotation_matrix = np.array([
+            [rotation_matrix[0, 0] / scale_x, rotation_matrix[0, 1] / scale_y, rotation_matrix[0, 2] / scale_z],
+            [rotation_matrix[1, 0] / scale_x, rotation_matrix[1, 1] / scale_y, rotation_matrix[1, 2] / scale_z],
+            [rotation_matrix[2, 0] / scale_x, rotation_matrix[2, 1] / scale_y, rotation_matrix[2, 2] / scale_z]
         ])
 
-        # Decompose the rotation matrix into Euler angles (ZYX order)
-        sy = np.sqrt(rotation_matrix[0, 0] ** 2 + rotation_matrix[1, 0] ** 2)
+        sy = sqrt(normalized_rotation_matrix[0, 0] ** 2 + normalized_rotation_matrix[1, 0] ** 2)
 
         singular = sy < 1e-6
 
         if not singular:
-            x_angle = atan2(rotation_matrix[2, 1], rotation_matrix[2, 2])
-            y_angle = atan2(-rotation_matrix[2, 0], sy)
-            z_angle = atan2(rotation_matrix[1, 0], rotation_matrix[0, 0])
+            x_angle = atan2(normalized_rotation_matrix[2, 1], normalized_rotation_matrix[2, 2])
+            y_angle = atan2(-normalized_rotation_matrix[2, 0], sy)
+            z_angle = atan2(normalized_rotation_matrix[1, 0], normalized_rotation_matrix[0, 0])
         else:
-            x_angle = atan2(-rotation_matrix[1, 2], rotation_matrix[1, 1])
-            y_angle = atan2(-rotation_matrix[2, 0], sy)
+            x_angle = atan2(-normalized_rotation_matrix[1, 2], normalized_rotation_matrix[1, 1])
+            y_angle = atan2(-normalized_rotation_matrix[2, 0], sy)
             z_angle = 0
 
         return Vector(degrees(x_angle), degrees(y_angle), degrees(z_angle))
@@ -88,17 +77,17 @@ class Transform():
         Getter da escala.
         '''
 
-        # TODO: Fix
+        rotation_matrix = self._matrix[0:3, 0:3]
 
-        local_x_axis = self._x_axis - self._position
-        local_y_axis = self._y_axis - self._position
-        local_z_axis = self._z_axis - self._position
+        scale_x = np.linalg.norm(rotation_matrix[:, 0])
+        scale_y = np.linalg.norm(rotation_matrix[:, 1])
+        scale_z = np.linalg.norm(rotation_matrix[:, 2])
 
-        return Vector(local_x_axis.magnitude(), local_y_axis.magnitude(), local_z_axis.magnitude())
+        return Vector(scale_x, scale_y, scale_z)
 
-    def get_translated(self, direction: Vector, coords: list[Vector]) -> list[Vector]:
+    def get_translated(self, direction: Vector, coords: list[Vector]) -> list[Vector] | np.matrix:
         '''
-        Obtém as coordenadas transladadas de um objeto.
+        Obtém as coordenadas transladadas de um objeto e também retorna a matriz de translação.
         '''
 
         translation = MatrixBuilder.build_translation_matrix(direction)
@@ -110,27 +99,29 @@ class Transform():
             new_coord = np.matmul(translation, coord.internal_vector_4d)
             new_coords.append(Vector(new_coord[0, 0], new_coord[0, 1], new_coord[0, 2]))
 
-        return new_coords
+        return new_coords, translation
 
     def translate(self, direction: Vector, coords: list[Vector]) -> list[Vector]:
         '''
         Translada um objeto e a transformada retornando uma nova lista de coordenadas.
         '''
 
-        self._position += direction
-        self._x_axis += direction
-        self._y_axis += direction
-        self._z_axis += direction
+        new_coords, translation = self.get_translated(direction, coords)
 
-        return self.get_translated(direction, coords)
+        self._matrix = translation @ self._matrix
 
-    def get_rotated(self, rotation: Vector, coords: list[Vector], origin: Vector | None = None) -> list[Vector]:
+        return new_coords
+
+    def get_rotated(self,
+                    rotation: Vector,
+                    coords: list[Vector],
+                    origin: Vector | None = None) -> list[Vector] | np.matrix:
         '''
-        Obtém as coordenadas rotacionadas de um objeto.
+        Obtém as coordenadas rotacionadas de um objeto e também retorna a matriz de rotação.
         '''
 
         if origin is None:
-            origin = self._position
+            origin = self.position
 
         relative_to_origin_translation = MatrixBuilder.build_translation_matrix(-origin)
         rotation = MatrixBuilder.build_rotation_matrix(rotation)
@@ -144,35 +135,35 @@ class Transform():
             new_coord = np.matmul(relative_rotation, coord.internal_vector_4d)
             new_coords.append(Vector(new_coord[0, 0], new_coord[0, 1], new_coord[0, 2]))
 
-        return new_coords
+        return new_coords, relative_rotation
 
     def rotate(self, rotation: Vector, coords: list[Vector], origin: Vector | None = None) -> list[Vector]:
         '''
         Rotaciona o objeto em relação à um ponto.
         '''
 
-        internal_coords = self.get_rotated(rotation,
-                                           [self._position, self._x_axis, self._y_axis, self._z_axis],
-                                           origin)
-        new_coords = self.get_rotated(rotation, coords, origin)
+        new_coords, rotation = self.get_rotated(rotation, coords, origin)
 
-        self._position = internal_coords[0]
-        self._x_axis = internal_coords[1]
-        self._y_axis = internal_coords[2]
-        self._z_axis = internal_coords[3]
+        self._matrix = rotation @ self._matrix
 
         return new_coords
 
-    def get_scaled(self, scale: Vector, coords: list[Vector]) -> list[Vector]:
+    def get_scaled(self, scale: Vector, coords: list[Vector]) -> list[Vector] | np.matrix:
         '''
-        Obtém as coordenadas escaladas de um objeto.
+        Obtém as coordenadas escaladas de um objeto e também retorna a matriz de escala.
         '''
 
-        relative_to_origin_translation = MatrixBuilder.build_translation_matrix(-self._position)
+        relative_to_origin_translation = MatrixBuilder.build_translation_matrix(-self.position)
+        inverse_rotation = MatrixBuilder.build_rotation_matrix(-self.rotation)
         scaling = MatrixBuilder.build_scaling_matrix(scale)
-        relative_to_self_translation = MatrixBuilder.build_translation_matrix(self._position)
+        rotation = MatrixBuilder.build_rotation_matrix(self.rotation)
+        relative_to_self_translation = MatrixBuilder.build_translation_matrix(self.position)
 
-        relative_scaling = relative_to_self_translation * scaling * relative_to_origin_translation
+        relative_scaling = relative_to_self_translation @ \
+            rotation @ \
+            scaling @ \
+            inverse_rotation @ \
+            relative_to_origin_translation
 
         new_coords = []
 
@@ -181,19 +172,16 @@ class Transform():
             new_coord = np.matmul(relative_scaling, coord.internal_vector_4d)
             new_coords.append(Vector(new_coord[0, 0], new_coord[0, 1], new_coord[0, 2]))
 
-        return new_coords
+        return new_coords, relative_scaling
 
     def rescale(self, scale: Vector, coords: list[Vector]) -> list[Vector]:
         '''
         Transformação de escala.
         '''
 
-        internal_coords = self.get_scaled(scale, [self._x_axis, self._y_axis, self._z_axis])
-        new_coords = self.get_scaled(scale, coords)
+        new_coords, scaling = self.get_scaled(scale, coords)
 
-        self._x_axis = internal_coords[0]
-        self._y_axis = internal_coords[1]
-        self._z_axis = internal_coords[2]
+        self._matrix = scaling @ self._matrix
 
         return new_coords
 
