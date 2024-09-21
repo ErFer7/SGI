@@ -21,9 +21,3 @@ Comando para executar: `python3 main.py`
 * Redefinir a posição: r
 * Redefinir a rotação: t
 * Redefinir o zoom: y
-
----
-
-##
-
-Este projeto inspirou a criação do [SGE (Simple Graphical Engine)](https://github.com/ErFer7/SGE) que está sendo desenvolvido em C++ com OpenGL.
