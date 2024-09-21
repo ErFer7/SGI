@@ -85,7 +85,7 @@ class Transform():
 
         return Vector(scale_x, scale_y, scale_z)
 
-    def get_translated(self, direction: Vector, coords: list[Vector]) -> list[Vector] | np.matrix:
+    def get_translated(self, direction: Vector, coords: list[Vector]) -> tuple[list[Vector], np.matrix]:
         '''
         Obtém as coordenadas transladadas de um objeto e também retorna a matriz de translação.
         '''
@@ -115,7 +115,7 @@ class Transform():
     def get_rotated(self,
                     rotation: Vector,
                     coords: list[Vector],
-                    origin: Vector | None = None) -> list[Vector] | np.matrix:
+                    origin: Vector | None = None) -> tuple[list[Vector], np.matrix]:
         '''
         Obtém as coordenadas rotacionadas de um objeto e também retorna a matriz de rotação.
         '''
@@ -148,13 +148,13 @@ class Transform():
 
         return new_coords
 
-    def get_scaled(self, scale: Vector, coords: list[Vector]) -> list[Vector] | np.matrix:
+    def get_scaled(self, scale: Vector, coords: list[Vector]) -> tuple[list[Vector], np.matrix]:
         '''
         Obtém as coordenadas escaladas de um objeto e também retorna a matriz de escala.
         '''
 
         relative_to_origin_translation = MatrixBuilder.build_translation_matrix(-self.position)
-        inverse_rotation = MatrixBuilder.build_rotation_matrix(-self.rotation)
+        inverse_rotation = MatrixBuilder.build_rotation_matrix(-self.rotation, True)
         scaling = MatrixBuilder.build_scaling_matrix(scale)
         rotation = MatrixBuilder.build_rotation_matrix(self.rotation)
         relative_to_self_translation = MatrixBuilder.build_translation_matrix(self.position)

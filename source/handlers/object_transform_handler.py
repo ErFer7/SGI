@@ -76,6 +76,7 @@ class ObjectTransformHandler(Handler):
 
             object_index = object_manager.objects.index(object_in_focus)
             object_manager.update_object_info(object_index)
+            self.update_spin_buttons()
 
     def update_scale(self, _) -> None:
         '''
@@ -91,6 +92,7 @@ class ObjectTransformHandler(Handler):
             diff_z = self._scale_z_button.get_value() / object_in_focus.scale.z
 
             object_in_focus.rescale(Vector(diff_x, diff_y, diff_z))
+            self.update_spin_buttons()
 
     def update_rotation(self, _) -> None:
         '''
@@ -106,6 +108,7 @@ class ObjectTransformHandler(Handler):
             diff_z = self._rotation_z_button.get_value() - object_in_focus.rotation.z
 
             object_in_focus.rotate(Vector(diff_x, diff_y, diff_z))
+            self.update_spin_buttons()
 
     def update_spin_buttons(self) -> None:
         '''

@@ -4,7 +4,7 @@
 Módulo para o gerenciamento de arquivos.
 '''
 
-from source.internals.wireframes import Object, Wireframe3D
+from source.backend.wireframes import Object, Wireframe3D
 from source.backend.vector import Vector
 
 

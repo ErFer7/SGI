@@ -11,7 +11,7 @@ from enum import Enum
 from math import inf
 
 from source.backend.vector import Vector
-from source.internals.wireframes import Window, Object, ObjectType
+from source.backend.wireframes import Window, Object, ObjectType
 from source.managers.manager import Manager
 
 if TYPE_CHECKING:
@@ -121,9 +121,9 @@ class ViewportManager(Manager):
         if obj.object_type == ObjectType.POINT and len(coords) > 0:
             if (self._window.normalized_origin.x <= coords[0].x <= self._window.normalized_extension.x) and \
                (self._window.normalized_origin.y <= coords[0].y <= self._window.normalized_extension.y):
-                clipped_lines.append(obj.lines[0])
+                clipped_lines.append(obj.vector_lines[0])
         else:
-            clipped_lines = obj.lines
+            clipped_lines = obj.vector_lines
             clipped_lines_temp = []
 
             for inter in [Intersection.LEFT, Intersection.RIGHT, Intersection.BOTTOM, Intersection.TOP]:
@@ -369,17 +369,17 @@ class ViewportManager(Manager):
         context.fill()
 
         self.project()
-        self._manager_mediator.object_manager.normalize_objects(self._window)
+        self.normalize()
+        self.generate_vector_lines()
 
         # Renderiza todos os objetos do display file
         for obj in self._manager_mediator.object_manager.objects + [self._window]:
-
             clipped_coords = []
 
             if obj != self._window:
                 clipped_coords = self.clip_to_lines(obj)
             else:
-                clipped_coords = obj.lines
+                clipped_coords = obj.vector_lines
 
             screen_lines = list(map(lambda x: self.world_line_to_screen(x, screen_width, screen_height),
                                     clipped_coords))
@@ -419,7 +419,7 @@ class ViewportManager(Manager):
         Redefine a posição da window.
         '''
 
-        self._window.translate(self._window.position * -1)
+        self._window.translate(-self._window.position)
 
     def rotate_window(self, rotation: Vector) -> None:
         '''
@@ -433,7 +433,9 @@ class ViewportManager(Manager):
         Redefine a rotação da window.
         '''
 
-        self._window.rotate(self._window.rotation * -1)
+        self._window.rotate(Vector(0.0, 0.0, -self._window.rotation.z))
+        self._window.rotate(Vector(0.0, -self._window.rotation.y, 0.0))
+        self._window.rotate(Vector(-self._window.rotation.x, 0.0, 0.0))
 
     def reescale_window(self, scale: Vector) -> None:
         '''
@@ -484,3 +486,18 @@ class ViewportManager(Manager):
 
         for obj in self._manager_mediator.object_manager.objects + [self._window]:
             obj.project(self._window.cop, normal, cop_distance)
+
+    def normalize(self) -> None:
+        '''
+        Normaliza todos os objetos.
+        '''
+
+        self._manager_mediator.object_manager.normalize_objects(self._window)
+
+    def generate_vector_lines(self) -> None:
+        '''
+        Gera as linhas dos vetores.
+        '''
+
+        for obj in self._manager_mediator.object_manager.objects + [self._window]:
+            obj.generate_vector_lines()

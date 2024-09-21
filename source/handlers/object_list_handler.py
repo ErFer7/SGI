@@ -12,7 +12,7 @@ from os.path import join
 from gi.repository import Gtk
 
 from source.handlers.handler import Handler
-from source.internals.wireframes import Object
+from source.backend.wireframes import Object
 
 if TYPE_CHECKING:
     from source.handlers.handler_mediator import HandlerMediator

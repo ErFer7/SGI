@@ -94,3 +94,11 @@
 ## v2.1
 
 * Correção no redimensionamento do viewport
+
+---
+
+## v2.2
+
+* Correções nos bugs da window
+* Transformadas totalmente refatoradas
+* Otimizações

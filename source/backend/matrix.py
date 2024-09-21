@@ -25,12 +25,10 @@ class MatrixBuilder():
                           [0.0, 0.0, 0.0, 1.0]])
 
     @staticmethod
-    def build_rotation_matrix(rotation: Vector) -> np.matrix:
+    def build_rotation_matrix(rotation: Vector, inverse: bool = False) -> np.matrix:
         '''
         Constrói a matriz de rotação.
         '''
-
-        # TODO: Verificar
 
         sinx = sin(radians(rotation.x))
         cosx = cos(radians(rotation.x))
@@ -39,19 +37,25 @@ class MatrixBuilder():
         sinz = sin(radians(rotation.z))
         cosz = cos(radians(rotation.z))
 
-        return np.matrix([[cosy * cosz,
-                           sinx * siny * cosz - cosx * sinz,
-                           cosx * siny * cosz + sinx * sinz,
-                           0.0],
-                          [cosy * sinz,
-                           sinx * siny * sinz + cosx * cosz,
-                           cosx * siny * sinz - sinx * cosz,
-                           0.0],
-                          [-siny,
-                           sinx * cosy,
-                           cosx * cosy,
-                           0.0],
-                          [0.0, 0.0, 0.0, 1.0]])
+        rotation_x = np.matrix([[1.0, 0.0, 0.0, 0.0],
+                                [0.0, cosx, -sinx, 0.0],
+                                [0.0, sinx, cosx, 0.0],
+                                [0.0, 0.0, 0.0, 1.0]])
+
+        rotation_y = np.matrix([[cosy, 0.0, siny, 0.0],
+                                [0.0, 1.0, 0.0, 0.0],
+                                [-siny, 0.0, cosy, 0.0],
+                                [0.0, 0.0, 0.0, 1.0]])
+
+        rotation_z = np.matrix([[cosz, -sinz, 0.0, 0.0],
+                                [sinz, cosz, 0.0, 0.0],
+                                [0.0, 0.0, 1.0, 0.0],
+                                [0.0, 0.0, 0.0, 1.0]])
+
+        if inverse:
+            return rotation_x @ rotation_y @ rotation_z
+
+        return rotation_z @ rotation_y @ rotation_x
 
     @staticmethod
     def build_scaling_matrix(scale: Vector) -> np.matrix:

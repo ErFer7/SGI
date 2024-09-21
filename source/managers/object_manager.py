@@ -9,8 +9,8 @@ from typing import TYPE_CHECKING
 
 from math import degrees
 
-from source.internals.wireframes import Object, Window
-from source.internals.file_system import FileSystem
+from source.backend.wireframes import Object, Window, Line
+from source.backend.file_system import FileSystem
 from source.backend.vector import Vector
 from source.managers.manager import Manager
 
@@ -24,18 +24,22 @@ class ObjectManager(Manager):
     Nesta classe os objetos seriam armazenados e transferidos para o viewport quando necessário.
     '''
 
+    _default_objects: list[Object]
     _objects: list[Object]
-    _all_objects_normalized: bool
     _file_system: FileSystem
     _object_in_focus: Object | None
 
     def __init__(self, manager_mediator: ManagerMediator) -> None:
         super().__init__(manager_mediator)
 
+        self._default_objects = []
         self._objects = []
-        self._all_objects_normalized = False
         self._file_system = FileSystem()
         self._object_in_focus = None
+
+        self._default_objects.append(Line(Vector(100.0, 0.0, 0.0), Vector(0.0, 0.0, 0.0), 'X Axis', (1.0, 0.25, 0.25)))
+        self._default_objects.append(Line(Vector(0.0, 100.0, 0.0), Vector(0.0, 0.0, 0.0), 'Y Axis', (0.25, 1.0, 0.25)))
+        self._default_objects.append(Line(Vector(0.0, 0.0, 100.0), Vector(0.0, 0.0, 0.0), 'Z Axis', (0.25, 0.25, 1.0)))
 
     @property
     def objects(self) -> list[Object]:
@@ -43,7 +47,7 @@ class ObjectManager(Manager):
         Retorna a lista de objetos.
         '''
 
-        return self._objects
+        return self._objects + self._default_objects
 
     @property
     def object_in_focus(self) -> Object | None:
@@ -81,7 +85,6 @@ class ObjectManager(Manager):
         '''
 
         self._objects.append(obj)
-        self._all_objects_normalized = False
 
         object_list_handler = self._manager_mediator.handler_mediator.object_list_handler
         object_list_handler.add_object_register(obj)
@@ -104,7 +107,6 @@ class ObjectManager(Manager):
 
             self._objects.pop()
             object_list_handler.remove_object_register(-1)
-            self._all_objects_normalized = False
 
     def normalize_objects(self, window: Window) -> None:
         '''
@@ -117,7 +119,7 @@ class ObjectManager(Manager):
         if window_up.x > 0.0:
             rotation = 360 - rotation
 
-        for obj in self._objects + [window]:
+        for obj in self._objects + self._default_objects:
             obj.normalize(window.position, window.scale, rotation)
 
     def load_file(self, file_name: str) -> None:
@@ -129,6 +131,8 @@ class ObjectManager(Manager):
 
         for obj in loaded:
             self.add_object(obj)
+
+        self._object_in_focus = self._objects[-1]
 
     def save_file(self, file_name: str) -> None:
         '''
