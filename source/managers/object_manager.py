@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 '''
 Módulo para o handler do display file.
 '''
@@ -9,9 +7,11 @@ from typing import TYPE_CHECKING
 
 from math import degrees
 
-from source.backend.wireframes import Object, Window, Line
+from source.backend.objects.object import Object
+from source.backend.objects.wireframes_2d import Line
+from source.backend.objects.window import Window
 from source.backend.file_system import FileSystem
-from source.backend.vector import Vector
+from source.backend.math.vector import Vector
 from source.managers.manager import Manager
 
 if TYPE_CHECKING:

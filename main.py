@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 '''
 Sistema Gráfico Interativo (SGI)
 '''

@@ -108,3 +108,9 @@
 ## v2.2.1
 
 * Pequenas correções
+
+---
+
+## v2.2.2
+
+* Pequenas correções

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 '''
 Módulo para o handler de configurações.
 '''

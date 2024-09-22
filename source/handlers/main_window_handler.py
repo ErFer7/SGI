@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 '''
 Módulo do handler da janela principal.
 '''

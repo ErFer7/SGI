@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 '''
 Neste módulo estão definidos os funcionamentos do viewport.
 '''
@@ -10,8 +8,9 @@ from typing import TYPE_CHECKING
 from enum import Enum
 from math import inf
 
-from source.backend.vector import Vector
-from source.backend.wireframes import Window, Object, ObjectType
+from source.backend.math.vector import Vector
+from source.backend.objects.object import Object, ObjectType
+from source.backend.objects.window import Window
 from source.managers.manager import Manager
 
 if TYPE_CHECKING:

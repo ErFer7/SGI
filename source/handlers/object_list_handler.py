@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 '''
 Módulo do handler da lista de objetos.
 '''
@@ -12,7 +10,7 @@ from os.path import join
 from gi.repository import Gtk
 
 from source.handlers.handler import Handler
-from source.backend.wireframes import Object
+from source.backend.objects.object import Object
 
 if TYPE_CHECKING:
     from source.handlers.handler_mediator import HandlerMediator

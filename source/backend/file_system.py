@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
-
 '''
 Módulo para o gerenciamento de arquivos.
 '''
 
-from source.backend.wireframes import Object, Wireframe3D
-from source.backend.vector import Vector
+from source.backend.objects.object import Object
+from source.backend.objects.wireframes_3d import Wireframe3D
+from source.backend.math.vector import Vector
 
 
 class FileSystem():

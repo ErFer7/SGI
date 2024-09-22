@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 '''
 Módulo para o criador.
 '''
@@ -10,8 +8,9 @@ from typing import TYPE_CHECKING
 from gi.repository import Gtk
 
 from source.handlers.handler import Handler
-from source.backend.transform import Vector
-from source.backend import wireframes
+from source.backend.math.transform import Vector
+from source.backend.objects import wireframes_2d
+from source.backend.objects import wireframes_3d
 
 if TYPE_CHECKING:
     from source.handlers.handler_mediator import HandlerMediator
@@ -48,7 +47,7 @@ class CreatorHandler(Handler):
     _input_y_button: Gtk.SpinButton
     _input_z_button: Gtk.SpinButton
     _add_point_button: Gtk.Button
-    _mode: wireframes.ObjectType
+    _mode: wireframes_2d.ObjectType
     _temp_coords: list[Vector]
     _width: float
     _color: tuple[float, float, float]
@@ -64,7 +63,7 @@ class CreatorHandler(Handler):
     def __init__(self, handler_mediator: HandlerMediator, main_window: MainWindow) -> None:
         super().__init__(handler_mediator)
 
-        self._mode = wireframes.ObjectType.NULL
+        self._mode = wireframes_2d.ObjectType.NULL
         self._temp_coords = []
         self._width = 1.0
         self._color = (1.0, 1.0, 1.0)
@@ -104,15 +103,15 @@ class CreatorHandler(Handler):
         self._input_z_button = self.search_child_by_name(creator_box, 'Input z button')
         self._add_point_button = self.search_child_by_name(creator_box, 'Add point button')
 
-        self._point_button.connect('toggled', self.set_mode, wireframes.ObjectType.POINT)
-        self._line_button.connect('toggled', self.set_mode, wireframes.ObjectType.LINE)
-        self._triangle_button .connect('toggled', self.set_mode, wireframes.ObjectType.TRIANGLE)
-        self._rectangle_button.connect('toggled', self.set_mode, wireframes.ObjectType.RECTANGLE)
-        self._polygon_button.connect('toggled', self.set_mode, wireframes.ObjectType.POLYGON)
-        self._bezier_curve_button.connect('toggled', self.set_mode, wireframes.ObjectType.BEZIER_CURVE)
-        self._spline_curve_button.connect('toggled', self.set_mode, wireframes.ObjectType.SPLINE_CURVE)
-        self._surface_button.connect('toggled', self.set_mode, wireframes.ObjectType.SURFACE)
-        self._parallelepiped_button.connect('toggled', self.set_mode, wireframes.ObjectType.PARALLELEPIPED)
+        self._point_button.connect('toggled', self.set_mode, wireframes_2d.ObjectType.POINT)
+        self._line_button.connect('toggled', self.set_mode, wireframes_2d.ObjectType.LINE)
+        self._triangle_button .connect('toggled', self.set_mode, wireframes_2d.ObjectType.TRIANGLE)
+        self._rectangle_button.connect('toggled', self.set_mode, wireframes_2d.ObjectType.RECTANGLE)
+        self._polygon_button.connect('toggled', self.set_mode, wireframes_2d.ObjectType.POLYGON)
+        self._bezier_curve_button.connect('toggled', self.set_mode, wireframes_2d.ObjectType.BEZIER_CURVE)
+        self._spline_curve_button.connect('toggled', self.set_mode, wireframes_2d.ObjectType.SPLINE_CURVE)
+        self._surface_button.connect('toggled', self.set_mode, wireframes_2d.ObjectType.SURFACE)
+        self._parallelepiped_button.connect('toggled', self.set_mode, wireframes_2d.ObjectType.PARALLELEPIPED)
         self._remove_button.connect('clicked', self.remove)
         self._width_button.connect('value-changed', self.set_width)
         self._color_button.connect('color-set', self.set_color)
@@ -126,7 +125,7 @@ class CreatorHandler(Handler):
         self._surface_step_count_button.connect('value-changed', self.set_surface_step_count)
         self._add_point_button.connect('clicked', self.add_point, True)
 
-    def set_mode(self, _, mode: wireframes.ObjectType) -> None:
+    def set_mode(self, _, mode: wireframes_2d.ObjectType) -> None:
         '''
         Define o modo.
         '''
@@ -141,7 +140,7 @@ class CreatorHandler(Handler):
             self.update_toggle_buttons(self._mode)
             self._mode = mode
         else:
-            self._mode = wireframes.ObjectType.NULL
+            self._mode = wireframes_2d.ObjectType.NULL
 
         self._edges_button.set_editable(False)
         self._curve_point_count_button.set_editable(False)
@@ -151,43 +150,43 @@ class CreatorHandler(Handler):
         self._surface_step_count_button.set_editable(False)
 
         match self._mode:
-            case wireframes.ObjectType.POLYGON:
+            case wireframes_2d.ObjectType.POLYGON:
                 self._edges_button.set_editable(True)
-            case wireframes.ObjectType.BEZIER_CURVE:
+            case wireframes_2d.ObjectType.BEZIER_CURVE:
                 self._curve_point_count_button.set_editable(True)
                 self._curve_step_count_button.set_editable(True)
-            case wireframes.ObjectType.SPLINE_CURVE:
+            case wireframes_2d.ObjectType.SPLINE_CURVE:
                 self._spline_point_count_button.set_editable(True)
                 self._spline_step_count_button.set_editable(True)
-            case wireframes.ObjectType.SURFACE:
+            case wireframes_2d.ObjectType.SURFACE:
                 self._surface_step_count_button.set_editable(True)
 
         self._temp_coords.clear()
 
-    def update_toggle_buttons(self, mode: wireframes.ObjectType) -> None:
+    def update_toggle_buttons(self, mode: wireframes_2d.ObjectType) -> None:
         '''
         Atualiza todos os botões de marcação.
         '''
 
         self._handler_mediator.main_window_handler.user_call = False
         match mode:
-            case wireframes.ObjectType.POINT:
+            case wireframes_2d.ObjectType.POINT:
                 self._point_button.set_active(False)
-            case wireframes.ObjectType.LINE:
+            case wireframes_2d.ObjectType.LINE:
                 self._line_button.set_active(False)
-            case wireframes.ObjectType.TRIANGLE:
+            case wireframes_2d.ObjectType.TRIANGLE:
                 self._triangle_button.set_active(False)
-            case wireframes.ObjectType.RECTANGLE:
+            case wireframes_2d.ObjectType.RECTANGLE:
                 self._rectangle_button.set_active(False)
-            case wireframes.ObjectType.POLYGON:
+            case wireframes_2d.ObjectType.POLYGON:
                 self._polygon_button.set_active(False)
-            case wireframes.ObjectType.BEZIER_CURVE:
+            case wireframes_2d.ObjectType.BEZIER_CURVE:
                 self._bezier_curve_button.set_active(False)
-            case wireframes.ObjectType.SPLINE_CURVE:
+            case wireframes_2d.ObjectType.SPLINE_CURVE:
                 self._spline_curve_button.set_active(False)
-            case wireframes.ObjectType.SURFACE:
+            case wireframes_2d.ObjectType.SURFACE:
                 self._surface_button.set_active(False)
-            case wireframes.ObjectType.PARALLELEPIPED:
+            case wireframes_2d.ObjectType.PARALLELEPIPED:
                 self._parallelepiped_button.set_active(False)
         self._handler_mediator.main_window_handler.user_call = True
 
@@ -284,25 +283,25 @@ class CreatorHandler(Handler):
 
         object_manager = self.handler_mediator.manager_mediator.object_manager
 
-        if self._mode != wireframes.ObjectType.NULL:
+        if self._mode != wireframes_2d.ObjectType.NULL:
             self._temp_coords.append(position)
             object_completed = False
 
-            if self._mode == wireframes.ObjectType.POINT and len(self._temp_coords) >= 1:
-                object_manager.add_object(wireframes.Point(self._temp_coords[0], 'Point', self._color))
+            if self._mode == wireframes_2d.ObjectType.POINT and len(self._temp_coords) >= 1:
+                object_manager.add_object(wireframes_2d.Point(self._temp_coords[0], 'Point', self._color))
                 object_completed = True
-            elif self._mode == wireframes.ObjectType.LINE and len(self._temp_coords) >= 2:
+            elif self._mode == wireframes_2d.ObjectType.LINE and len(self._temp_coords) >= 2:
                 object_manager.add_object(
-                    wireframes.Line(
+                    wireframes_2d.Line(
                         self._temp_coords[0],
                         self._temp_coords[1],
                         'Line',
                         self._color,
                         self._width))
                 object_completed = True
-            elif self._mode == wireframes.ObjectType.TRIANGLE and len(self._temp_coords) >= 3:
+            elif self._mode == wireframes_2d.ObjectType.TRIANGLE and len(self._temp_coords) >= 3:
                 object_manager.add_object(
-                    wireframes.Triangle(
+                    wireframes_2d.Triangle(
                         self._temp_coords[0],
                         self._temp_coords[1],
                         self._temp_coords[2],
@@ -311,9 +310,9 @@ class CreatorHandler(Handler):
                         self._width,
                         self._fill))
                 object_completed = True
-            elif self._mode == wireframes.ObjectType.RECTANGLE and len(self._temp_coords) >= 2:
+            elif self._mode == wireframes_2d.ObjectType.RECTANGLE and len(self._temp_coords) >= 2:
                 object_manager.add_object(
-                    wireframes.Rectangle(
+                    wireframes_2d.Rectangle(
                         self._temp_coords[0],
                         self._temp_coords[1],
                         'Rectangle',
@@ -321,30 +320,30 @@ class CreatorHandler(Handler):
                         self._width,
                         self._fill))
                 object_completed = True
-            elif self._mode == wireframes.ObjectType.POLYGON and len(self._temp_coords) >= self._edges:
+            elif self._mode == wireframes_2d.ObjectType.POLYGON and len(self._temp_coords) >= self._edges:
                 object_manager.add_object(
-                    wireframes.Wireframe2D(
+                    wireframes_2d.Wireframe2D(
                         self._temp_coords.copy(),
                         'Wireframe',
                         self._color,
                         self._width,
-                        wireframes.ObjectType.POLYGON,
+                        wireframes_2d.ObjectType.POLYGON,
                         self._fill))
                 object_completed = True
-            elif self._mode == wireframes.ObjectType.BEZIER_CURVE:
+            elif self._mode == wireframes_2d.ObjectType.BEZIER_CURVE:
                 self.check_curve_requirements()
 
                 if len(self._temp_coords) >= self._curve_point_count:
                     object_manager.add_object(
-                        wireframes.BezierCurve(self._temp_coords,
+                        wireframes_2d.BezierCurve(self._temp_coords,
                                               self._curve_step_count,
                                               'Bezier Curve',
                                               self._color,
                                               self._width))
                     object_completed = True
-            elif self._mode == wireframes.ObjectType.SPLINE_CURVE and len(self._temp_coords) >= self._spline_point_count:
+            elif self._mode == wireframes_2d.ObjectType.SPLINE_CURVE and len(self._temp_coords) >= self._spline_point_count:
                 object_manager.add_object(
-                    wireframes.SplineCurve(self._temp_coords,
+                    wireframes_2d.SplineCurve(self._temp_coords,
                                           self._fill,
                                           self._closed_spline,
                                           self._spline_step_count,
@@ -352,17 +351,17 @@ class CreatorHandler(Handler):
                                           self._color,
                                           self._width))
                 object_completed = True
-            elif self._mode == wireframes.ObjectType.SURFACE and len(self._temp_coords) >= 16:
+            elif self._mode == wireframes_2d.ObjectType.SURFACE and len(self._temp_coords) >= 16:
                 object_manager.add_object(
-                    wireframes.Surface(self._temp_coords,
+                    wireframes_3d.Surface(self._temp_coords,
                                       self._surface_step_count,
                                       'Surface',
                                       self._color,
                                       self._width))
                 object_completed = True
-            elif self._mode == wireframes.ObjectType.PARALLELEPIPED and len(self._temp_coords) >= 2:
+            elif self._mode == wireframes_2d.ObjectType.PARALLELEPIPED and len(self._temp_coords) >= 2:
                 object_manager.add_object(
-                    wireframes.Parallelepiped(self._temp_coords[0],
+                    wireframes_3d.Parallelepiped(self._temp_coords[0],
                                              self._temp_coords[1],
                                              'Parallelepiped',
                                              self._color,

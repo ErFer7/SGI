@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 '''
 Módulo para as operações matemáticas.
 '''
@@ -7,8 +5,8 @@ Módulo para as operações matemáticas.
 from math import degrees, atan2, sqrt
 import numpy as np
 
-from source.backend.vector import Vector
-from source.backend.matrix import MatrixBuilder
+from source.backend.math.vector import Vector
+from source.backend.math.matrix import MatrixBuilder
 
 
 class Transform():
@@ -127,7 +125,7 @@ class Transform():
         rotation = MatrixBuilder.build_rotation_matrix(rotation)
         relative_to_self_translation = MatrixBuilder.build_translation_matrix(origin)
 
-        relative_rotation = relative_to_self_translation * rotation * relative_to_origin_translation
+        relative_rotation = relative_to_self_translation @ rotation @ relative_to_origin_translation
 
         new_coords = []
 

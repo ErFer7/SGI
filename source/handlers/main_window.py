@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 '''
 Módulo para a interface de usuário.
 '''
@@ -9,7 +7,7 @@ import os
 from gi.repository import Gtk
 
 from source.managers.viewport_manager import ViewportManager
-from source.backend.vector import Vector
+from source.backend.math.vector import Vector
 
 
 @Gtk.Template(filename=os.path.join(os.getcwd(), 'templates', 'template.ui'))

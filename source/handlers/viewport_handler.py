@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 '''
 Módulo para o handler do viewport.
 '''
@@ -9,7 +7,7 @@ from typing import TYPE_CHECKING
 
 from gi.repository import Gtk, Gdk
 
-from source.backend.vector import Vector
+from source.backend.math.vector import Vector
 from source.handlers.handler import Handler
 
 if TYPE_CHECKING:
