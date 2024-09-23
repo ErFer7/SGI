@@ -36,7 +36,7 @@ class SettingsHandler(Handler):
         Muda o método de clipping.
         '''
 
-        self.handler_mediator.manager_mediator.viewport_manager.change_clipping_method()
+        self.handler_mediator.manager_mediator.viewport_manager.toggle_clipping_method()
 
         if self._clipping_method_button.get_label() == 'Liang-Barsky':
             self._clipping_method_button.set_label('Cohen-Sutherland')

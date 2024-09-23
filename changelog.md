@@ -114,3 +114,9 @@
 ## v2.2.2
 
 * Pequenas correções
+
+---
+
+## v2.2.3
+
+* Refatoração do clipping

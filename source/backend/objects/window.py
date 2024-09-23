@@ -107,7 +107,7 @@ class Window(Rectangle):
         Retorna a distância do cop (projetado) até o centro da window.
         '''
 
-        return (self.projected_position - self.projected_cop).magnitude()
+        return (self.projected_position - self.projected_cop).magnitude
 
     def translate(self, direction: Vector) -> None:
         coords = self._transform.translate(direction, self.coords + [self.cop])

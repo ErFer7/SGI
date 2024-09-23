@@ -5,11 +5,8 @@ Módulo para o handler do display file.
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
-from math import degrees
-
 from source.backend.objects.object import Object
 from source.backend.objects.wireframes_2d import Line
-from source.backend.objects.window import Window
 from source.backend.file_system import FileSystem
 from source.backend.math.vector import Vector
 from source.managers.manager import Manager
@@ -107,20 +104,6 @@ class ObjectManager(Manager):
 
             self._objects.pop()
             object_list_handler.remove_object_register(-1)
-
-    def normalize_objects(self, window: Window) -> None:
-        '''
-        Normaliza todos os objetos.
-        '''
-
-        window_up = window.calculate_y_projected_vector()
-        rotation = degrees(window_up * Vector(0.0, 1.0, 0.0))
-
-        if window_up.x > 0.0:
-            rotation = 360 - rotation
-
-        for obj in self._objects + self._default_objects:
-            obj.normalize(window.position, window.scale, rotation)
 
     def load_file(self, file_name: str) -> None:
         '''

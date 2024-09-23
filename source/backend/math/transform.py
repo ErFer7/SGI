@@ -6,7 +6,7 @@ from math import degrees, atan2, sqrt
 import numpy as np
 
 from source.backend.math.vector import Vector
-from source.backend.math.matrix import MatrixBuilder
+from source.backend.math.matrix import Matrix
 
 
 class Transform():
@@ -18,7 +18,7 @@ class Transform():
     _matrix: np.matrix
 
     def __init__(self, position: Vector) -> None:
-        self._matrix = MatrixBuilder.build_translation_matrix(position)
+        self._matrix = Matrix.build_translation_matrix(position)
 
     def __repr__(self) -> str:
         return str(self)
@@ -88,16 +88,9 @@ class Transform():
         Obtém as coordenadas transladadas de um objeto e também retorna a matriz de translação.
         '''
 
-        translation = MatrixBuilder.build_translation_matrix(direction)
+        translation = Matrix.build_translation_matrix(direction)
 
-        new_coords = []
-
-        # Translação ponto a ponto
-        for coord in coords:
-            new_coord = np.matmul(translation, coord.internal_vector_4d)
-            new_coords.append(Vector(new_coord[0, 0], new_coord[0, 1], new_coord[0, 2]))
-
-        return new_coords, translation
+        return Matrix.multiply_vectors(translation, coords), translation
 
     def translate(self, direction: Vector, coords: list[Vector]) -> list[Vector]:
         '''
@@ -105,7 +98,6 @@ class Transform():
         '''
 
         new_coords, translation = self.get_translated(direction, coords)
-
         self._matrix = translation @ self._matrix
 
         return new_coords
@@ -121,19 +113,13 @@ class Transform():
         if origin is None:
             origin = self.position
 
-        relative_to_origin_translation = MatrixBuilder.build_translation_matrix(-origin)
-        rotation = MatrixBuilder.build_rotation_matrix(rotation)
-        relative_to_self_translation = MatrixBuilder.build_translation_matrix(origin)
+        relative_to_origin_translation = Matrix.build_translation_matrix(-origin)
+        rotation = Matrix.build_rotation_matrix(rotation)
+        relative_to_self_translation = Matrix.build_translation_matrix(origin)
 
         relative_rotation = relative_to_self_translation @ rotation @ relative_to_origin_translation
 
-        new_coords = []
-
-        for coord in coords:
-            new_coord = np.matmul(relative_rotation, coord.internal_vector_4d)
-            new_coords.append(Vector(new_coord[0, 0], new_coord[0, 1], new_coord[0, 2]))
-
-        return new_coords, relative_rotation
+        return Matrix.multiply_vectors(relative_rotation, coords), relative_rotation
 
     def rotate(self, rotation: Vector, coords: list[Vector], origin: Vector | None = None) -> list[Vector]:
         '''
@@ -141,7 +127,6 @@ class Transform():
         '''
 
         new_coords, rotation = self.get_rotated(rotation, coords, origin)
-
         self._matrix = rotation @ self._matrix
 
         return new_coords
@@ -151,11 +136,11 @@ class Transform():
         Obtém as coordenadas escaladas de um objeto e também retorna a matriz de escala.
         '''
 
-        relative_to_origin_translation = MatrixBuilder.build_translation_matrix(-self.position)
-        inverse_rotation = MatrixBuilder.build_rotation_matrix(-self.rotation, True)
-        scaling = MatrixBuilder.build_scaling_matrix(scale)
-        rotation = MatrixBuilder.build_rotation_matrix(self.rotation)
-        relative_to_self_translation = MatrixBuilder.build_translation_matrix(self.position)
+        relative_to_origin_translation = Matrix.build_translation_matrix(-self.position)
+        inverse_rotation = Matrix.build_rotation_matrix(-self.rotation, True)
+        scaling = Matrix.build_scaling_matrix(scale)
+        rotation = Matrix.build_rotation_matrix(self.rotation)
+        relative_to_self_translation = Matrix.build_translation_matrix(self.position)
 
         relative_scaling = relative_to_self_translation @ \
             rotation @ \
@@ -163,14 +148,7 @@ class Transform():
             inverse_rotation @ \
             relative_to_origin_translation
 
-        new_coords = []
-
-        # Translação ponto a ponto
-        for coord in coords:
-            new_coord = np.matmul(relative_scaling, coord.internal_vector_4d)
-            new_coords.append(Vector(new_coord[0, 0], new_coord[0, 1], new_coord[0, 2]))
-
-        return new_coords, relative_scaling
+        return Matrix.multiply_vectors(relative_scaling, coords), relative_scaling
 
     def rescale(self, scale: Vector, coords: list[Vector]) -> list[Vector]:
         '''
@@ -178,29 +156,22 @@ class Transform():
         '''
 
         new_coords, scaling = self.get_scaled(scale, coords)
-
         self._matrix = scaling @ self._matrix
 
         return new_coords
 
     def normalize(self,
                   window_position: Vector,
-                  window_rotation: float,
-                  window_scale: Vector,
+                  window_z_rotation: float,
+                  window_diff_scale: Vector,
                   coords: list[Vector]) -> list[Vector]:
         '''
         Normaliza as coordenadas.
         '''
 
-        normalization = MatrixBuilder.build_normalization_matrix(window_position, window_rotation, window_scale)
+        normalization = Matrix.build_normalization_matrix(window_position, window_z_rotation, window_diff_scale)
 
-        new_coords = []
-
-        for coord in coords:
-            new_coord = np.matmul(normalization, coord.internal_vector_4d)
-            new_coords.append(Vector(new_coord[0, 0], new_coord[0, 1], new_coord[0, 2]))
-
-        return new_coords
+        return Matrix.multiply_vectors(normalization, coords)
 
     def project(self,
                 cop: Vector,
@@ -212,24 +183,28 @@ class Transform():
         Projeta as coordendas.
         '''
 
-        projection_matrix = MatrixBuilder.build_projection_matrix(cop, normal)
-        perspective_matrix = MatrixBuilder.build_perspective_matrix(cop_distance)
+        if len(coords) == 0:
+            return []
+
+        projection_matrix = Matrix.build_projection_matrix(cop, normal)
+        perspective_matrix = Matrix.build_perspective_matrix(cop_distance)
+        transformation = projection_matrix if is_window else perspective_matrix @ projection_matrix
+
+        internal_vectors = np.stack([coord.internal_vector_4d for coord in coords])
+        internal_vectors = np.transpose(internal_vectors)
+        transformed_vectors = transformation @ internal_vectors
+        tranformed_coords = [Vector(transformed_vectors[0, i], transformed_vectors[1, i], transformed_vectors[2, i])
+                             for i in range(transformed_vectors.shape[1])]
+
+        if is_window:
+            return tranformed_coords
 
         new_coords = []
 
-        for coord in coords:
-            new_coord = projection_matrix @ coord.internal_vector_4d
-            new_vec = Vector(new_coord[0, 0], new_coord[0, 1], new_coord[0, 2])
-
-            if is_window:
-                new_coords.append(new_vec)
-            else:
-                new_coord = perspective_matrix @ new_coord.transpose()
-
-                if new_coord[2, 0] >= 0.0 and new_coord[3, 0] > 0.0:
-                    new_vec = Vector(new_coord[0, 0] / new_coord[3, 0],
-                                     new_coord[1, 0] / new_coord[3, 0],
-                                     new_coord[2, 0] / new_coord[3, 0])
-                    new_coords.append(new_vec)
+        for i in range(transformed_vectors.shape[1]):
+            if transformed_vectors[2, i] >= 0.0 and transformed_vectors[3, i] > 0.0:
+                new_coords.append(Vector(transformed_vectors[0, i] / transformed_vectors[3, i],
+                                         transformed_vectors[1, i] / transformed_vectors[3, i],
+                                         transformed_vectors[2, i] / transformed_vectors[3, i]))
 
         return new_coords

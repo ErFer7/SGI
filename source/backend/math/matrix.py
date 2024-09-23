@@ -8,7 +8,7 @@ import numpy as np
 from source.backend.math.vector import Vector
 
 
-class MatrixBuilder():
+class Matrix():
     '''
     Classe para construção de matrizes.
     '''
@@ -70,15 +70,15 @@ class MatrixBuilder():
 
     @staticmethod
     def build_normalization_matrix(window_position: Vector,
-                                   window_rotation: float,
-                                   window_scale: Vector) -> np.matrix:
+                                   window_z_rotation: float,
+                                   window_diff_scale: Vector) -> np.matrix:
         '''
         Constrói a matriz de normalização.
         '''
 
-        translation = MatrixBuilder.build_translation_matrix(-window_position)
-        rotation = MatrixBuilder.build_rotation_matrix(Vector(0.0, 0.0, window_rotation))
-        scaling = MatrixBuilder.build_scaling_matrix(window_scale)
+        translation = Matrix.build_translation_matrix(-window_position)
+        rotation = Matrix.build_rotation_matrix(Vector(0.0, 0.0, window_z_rotation))
+        scaling = Matrix.build_scaling_matrix(window_diff_scale)
 
         return scaling @ rotation @ translation
 
@@ -88,14 +88,14 @@ class MatrixBuilder():
         Constrói a matriz de projeção.
         '''
 
-        translation = MatrixBuilder.build_translation_matrix(-cop)
+        translation = Matrix.build_translation_matrix(-cop)
         normal_shadow_xz = Vector(normal.x, 0.0, normal.z)
         rotation_y = degrees(Vector(0.0, 0.0, 1.0) * normal_shadow_xz)
 
         if normal.x > 0.0:
             rotation_y = 360 - rotation_y
 
-        normal_rotation_matrix = MatrixBuilder.build_rotation_matrix(Vector(0.0, rotation_y, 0.0))
+        normal_rotation_matrix = Matrix.build_rotation_matrix(Vector(0.0, rotation_y, 0.0))
         new_normal = np.matmul(normal_rotation_matrix, normal.internal_vector_4d)
         normal = Vector(new_normal[0, 0], new_normal[0, 1], new_normal[0, 2])
 
@@ -104,8 +104,8 @@ class MatrixBuilder():
         if normal.y < 0.0:
             rotation_x = 360 - rotation_x
 
-        rotation_x = MatrixBuilder.build_rotation_matrix(Vector(rotation_x, 0.0, 0.0))
-        rotation_y = MatrixBuilder.build_rotation_matrix(Vector(0.0, rotation_y, 0.0))
+        rotation_x = Matrix.build_rotation_matrix(Vector(rotation_x, 0.0, 0.0))
+        rotation_y = Matrix.build_rotation_matrix(Vector(0.0, rotation_y, 0.0))
 
         return rotation_x @ rotation_y @ translation
 
@@ -119,3 +119,19 @@ class MatrixBuilder():
                           [0.0, 1.0, 0.0, 0.0],
                           [0.0, 0.0, 1.0, 0.0],
                           [0.0, 0.0, 1.0 / cop_distance, 0.0]])
+
+    @staticmethod
+    def multiply_vectors(matrix: np.matrix, vectors: list[Vector]) -> list[Vector]:
+        '''
+        Multiplica uma lista de vetores por uma matriz.
+        '''
+
+        if len(vectors) == 0:
+            return []
+
+        internal_vectors = np.stack([coord.internal_vector_4d for coord in vectors])
+        internal_vectors = np.transpose(internal_vectors)
+        transformed_vectors = matrix @ internal_vectors
+
+        return [Vector(transformed_vectors[0, i], transformed_vectors[1, i], transformed_vectors[2, i])
+                for i in range(transformed_vectors.shape[1])]

@@ -36,7 +36,7 @@ class Vector():
         if isinstance(other, (float, int)):  # Escalar
             result = Vector(0.0, 0.0, 0.0, np.multiply(self.internal_vector_3d, other))
         elif isinstance(other, Vector):  # Ângulo entre vetores
-            magnitude = self.magnitude() * other.magnitude()
+            magnitude = self.magnitude * other.magnitude
 
             if magnitude > 0.0:
                 result = acos(self.dot(other) / magnitude)
@@ -119,6 +119,14 @@ class Vector():
 
         return self._internal_vector
 
+    @property
+    def magnitude(self) -> float:
+        '''
+        Retorna a magnitude.
+        '''
+
+        return np.sqrt(self.internal_vector_3d.dot(self.internal_vector_3d))
+
     def dot(self, other) -> float:
         '''
         Produto escalar.
@@ -134,21 +142,3 @@ class Vector():
         cross = np.cross(self.internal_vector_3d, other.internal_vector_3d)
 
         return Vector(cross[0], cross[1], cross[2])
-
-    def magnitude(self) -> float:
-        '''
-        Retorna a magnitude.
-        '''
-
-        return np.sqrt(self.internal_vector_3d.dot(self.internal_vector_3d))
-
-    def normalize(self) -> 'Vector':
-        '''
-        Normaliza o vetor.
-        '''
-
-        norm = self.magnitude()
-        if norm == 0:
-            raise ValueError("Cannot normalize a zero vector")
-
-        return Vector(0, 0, 0, self.internal_vector_3d / norm)
