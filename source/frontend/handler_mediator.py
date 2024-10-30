@@ -2,13 +2,13 @@
 Módulo do mediador de handlers.
 '''
 
-from source.handlers.creator_handler import CreatorHandler
-from source.handlers.main_window_handler import MainWindowHandler
-from source.handlers.object_list_handler import ObjectListHandler
-from source.handlers.object_transform_handler import ObjectTransformHandler
-from source.handlers.settings_handler import SettingsHandler
-from source.handlers.transformations_handler import TransformationsHandler
-from source.handlers.viewport_handler import ViewportHandler
+from source.frontend.creator_handler import CreatorHandler
+from source.frontend.main_window_handler import MainWindowHandler
+from source.frontend.object_list_handler import ObjectListHandler
+from source.frontend.object_transform_handler import ObjectTransformHandler
+from source.frontend.settings_handler import SettingsHandler
+from source.frontend.transformations_handler import TransformationsHandler
+from source.frontend.viewport_handler import ViewportHandler
 from source.managers.manager_mediator import ManagerMediator
 
 

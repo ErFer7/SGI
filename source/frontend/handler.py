@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 from gi.repository import Gtk
 
 if TYPE_CHECKING:
-    from source.handlers.handler_mediator import HandlerMediator
+    from source.frontend.handler_mediator import HandlerMediator
 
 
 class Handler():

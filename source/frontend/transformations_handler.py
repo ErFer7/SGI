@@ -8,11 +8,11 @@ from typing import TYPE_CHECKING
 from gi.repository import Gtk
 
 from source.backend.math.vector import Vector
-from source.handlers.handler import Handler
+from source.frontend.handler import Handler
 
 if TYPE_CHECKING:
-    from source.handlers.handler_mediator import HandlerMediator
-    from source.handlers.main_window import MainWindow
+    from source.frontend.handler_mediator import HandlerMediator
+    from source.frontend.main_window import MainWindow
 
 
 class TransformationsHandler(Handler):
@@ -85,7 +85,7 @@ class TransformationsHandler(Handler):
             self.update_rotation_anchor_spin_buttons()
 
             object_index = object_manager.objects.index(object_in_focus)
-            object_manager.update_object_info(object_index)
+            self.handler_mediator.object_list_handler.update_object_info(object_index)
 
     def rescale(self, _) -> None:
         '''

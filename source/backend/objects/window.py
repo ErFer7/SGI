@@ -114,15 +114,43 @@ class Window(Rectangle):
         self.coords = coords[:-1]
         self.cop = coords[-1]
 
+    def rotate(self, rotation: Vector, origin: Vector | None = None) -> None:
+        coords = self._transform.rotate(rotation, self.coords + [self.cop], origin)
+        self.coords = coords[:-1]
+        self.cop = coords[-1]
+
     def rescale(self, scale: Vector) -> None:
         coords = self._transform.rescale(scale, self.coords + [self.cop])
         self.coords = coords[:-1]
         self.cop = coords[-1]
 
-    def rotate(self, rotation: Vector, origin: Vector | None = None) -> None:
-        coords = self._transform.rotate(rotation, self.coords + [self.cop], origin)
-        self.coords = coords[:-1]
-        self.cop = coords[-1]
+    def reset(self) -> None:
+        '''
+        Reseta a window.
+        '''
+
+        self.translate(-self.position)
+
+        self.rotate(Vector(0.0, 0.0, -self.rotation.z))
+        self.rotate(Vector(0.0, -self.rotation.y, 0.0))
+        self.rotate(Vector(-self.rotation.x, 0.0, 0.0))
+
+        diff_x = 1.0 / self.scale.x
+        diff_y = 1.0 / self.scale.y
+        diff_z = 1.0 / self.scale.z
+
+        self.rescale(Vector(diff_x, diff_y, diff_z))
+
+    def resize(self, extension: Vector) -> None:
+        '''
+        Redefine a extensão da window.
+        '''
+
+        diff_x = extension.x / self.scale.x
+        diff_y = extension.y / self.scale.y
+        diff_z = extension.z / self.scale.z
+
+        self.rescale(Vector(diff_x, diff_y, diff_z))
 
     def project(self, cop: Vector, normal: Vector, cop_distance) -> None:
         coords = self._transform.project(cop, normal, cop_distance, self.coords + [cop, self.position], True)

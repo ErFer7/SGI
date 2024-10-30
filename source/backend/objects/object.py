@@ -6,6 +6,7 @@ from enum import Enum
 
 from source.backend.math.transform import Transform
 from source.backend.math.vector import Vector
+from uuid import uuid4
 
 
 class ObjectType(Enum):
@@ -45,6 +46,7 @@ class Object():
     lines: list[tuple[int, int]]
     vector_lines: list[tuple[Vector, Vector]]
 
+    _id: uuid4
     _transform: Transform
 
     def __init__(self,
@@ -56,8 +58,7 @@ class Object():
                  object_type: ObjectType,
                  fill: bool,
                  closed: bool) -> None:
-
-        super().__init__()
+        self._id = uuid4()
         self.name = name
         self.color = color
         self.line_width = line_width
@@ -72,6 +73,14 @@ class Object():
         self.vector_lines = []
 
         self.generate_vector_lines()
+
+    @property
+    def id(self) -> uuid4:
+        '''
+        Retorna o id.
+        '''
+
+        return self._id
 
     @property
     def position(self) -> Vector:

@@ -7,14 +7,14 @@ from typing import TYPE_CHECKING
 
 from gi.repository import Gtk
 
-from source.handlers.handler import Handler
+from source.frontend.handler import Handler
 from source.backend.math.transform import Vector
 from source.backend.objects import wireframes_2d
 from source.backend.objects import wireframes_3d
 
 if TYPE_CHECKING:
-    from source.handlers.handler_mediator import HandlerMediator
-    from source.handlers.main_window import MainWindow
+    from source.frontend.handler_mediator import HandlerMediator
+    from source.frontend.main_window import MainWindow
 
 
 class CreatorHandler(Handler):
@@ -196,7 +196,7 @@ class CreatorHandler(Handler):
         '''
 
         object_manager = self.handler_mediator.manager_mediator.object_manager
-        object_manager.remove_last()
+        self.handler_mediator.object_list_handler.remove_object_register(len(object_manager.objects) - 1)
 
     def set_width(self, _) -> None:
         '''
@@ -369,6 +369,7 @@ class CreatorHandler(Handler):
                 object_completed = True
 
             if object_completed:
+                self._handler_mediator.object_list_handler.add_object_register(object_manager.get_last())
                 object_manager.set_last_as_focus()
 
                 anchor = self._handler_mediator.manager_mediator.object_manager.object_in_focus.position

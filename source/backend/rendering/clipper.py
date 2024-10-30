@@ -37,10 +37,10 @@ class Clipper():
     Clipper.
     '''
 
-    _method: LineClippingMethod
+    _line_clipping_method: LineClippingMethod
 
-    def __init__(self) -> None:
-        self._clipping_method = LineClippingMethod.LIANG_BARSKY
+    def __init__(self, line_clipping_method: LineClippingMethod = LineClippingMethod.LIANG_BARSKY) -> None:
+        self._line_clipping_method = line_clipping_method
 
     @property
     def clipping_method(self) -> LineClippingMethod:
@@ -48,17 +48,17 @@ class Clipper():
         Getter do método de clipping.
         '''
 
-        return self._clipping_method
+        return self._line_clipping_method
 
     def toggle_clipping_method(self) -> None:
         '''
         Muda o método de clipping.
         '''
 
-        if self._clipping_method == LineClippingMethod.COHEN_SUTHERLAND:
-            self._clipping_method = LineClippingMethod.LIANG_BARSKY
+        if self._line_clipping_method == LineClippingMethod.COHEN_SUTHERLAND:
+            self._line_clipping_method = LineClippingMethod.LIANG_BARSKY
         else:
-            self._clipping_method = LineClippingMethod.COHEN_SUTHERLAND
+            self._line_clipping_method = LineClippingMethod.COHEN_SUTHERLAND
 
     def clip(self, window: Window, object_: Object) -> list[list[Vector]]:
         '''
@@ -201,10 +201,10 @@ class Clipper():
 
         clipped_lines = []
 
-        if self._clipping_method == LineClippingMethod.COHEN_SUTHERLAND:
+        if self._line_clipping_method == LineClippingMethod.COHEN_SUTHERLAND:
             def __clip_line(line):
                 return self.cohen_sutherland(window, line)
-        elif self._clipping_method == LineClippingMethod.LIANG_BARSKY:
+        elif self._line_clipping_method == LineClippingMethod.LIANG_BARSKY:
             def __clip_line(line):
                 return self.liang_barsky(window, line)
 
@@ -236,7 +236,6 @@ class Clipper():
         if region_codes[0] | region_codes[1] == 0b0000:
             clipped_line = line
         elif region_codes[0] & region_codes[1] == 0b0000:
-
             intersections = []
 
             for region_code in region_codes:
@@ -257,11 +256,9 @@ class Clipper():
             if intersections[0] is not None and intersections[1] is not None:
                 clipped_line = self.intersection(window, line, intersections[0], intersections[1])
             else:
-
                 double_try_intersections = []
 
                 for intersection, region_code in zip(intersections, region_codes):
-
                     if intersection is None:
                         match region_code:
                             case 0b1001:

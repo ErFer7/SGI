@@ -8,11 +8,11 @@ from typing import TYPE_CHECKING
 from gi.repository import Gtk
 
 from source.backend.math.vector import Vector
-from source.handlers.handler import Handler
+from source.frontend.handler import Handler
 
 if TYPE_CHECKING:
-    from source.handlers.handler_mediator import HandlerMediator
-    from source.handlers.main_window import MainWindow
+    from source.frontend.handler_mediator import HandlerMediator
+    from source.frontend.main_window import MainWindow
 
 
 class ObjectTransformHandler(Handler):
@@ -73,7 +73,7 @@ class ObjectTransformHandler(Handler):
             object_in_focus.translate(Vector(diff_x, diff_y, diff_z))
 
             object_index = object_manager.objects.index(object_in_focus)
-            object_manager.update_object_info(object_index)
+            self.handler_mediator.object_list_handler.update_object_info(object_index)
             self.update_spin_buttons()
 
     def update_scale(self, _) -> None:

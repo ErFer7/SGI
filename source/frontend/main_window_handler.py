@@ -7,11 +7,11 @@ from typing import TYPE_CHECKING
 
 from gi.repository import Gtk
 
-from source.handlers.handler import Handler
+from source.frontend.handler import Handler
 
 if TYPE_CHECKING:
-    from source.handlers.handler_mediator import HandlerMediator
-    from source.handlers.main_window import MainWindow
+    from source.frontend.handler_mediator import HandlerMediator
+    from source.frontend.main_window import MainWindow
 
 
 class MainWindowHandler(Handler):

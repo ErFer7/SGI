@@ -4,19 +4,16 @@ Classe principal do SGI.
 
 from gi.repository import Gtk
 
-from source.backend.math.transform import Vector
-from source.managers.viewport_manager import ViewportManager
-from source.handlers.viewport_handler import ViewportHandler
-from source.handlers.settings_handler import SettingsHandler
-from source.handlers.transformations_handler import TransformationsHandler
-from source.handlers.object_transform_handler import ObjectTransformHandler
-from source.handlers.creator_handler import CreatorHandler
-from source.handlers.object_list_handler import ObjectListHandler
-from source.handlers.main_window_handler import MainWindowHandler
-from source.managers.manager_mediator import ManagerMediator
-from source.managers.object_manager import ObjectManager
-from source.handlers.handler_mediator import HandlerMediator
-from source.handlers.main_window import MainWindow
+from source.backend.backend import Backend
+from source.frontend.viewport_handler import ViewportHandler
+from source.frontend.settings_handler import SettingsHandler
+from source.frontend.transformations_handler import TransformationsHandler
+from source.frontend.object_transform_handler import ObjectTransformHandler
+from source.frontend.creator_handler import CreatorHandler
+from source.frontend.object_list_handler import ObjectListHandler
+from source.frontend.main_window_handler import MainWindowHandler
+from source.frontend.handler_mediator import HandlerMediator
+from source.frontend.main_window import MainWindow
 
 
 class SGI():
@@ -28,7 +25,6 @@ class SGI():
     _main_window: MainWindow
 
     _handler_mediator: HandlerMediator
-    _manager_mediator: ManagerMediator
 
     _main_window_handler: MainWindowHandler
     _object_list_handler: ObjectListHandler
@@ -38,17 +34,14 @@ class SGI():
     _settings_handler: SettingsHandler
     _viewport_handler: ViewportHandler
 
-    _object_manager: ObjectManager
-    _viewport_manager: ViewportManager
+    _backend: Backend
 
     def __init__(self):
         self._main_window = MainWindow()
 
-        self._handler_mediator = HandlerMediator()
-        self._manager_mediator = ManagerMediator()
+        self._backend = Backend()
 
-        self._handler_mediator.manager_mediator = self._manager_mediator
-        self._manager_mediator.handler_mediator = self._handler_mediator
+        self._handler_mediator = HandlerMediator()
 
         self._main_window_handler = MainWindowHandler(self._handler_mediator, self._main_window)
         self._object_list_handler = ObjectListHandler(self._handler_mediator, self._main_window)
@@ -65,12 +58,6 @@ class SGI():
                                             transformations_handler=self._transformations_handler,
                                             settings_handler=self._settings_handler,
                                             viewport_handler=self._viewport_handler)
-
-        self._object_manager = ObjectManager(self._manager_mediator)
-        self._viewport_manager = ViewportManager(self._manager_mediator, Vector(25.0, 25.0, 0.0), (0.05, 0.05, 0.05))
-
-        self._manager_mediator.set_managers(object_manager=self._object_manager,
-                                            viewport_manager=self._viewport_manager)
 
     def run(self) -> None:
         '''

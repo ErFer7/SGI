@@ -7,12 +7,13 @@ from source.backend.objects.wireframes_3d import Wireframe3D
 from source.backend.math.vector import Vector
 
 
-class FileSystem():
+class FileManager():
     '''
     Sistema de arquivos.
     '''
 
-    def load_scene(self, file_name: str) -> list[Object]:
+    @staticmethod
+    def load_scene(file_name: str) -> list[Object]:
         '''
         Carrega um arquivo.
         '''
@@ -99,7 +100,8 @@ class FileSystem():
 
         return objects
 
-    def save_scene(self, file_name: str, objects: list[Object]) -> None:
+    @staticmethod
+    def save_scene(file_name: str, objects: list[Object]) -> None:
         '''
         Escreve um arquivo.
         '''

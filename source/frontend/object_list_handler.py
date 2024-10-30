@@ -9,12 +9,12 @@ from os.path import join
 
 from gi.repository import Gtk
 
-from source.handlers.handler import Handler
+from source.frontend.handler import Handler
 from source.backend.objects.object import Object
 
 if TYPE_CHECKING:
-    from source.handlers.handler_mediator import HandlerMediator
-    from source.handlers.main_window import MainWindow
+    from source.frontend.handler_mediator import HandlerMediator
+    from source.frontend.main_window import MainWindow
 
 
 class ObjectListHandler(Handler):
@@ -52,6 +52,7 @@ class ObjectListHandler(Handler):
         object_manager = self._handler_mediator.manager_mediator.object_manager
 
         object_manager.load_file(join('assets', 'objects', file_name))
+        self.add_object_register(object_manager.get_last())
         self._handler_mediator.transformations_handler.update_object_rotation_anchor(anchor)
         self._handler_mediator.object_transform_handler.update_spin_buttons()
         self._handler_mediator.transformations_handler.update_rotation_anchor_spin_buttons()
