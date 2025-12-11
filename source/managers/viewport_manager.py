@@ -41,6 +41,8 @@ class ViewportManager(Manager):
         self._viewport_padding = viewport_padding
         self._clipper = Clipper()
 
+        self.window.translate(Vector(165.0, 15.0, 500.0))
+
     @property
     def window(self) -> Window:
         '''
